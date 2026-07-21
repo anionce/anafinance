@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# react-router uses client-side routing, so every path needs to fall back
+# to index.html instead of Netlify 404ing on direct loads/refreshes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -10,59 +10,78 @@ import {
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
-import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import { formatCurrency } from "../../utils/currency";
+import { calculateRawPercentage } from "../../services/budget";
+import { useTranslation } from "../../i18n/useTranslation";
+import FeaturedGoalCard from "../goals/FeaturedGoalCard";
+import type { Goal } from "../../types/Goal";
 
 interface Props {
     spent: number;
     budget: number;
     income: number;
-    colchon: number;
-    colchonMeta: number;
-    onColchonChange: (value: number) => void;
+    estimatedIncome: number;
+    onEstimatedIncomeChange: (value: number) => void;
+    featuredGoal: Goal;
+    onFeaturedGoalAmountChange: (value: number) => void;
+    onFeaturedGoalTargetChange: (value: number) => void;
+    onFeaturedGoalNameChange: (name: string) => void;
+    onEditBudget: () => void;
 }
 
-const INGRESOS_ESTIMADOS = 2300;
-
-export default function Dashboard({ spent, budget, income, colchon, colchonMeta, onColchonChange }: Props) {
-    const [editingColchon, setEditingColchon] = useState(false);
-    const [colchonInput, setColchonInput] = useState(String(colchon));
+export default function Dashboard({
+    spent,
+    budget,
+    income,
+    estimatedIncome,
+    onEstimatedIncomeChange,
+    featuredGoal,
+    onFeaturedGoalAmountChange,
+    onFeaturedGoalTargetChange,
+    onFeaturedGoalNameChange,
+    onEditBudget,
+}: Props) {
+    const { t } = useTranslation();
+    const [editingIncome, setEditingIncome] = useState(false);
+    const [incomeInput, setIncomeInput] = useState(String(estimatedIncome));
 
     const remaining = budget - spent;
     const overBudget = remaining < 0;
-    const presupuestoPct = Math.min((spent / budget) * 100, 100);
-    const colchonPct = Math.min((colchon / colchonMeta) * 100, 100);
-    const ingresosPct = Math.min((income / INGRESOS_ESTIMADOS) * 100, 100);
+    const budgetPct = Math.min((spent / budget) * 100, 100);
+    const budgetPctRaw = calculateRawPercentage(spent, budget);
+    const incomePct = Math.min((income / estimatedIncome) * 100, 100);
+    const incomePctRaw = calculateRawPercentage(income, estimatedIncome);
 
     let statusEmoji = "🎉";
-    let statusText = "Vas genial este mes";
+    let statusText = t.statusGreatTitle;
     let statusColor = "#B8E6C9";
     if (overBudget) {
         statusEmoji = "😬";
-        statusText = "Te has pasado del presupuesto";
+        statusText = t.statusOverTitle;
         statusColor = "#FFC9C9";
-    } else if (presupuestoPct > 75) {
+    } else if (budgetPct > 75) {
         statusEmoji = "😅";
-        statusText = "Vas ajustada este mes";
+        statusText = t.statusTightTitle;
         statusColor = "#FFE3B8";
-    } else if (presupuestoPct > 40) {
+    } else if (budgetPct > 40) {
         statusEmoji = "🙂";
-        statusText = "Vas bien este mes";
+        statusText = t.statusOkTitle;
         statusColor = "#D6E8FF";
     }
 
-    function handleSaveColchon() {
-        const parsed = Number(colchonInput);
+    function handleSaveIncome() {
+        const parsed = Number(incomeInput);
         if (!isNaN(parsed)) {
-            onColchonChange(parsed);
+            onEstimatedIncomeChange(parsed);
         }
-        setEditingColchon(false);
+        setEditingIncome(false);
     }
 
     return (
         <Grid container spacing={3}>
-            {/* Estado del mes */}
+            {/* Month status */}
             <Grid size={{ xs: 12, md: 6 }}>
                 <Card
                     sx={{
@@ -81,21 +100,24 @@ export default function Dashboard({ spent, budget, income, colchon, colchonMeta,
                     </Box>
                     <Typography variant="body1" sx={{ opacity: 0.8 }}>
                         {overBudget
-                            ? `Te has pasado ${Math.abs(remaining).toFixed(0)} € del presupuesto`
-                            : `Te quedan ${remaining.toFixed(0)} € por gastar este mes`}
+                            ? t.overBudgetBy(formatCurrency(Math.abs(remaining)))
+                            : t.remainingToSpend(formatCurrency(remaining))}
                     </Typography>
                 </Card>
             </Grid>
 
-            {/* Presupuesto */}
+            {/* Budget */}
             <Grid size={{ xs: 12, md: 6 }}>
                 <Card sx={{ bgcolor: "#FFE3E3", borderRadius: 1, p: 3, height: "100%", boxShadow: "none" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                         <ShoppingBagOutlinedIcon />
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Presupuesto</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>{t.budgetCardTitle}</Typography>
+                        <IconButton size="small" onClick={onEditBudget} title={t.editBudgetTooltip}>
+                            <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
+                        </IconButton>
                     </Box>
                     <LinearProgress
-                        value={presupuestoPct}
+                        value={budgetPct}
                         variant="determinate"
                         sx={{
                             my: 2, height: 8, borderRadius: 1,
@@ -104,20 +126,23 @@ export default function Dashboard({ spent, budget, income, colchon, colchonMeta,
                         }}
                     />
                     <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                        {spent.toFixed(0)} € <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/ {budget} €</Typography>
+                        {formatCurrency(spent)} <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/ {formatCurrency(budget)}</Typography>
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.6, mt: 0.5 }}>
+                        {budgetPctRaw.toFixed(0)}%
                     </Typography>
                 </Card>
             </Grid>
 
-            {/* Ingresos */}
+            {/* Income */}
             <Grid size={{ xs: 12, md: 6 }}>
                 <Card sx={{ bgcolor: "#DFF5E1", borderRadius: 1, p: 3, height: "100%", boxShadow: "none" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                         <TrendingUpOutlinedIcon />
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Ingresos del mes</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>{t.incomeCardTitle}</Typography>
                     </Box>
                     <LinearProgress
-                        value={ingresosPct}
+                        value={incomePct}
                         variant="determinate"
                         sx={{
                             my: 2, height: 8, borderRadius: 1,
@@ -125,61 +150,52 @@ export default function Dashboard({ spent, budget, income, colchon, colchonMeta,
                             "& .MuiLinearProgress-bar": { bgcolor: "#66BB6A" },
                         }}
                     />
-                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                        {income.toFixed(0)} € <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/ {INGRESOS_ESTIMADOS} €</Typography>
-                    </Typography>
-                </Card>
-            </Grid>
-
-            {/* Colchón Revolut - editable */}
-            <Grid size={{ xs: 12, md: 6 }}>
-                <Card sx={{ bgcolor: "#E8E1F5", borderRadius: 1, p: 3, height: "100%", boxShadow: "none" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                        <SavingsOutlinedIcon />
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Colchón Revolut</Typography>
-                    </Box>
-                    <LinearProgress
-                        value={colchonPct}
-                        variant="determinate"
-                        sx={{
-                            my: 2, height: 8, borderRadius: 1,
-                            bgcolor: "rgba(0,0,0,0.08)",
-                            "& .MuiLinearProgress-bar": { bgcolor: "#9575CD" },
-                        }}
-                    />
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        {editingColchon ? (
+                        {editingIncome ? (
                             <>
                                 <TextField
                                     size="small"
                                     type="number"
-                                    value={colchonInput}
-                                    onChange={(e) => setColchonInput(e.target.value)}
+                                    value={incomeInput}
+                                    onChange={(e) => setIncomeInput(e.target.value)}
                                     autoFocus
                                     sx={{ maxWidth: 140 }}
                                 />
-                                <IconButton onClick={handleSaveColchon} size="small">
+                                <IconButton onClick={handleSaveIncome} size="small">
                                     <CheckIcon />
                                 </IconButton>
                             </>
                         ) : (
                             <>
                                 <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                    {colchon.toLocaleString("es-ES")} € <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/ {colchonMeta.toLocaleString("es-ES")} €</Typography>
+                                    {formatCurrency(income)} <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/ {formatCurrency(estimatedIncome)}</Typography>
                                 </Typography>
                                 <IconButton
                                     size="small"
                                     onClick={() => {
-                                        setColchonInput(String(colchon));
-                                        setEditingColchon(true);
+                                        setIncomeInput(String(estimatedIncome));
+                                        setEditingIncome(true);
                                     }}
                                 >
-                                    <EditIcon sx={{ fontSize: 18, opacity: 0.5 }} />
+                                    <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                                 </IconButton>
                             </>
                         )}
                     </Box>
+                    <Typography variant="body2" sx={{ opacity: 0.6, mt: 0.5 }}>
+                        {incomePctRaw.toFixed(0)}%
+                    </Typography>
                 </Card>
+            </Grid>
+
+            {/* Featured goal - persisted like any other Goal */}
+            <Grid size={{ xs: 12, md: 6 }}>
+                <FeaturedGoalCard
+                    goal={featuredGoal}
+                    onAmountChange={onFeaturedGoalAmountChange}
+                    onTargetChange={onFeaturedGoalTargetChange}
+                    onNameChange={onFeaturedGoalNameChange}
+                />
             </Grid>
         </Grid>
     );

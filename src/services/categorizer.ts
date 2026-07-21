@@ -1,9 +1,10 @@
 import type { CategoryValue } from "../types/Category";
 
-// Solo Amazon requiere revisión manual (compras de todo tipo, no hay patrón claro)
+// Only Amazon needs manual review (all sorts of purchases, no clear pattern)
 const MANUAL_REVIEW_KEYWORDS = ["amazon, biz"];
 
 const RULES: { keywords: string[]; category: CategoryValue }[] = [
+  { keywords: ["aeat"], category: "transferencia" },
   { keywords: ["transferencia recibida"], category: "vinted_wallapop" },
   { keywords: ["farmacia", "dentista", "fisio", "clinica", "clínica", "médico", "medico"], category: "salud" },
   { keywords: ["gimnasio", "yoga", "pilates", "spa"], category: "wellness" },
@@ -32,13 +33,13 @@ const RULES: { keywords: string[]; category: CategoryValue }[] = [
 ];
 
 /**
- * @param text descripción del movimiento
- * @param amount importe (positivo = ingreso, negativo = gasto)
+ * @param text transaction description
+ * @param amount amount (positive = income, negative = expense)
  */
 export function categorize(text: string, amount: number): CategoryValue | null {
   const normalized = text.toLowerCase();
 
-  // Caso especial: Vinted depende de si es venta (ingreso) o compra (gasto)
+  // Special case: Vinted depends on whether it's a sale (income) or purchase (expense)
   if (normalized.includes("vinted")) {
     return amount < 0 ? "ropa" : "vinted_wallapop";
   }

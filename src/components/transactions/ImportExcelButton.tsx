@@ -1,4 +1,5 @@
 import { Button } from "@mui/material";
+import { useTranslation } from "../../i18n/useTranslation";
 
 interface Props {
 
@@ -6,7 +7,8 @@ interface Props {
 
 }
 
-export default function ImportExcel({ onImport }: Props) {
+export default function ImportExcelButton({ onImport }: Props) {
+    const { t } = useTranslation();
 
     return (
 
@@ -15,7 +17,7 @@ export default function ImportExcel({ onImport }: Props) {
             component="label"
         >
 
-            Importar Excel BBVA
+            {t.importExcelButton}
 
             <input
                 hidden
