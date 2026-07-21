@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import type { Transaction } from '../types/Transaction';
-import { categorize } from "./categorize";
+import { categorize } from "./categorizer";
 import { hashTransaction } from "./hash";
 
 export async function parseExcel(file: File): Promise<Transaction[]> {
@@ -19,7 +19,7 @@ export async function parseExcel(file: File): Promise<Transaction[]> {
     );
 
     if (headerRowIndex === -1) {
-        throw new Error('No se encontró la fila de cabecera ("Concepto") en el Excel.');
+        throw new Error('Could not find the header row ("Concepto") in the Excel file.');
     }
 
     const headerRow = rows[headerRowIndex].map((h) =>
@@ -37,8 +37,9 @@ export async function parseExcel(file: File): Promise<Transaction[]> {
     const dataRows = rows.slice(headerRowIndex + 1);
     const transactions: Transaction[] = [];
 
-    // Cuenta cuántas veces hemos visto ya la misma combinación fecha+descripción+importe
-    // en este archivo, para poder distinguir movimientos idénticos (p.ej. dos cafés del mismo importe el mismo día)
+    // Counts how many times we've already seen the same date+description+amount
+    // combination in this file, so identical transactions can be told apart
+    // (e.g. two coffees with the same amount on the same day)
     const occurrenceCount = new Map<string, number>();
 
     for (const row of dataRows) {

@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Claude Code permissions, not meant to be shared
+.claude/settings.local.json

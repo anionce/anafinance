@@ -10,16 +10,21 @@ import {
     ToggleButtonGroup,
     Box,
 } from "@mui/material";
-import { CATEGORIES } from "../types/Category";
-import type { Transaction } from "../types/Transaction";
+import type { Category } from "../../types/Category";
+import type { Transaction } from "../../types/Transaction";
+import { formatCurrency } from "../../utils/currency";
+import { useTranslation } from "../../i18n/useTranslation";
+import { getCategoryLabel } from "../../i18n/categoryTranslations";
 
 interface Props {
     pending: Transaction[];
+    categories: Category[];
     onResolve: (id: string, category: string) => void;
     onFinish: () => void;
 }
 
-export default function CategoryReviewModal({ pending, onResolve, onFinish }: Props) {
+export default function ReviewDialog({ pending, categories, onResolve, onFinish }: Props) {
+    const { t, locale } = useTranslation();
     const [selected, setSelected] = useState<string | null>(null);
 
     if (pending.length === 0) return null;
@@ -41,14 +46,14 @@ export default function CategoryReviewModal({ pending, onResolve, onFinish }: Pr
     return (
         <Dialog open={pending.length > 0} maxWidth="xs" fullWidth>
             <DialogTitle>
-                Clasificar movimiento (quedan {remaining})
+                {t.reviewDialogTitle(remaining)}
             </DialogTitle>
             <DialogContent>
                 <Typography variant="body1" sx={{ mb: 1 }}>
                     {current.description}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {current.amount.toFixed(2)} € — {current.date}
+                    {formatCurrency(current.amount, 2)} — {current.date}
                 </Typography>
 
                 <ToggleButtonGroup
@@ -58,9 +63,9 @@ export default function CategoryReviewModal({ pending, onResolve, onFinish }: Pr
                     value={selected}
                     onChange={(_, value) => setSelected(value)}
                 >
-                    {CATEGORIES.map((cat) => (
+                    {categories.map((cat) => (
                         <ToggleButton key={cat.value} value={cat.value} sx={{ justifyContent: "flex-start" }}>
-                            {cat.label}
+                            {getCategoryLabel(cat, locale)}
                         </ToggleButton>
                     ))}
                 </ToggleButtonGroup>
@@ -68,7 +73,7 @@ export default function CategoryReviewModal({ pending, onResolve, onFinish }: Pr
             <DialogActions>
                 <Box sx={{ flexGrow: 1 }} />
                 <Button variant="contained" disabled={!selected} onClick={handleNext}>
-                    {remaining === 1 ? "Terminar" : "Siguiente"}
+                    {remaining === 1 ? t.finish : t.next}
                 </Button>
             </DialogActions>
         </Dialog>
