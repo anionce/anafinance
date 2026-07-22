@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Button } from "@mui/material";
 import Layout from "../components/Layout";
 import Dashboard from "../components/dashboard/Dashboard";
 import InsightsCard from "../components/dashboard/InsightsCard";
 import ImportExcelFlow from "../components/transactions/ImportExcelFlow";
+import AddTransactionDialog from "../components/transactions/AddTransactionDialog";
 import BudgetList from "../components/budget/BudgetList";
 import EditBudgetsDialog from "../components/budget/EditBudgetsDialog";
 import { useFinanceStore } from "../store/financeStore";
@@ -18,8 +20,9 @@ export default function DashboardPage() {
     const { t, locale } = useTranslation();
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const [budgetsDialogOpen, setBudgetsDialogOpen] = useState(false);
+    const [addTransactionOpen, setAddTransactionOpen] = useState(false);
     const {
-        transactions, hasLoaded,
+        transactions, hasLoaded, addTransaction,
         goals, updateGoalAmount, updateGoalTarget, updateGoalName,
     } = useFinanceStore();
     const {
@@ -44,9 +47,19 @@ export default function DashboardPage() {
 
     return (
         <Layout>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
+                <Button variant="outlined" onClick={() => setAddTransactionOpen(true)}>
+                    {t.addTransactionButton}
+                </Button>
                 <ImportExcelFlow uid={uid} />
             </div>
+
+            <AddTransactionDialog
+                open={addTransactionOpen}
+                categories={categories}
+                onClose={() => setAddTransactionOpen(false)}
+                onConfirm={(transaction) => addTransaction(uid, transaction)}
+            />
 
             {featuredGoal && (
                 <Dashboard

@@ -26,6 +26,7 @@ interface FinanceState {
     reset: () => void;
     importFile: (uid: string, file: File) => Promise<void>;
     importFileWithMapping: (uid: string, rows: unknown[][], mapping: ColumnMapping) => Promise<void>;
+    addTransaction: (uid: string, transaction: Omit<Transaction, "id">) => Promise<void>;
     resolveCategory: (uid: string, id: string, category: string) => Promise<void>;
     updateNotes: (uid: string, id: string, notes: string) => Promise<void>;
     splitTransaction: (uid: string, id: string, portions: { category: string; amount: number }[]) => Promise<void>;
@@ -77,6 +78,12 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
         console.log(`${addedCount} new transactions added out of ${incoming.length} in the file`);
         set({ transactions: sortByDateDesc(merged) });
+    },
+
+    async addTransaction(uid, transaction) {
+        const newTransaction: Transaction = { ...transaction, id: `manual_${generateId()}` };
+        await saveTransaction(uid, newTransaction);
+        set((state) => ({ transactions: sortByDateDesc([...state.transactions, newTransaction]) }));
     },
 
     async resolveCategory(uid, id, category) {
