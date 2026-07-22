@@ -218,8 +218,8 @@ export const translations: Record<Locale, TranslationSet> = {
         yearly: "Anual",
         intervalMonthsLabel: "Cada cuántos meses",
 
-        noComputableLabel: "No computable (no cuenta como gasto ni ingreso)",
-        incomeOnlyLabel: "Solo ingreso (no aparece en el presupuesto)",
+        noComputableLabel: "No computable",
+        incomeOnlyLabel: "Solo ingreso",
 
         manageRulesTooltip: "Reglas de categorización",
         rulesDialogTitle: "Reglas de categorización",
