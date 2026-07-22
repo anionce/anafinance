@@ -3,11 +3,13 @@ import { loadSettings, saveSettings } from "../services/storage";
 import { DEFAULT_SETTINGS } from "../types/Settings";
 import type { Category } from "../types/Category";
 import type { CategoryBudget } from "../types/Budget";
+import type { CategorizationRule } from "../types/CategorizationRule";
 
 interface SettingsState {
     estimatedIncome: number;
     categoryBudgets: Record<string, CategoryBudget>;
     categories: Category[];
+    categorizationRules: CategorizationRule[];
     onboardingComplete: boolean;
     hasLoaded: boolean;
     load: (uid: string) => Promise<void>;
@@ -17,7 +19,10 @@ interface SettingsState {
     setCategories: (uid: string, categories: Category[]) => Promise<void>;
     addCategory: (uid: string, value: string, label: string) => Promise<void>;
     updateCategoryLabel: (uid: string, value: string, label: string) => Promise<void>;
+    setCategoryNoComputable: (uid: string, value: string, noComputable: boolean) => Promise<void>;
     removeCategory: (uid: string, value: string) => Promise<void>;
+    addRule: (uid: string, keyword: string, category: string) => Promise<void>;
+    removeRule: (uid: string, id: string) => Promise<void>;
     completeOnboarding: (uid: string) => Promise<void>;
 }
 
@@ -65,6 +70,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         await saveSettings(uid, { categories });
     },
 
+    async setCategoryNoComputable(uid, value, noComputable) {
+        const categories = get().categories.map((c) => (c.value === value ? { ...c, noComputable } : c));
+        const categoryBudgets = { ...get().categoryBudgets };
+        if (noComputable) delete categoryBudgets[value];
+        set({ categories, categoryBudgets });
+        await Promise.all([
+            saveSettings(uid, { categories }),
+            saveSettings(uid, { categoryBudgets }),
+        ]);
+    },
+
     async removeCategory(uid, value) {
         const categories = get().categories.filter((c) => c.value !== value);
         const categoryBudgets = { ...get().categoryBudgets };
@@ -74,6 +90,19 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
             saveSettings(uid, { categories }),
             saveSettings(uid, { categoryBudgets }),
         ]);
+    },
+
+    async addRule(uid, keyword, category) {
+        const rule: CategorizationRule = { id: crypto.randomUUID(), keyword, category };
+        const categorizationRules = [...get().categorizationRules, rule];
+        set({ categorizationRules });
+        await saveSettings(uid, { categorizationRules });
+    },
+
+    async removeRule(uid, id) {
+        const categorizationRules = get().categorizationRules.filter((r) => r.id !== id);
+        set({ categorizationRules });
+        await saveSettings(uid, { categorizationRules });
     },
 
     async completeOnboarding(uid) {

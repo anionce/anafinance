@@ -2,15 +2,19 @@ import { useState } from "react";
 import { Card, Grid, LinearProgress, Typography, Box, IconButton, Chip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
+import RuleOutlinedIcon from "@mui/icons-material/RuleOutlined";
 import type { Category } from "../../types/Category";
 import type { Transaction } from "../../types/Transaction";
 import type { CategoryBudget } from "../../types/Budget";
+import type { CategorizationRule } from "../../types/CategorizationRule";
 import { calculateSpentByCategory, calculatePercentage, calculateRawPercentage, calculateRemaining } from "../../services/budget";
 import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { accent } from "../../theme/colors";
 import CategoryManagerDialog from "./CategoryManagerDialog";
+import CategorizationRulesDialog from "./CategorizationRulesDialog";
+import type { TranslationSet } from "../../i18n/translations";
 
 interface Props {
     transactions: Transaction[];
@@ -20,6 +24,21 @@ interface Props {
     onUpdateCategoryLabel: (value: string, label: string) => void;
     onAddCategory: (value: string, label: string) => void;
     onRemoveCategory: (value: string) => void;
+    onToggleNoComputable: (value: string, noComputable: boolean) => void;
+    categorizationRules: CategorizationRule[];
+    onAddRule: (keyword: string, category: string) => void;
+    onRemoveRule: (id: string) => void;
+}
+
+function periodChipLabel(budget: CategoryBudget, t: TranslationSet): string | null {
+    switch (budget.period) {
+        case "weekly": return t.weekly;
+        case "bimonthly": return t.bimonthly;
+        case "everyNMonths": return t.everyNMonthsChip(Math.max(budget.intervalMonths ?? 1, 1));
+        case "yearly": return t.yearly;
+        case "monthly":
+        default: return null;
+    }
 }
 
 export default function BudgetList({
@@ -30,9 +49,14 @@ export default function BudgetList({
     onUpdateCategoryLabel,
     onAddCategory,
     onRemoveCategory,
+    onToggleNoComputable,
+    categorizationRules,
+    onAddRule,
+    onRemoveRule,
 }: Props) {
     const { t, locale } = useTranslation();
     const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
+    const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
     const spentByCategory = calculateSpentByCategory(transactions, budgets);
 
     return (
@@ -42,6 +66,9 @@ export default function BudgetList({
                 <Box>
                     <IconButton size="small" onClick={() => setCategoriesDialogOpen(true)} title={t.manageCategoriesTooltip}>
                         <CategoryOutlinedIcon sx={{ fontSize: 20, opacity: 0.75 }} />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => setRulesDialogOpen(true)} title={t.manageRulesTooltip}>
+                        <RuleOutlinedIcon sx={{ fontSize: 20, opacity: 0.75 }} />
                     </IconButton>
                     <IconButton size="small" onClick={onEditBudget} title={t.editBudgetTooltip}>
                         <EditIcon sx={{ fontSize: 20, opacity: 0.75 }} />
@@ -58,14 +85,15 @@ export default function BudgetList({
                     const category = categories.find((c) => c.value === key);
                     const label = category ? getCategoryLabel(category, locale) : key;
                     const over = spent > budget.amount;
+                    const chipLabel = periodChipLabel(budget, t);
 
                     return (
                         <Grid key={key} size={{ xs: 12, sm: 6 }}>
                             <Box sx={{ p: 2, borderRadius: "10px", border: "1px solid", borderColor: "divider", bgcolor: "background.paper", height: "100%" }}>
                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                                     <Typography variant="body1" sx={{ fontWeight: 600, flex: 1 }}>{label}</Typography>
-                                    {budget.period === "bimonthly" && (
-                                        <Chip label={t.bimonthly} size="small" variant="outlined" />
+                                    {chipLabel && (
+                                        <Chip label={chipLabel} size="small" variant="outlined" />
                                     )}
                                 </Box>
                                 <Typography variant="h6" sx={{ mb: 1 }}>
@@ -102,6 +130,16 @@ export default function BudgetList({
                 onUpdateLabel={onUpdateCategoryLabel}
                 onAdd={onAddCategory}
                 onRemove={onRemoveCategory}
+                onToggleNoComputable={onToggleNoComputable}
+            />
+
+            <CategorizationRulesDialog
+                open={rulesDialogOpen}
+                onClose={() => setRulesDialogOpen(false)}
+                categories={categories}
+                rules={categorizationRules}
+                onAdd={onAddRule}
+                onRemove={onRemoveRule}
             />
         </Card>
     );

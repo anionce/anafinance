@@ -1,20 +1,16 @@
 import type { Transaction } from "../types/Transaction";
 import type { CategoryBudget } from "../types/Budget";
-import { getCurrentMonth, getCurrentBimonthlyPeriod, filterByMonth, filterByBimonthlyPeriod } from "../utils/dates";
+import { filterByBudgetPeriod, monthlyEquivalentAmount } from "../utils/dates";
 
-/** Per-category spend for the category's own current period (month or bimonthly pair). */
+/** Per-category spend for the category's own current period. */
 export function calculateSpentByCategory(
     transactions: Transaction[],
     budgets: Record<string, CategoryBudget>
 ): Record<string, number> {
     const spentByCategory: Record<string, number> = {};
-    const currentMonth = getCurrentMonth();
-    const currentBimonthlyPeriod = getCurrentBimonthlyPeriod();
 
     for (const [key, budget] of Object.entries(budgets)) {
-        const periodTransactions = budget.period === "bimonthly"
-            ? filterByBimonthlyPeriod(transactions, currentBimonthlyPeriod)
-            : filterByMonth(transactions, currentMonth);
+        const periodTransactions = filterByBudgetPeriod(transactions, budget);
 
         spentByCategory[key] = periodTransactions
             .filter((t) => t.amount < 0 && t.category === key)
@@ -30,18 +26,16 @@ export function calculateTotalSpent(transactions: Transaction[], budgets: Record
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 }
 
+/** Assumes `transactions` has already been filtered to exclude non-computable categories. */
 export function calculateTotalIncome(transactions: Transaction[]): number {
     return transactions
-        .filter((t) => t.amount > 0 && t.category !== "no_computable")
+        .filter((t) => t.amount > 0)
         .reduce((sum, t) => sum + t.amount, 0);
 }
 
-/** Monthly-equivalent total, halving bimonthly budgets so they blend into the monthly view. */
+/** Monthly-equivalent total, blending every budget's own period into the monthly view. */
 export function calculateTotalBudget(budgets: Record<string, CategoryBudget>): number {
-    return Object.values(budgets).reduce(
-        (sum, b) => sum + (b.period === "bimonthly" ? b.amount / 2 : b.amount),
-        0
-    );
+    return Object.values(budgets).reduce((sum, b) => sum + monthlyEquivalentAmount(b), 0);
 }
 
 export function calculateRemaining(spent: number, budget: number): number {

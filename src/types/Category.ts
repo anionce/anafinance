@@ -1,6 +1,8 @@
 export interface Category {
     value: string;
     label: string;
+    /** True if transactions in this category should not count as expense or income anywhere in the app. */
+    noComputable?: boolean;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [
@@ -9,16 +11,13 @@ export const DEFAULT_CATEGORIES: Category[] = [
     { value: "espectaculos", label: "🎭 Espectáculos" },
     { value: "casa", label: "🏡 Casa & decoración" },
     { value: "cafeterias", label: "☕ Cafeterías y restaurantes" },
-    { value: "imprevistos", label: "🗨 Imprevistos" },
     { value: "supermercado", label: "🛒 Supermercado" },
     { value: "salud", label: "💊 Salud" },
     { value: "wellness", label: "🧘 Wellness" },
     { value: "regalos", label: "🎁 Regalos" },
-    { value: "ahorro", label: "💰 Ahorro" },
     { value: "transferencia", label: "🔄 Transferencia" },
     { value: "servicios_online", label: "💻 Servicios online" },
-    { value: "no_computable", label: "🚫 No computable" },
-    { value: "vinted_wallapop", label: "💵 Vinted/Wallapop" },
+    { value: "no_computable", label: "🚫 No computable", noComputable: true },
 ];
 
 export type CategoryValue = string;

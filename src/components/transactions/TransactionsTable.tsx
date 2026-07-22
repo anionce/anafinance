@@ -1,22 +1,27 @@
+import { useState } from 'react';
 import { DataGrid, useGridApiRef } from '@mui/x-data-grid';
 import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
 import type { Transaction } from '../../types/Transaction';
 import type { Category } from '../../types/Category';
 import EditIcon from '@mui/icons-material/Edit';
+import CallSplitIcon from '@mui/icons-material/CallSplit';
 import { Box, IconButton } from '@mui/material';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getCategoryLabel } from '../../i18n/categoryTranslations';
+import SplitTransactionDialog from './SplitTransactionDialog';
 
 interface Props {
     transactions: Transaction[];
     categories: Category[];
     onCategoryChange: (id: string, category: string) => void;
     onNotesChange: (id: string, notes: string) => void;
+    onSplit: (id: string, portions: { category: string; amount: number }[]) => void;
 }
 
-export default function TransactionsTable({ transactions, categories, onCategoryChange, onNotesChange }: Props) {
+export default function TransactionsTable({ transactions, categories, onCategoryChange, onNotesChange, onSplit }: Props) {
     const { t, locale } = useTranslation();
     const apiRef = useGridApiRef();
+    const [splitting, setSplitting] = useState<Transaction | null>(null);
 
     function startEditing(id: string | number, field: string) {
         apiRef.current?.startCellEditMode({ id, field });
@@ -41,7 +46,22 @@ export default function TransactionsTable({ transactions, categories, onCategory
         {
             field: "amount",
             headerName: t.colAmount,
-            width: 120,
+            width: 130,
+            renderCell: (params) => {
+                const tx = transactions.find((t) => t.id === params.id);
+                return (
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                        <span>{params.value}</span>
+                        <IconButton
+                            size="small"
+                            title={t.splitTooltip}
+                            onClick={(e) => { e.stopPropagation(); if (tx) setSplitting(tx); }}
+                        >
+                            <CallSplitIcon sx={{ fontSize: 16, opacity: 0.75 }} />
+                        </IconButton>
+                    </Box>
+                );
+            },
         },
         {
             field: "category",
@@ -111,6 +131,16 @@ export default function TransactionsTable({ transactions, categories, onCategory
                     bgcolor: "background.paper",
                     boxShadow: "0 1px 2px rgba(43,42,40,0.04), 0 6px 16px rgba(43,42,40,0.05)",
                     "& .MuiDataGrid-columnHeaders": { bgcolor: "background.default" },
+                }}
+            />
+            <SplitTransactionDialog
+                open={!!splitting}
+                transaction={splitting}
+                categories={categories}
+                onClose={() => setSplitting(null)}
+                onConfirm={(portions) => {
+                    if (splitting) onSplit(splitting.id, portions);
+                    setSplitting(null);
                 }}
             />
         </div>

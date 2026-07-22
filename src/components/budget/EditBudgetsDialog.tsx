@@ -6,8 +6,8 @@ import {
     DialogActions,
     Button,
     TextField,
-    ToggleButtonGroup,
-    ToggleButton,
+    Select,
+    MenuItem,
     Stack,
     Box,
     Typography,
@@ -25,17 +25,19 @@ interface Props {
     onSave: (budgets: Record<string, CategoryBudget>) => void;
 }
 
-const EXCLUDED = ["ahorro", "transferencia", "no_computable", "vinted_wallapop"];
+const EXCLUDED = ["transferencia"];
 
 export default function EditBudgetsDialog({ open, onClose, categories, budgets, onSave }: Props) {
     const { t, locale } = useTranslation();
     const [amountDraft, setAmountDraft] = useState<Record<string, string>>({});
     const [periodDraft, setPeriodDraft] = useState<Record<string, BudgetPeriod>>({});
+    const [intervalDraft, setIntervalDraft] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (open) {
             setAmountDraft(Object.fromEntries(categories.map((c) => [c.value, String(budgets[c.value]?.amount ?? "")])));
             setPeriodDraft(Object.fromEntries(categories.map((c) => [c.value, budgets[c.value]?.period ?? "monthly"])));
+            setIntervalDraft(Object.fromEntries(categories.map((c) => [c.value, String(budgets[c.value]?.intervalMonths ?? 3)])));
         }
     }, [open, categories, budgets]);
 
@@ -44,14 +46,19 @@ export default function EditBudgetsDialog({ open, onClose, categories, budgets, 
         for (const [key, value] of Object.entries(amountDraft)) {
             const num = Number(value);
             if (value.trim() !== "" && !isNaN(num) && num > 0) {
-                parsed[key] = { amount: num, period: periodDraft[key] ?? "monthly" };
+                const period = periodDraft[key] ?? "monthly";
+                parsed[key] = {
+                    amount: num,
+                    period,
+                    ...(period === "everyNMonths" ? { intervalMonths: Math.max(Number(intervalDraft[key]) || 1, 1) } : {}),
+                };
             }
         }
         onSave(parsed);
         onClose();
     }
 
-    const editableCategories = categories.filter((c) => !EXCLUDED.includes(c.value));
+    const editableCategories = categories.filter((c) => !EXCLUDED.includes(c.value) && !c.noComputable);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -72,16 +79,29 @@ export default function EditBudgetsDialog({ open, onClose, categories, budgets, 
                                     onChange={(e) => setAmountDraft((d) => ({ ...d, [cat.value]: e.target.value }))}
                                     sx={{ flex: 1 }}
                                 />
-                                <ToggleButtonGroup
+                                <Select
                                     size="small"
-                                    exclusive
                                     value={periodDraft[cat.value] ?? "monthly"}
-                                    onChange={(_, value: BudgetPeriod | null) => value && setPeriodDraft((d) => ({ ...d, [cat.value]: value }))}
+                                    onChange={(e) => setPeriodDraft((d) => ({ ...d, [cat.value]: e.target.value as BudgetPeriod }))}
+                                    sx={{ minWidth: 140 }}
                                 >
-                                    <ToggleButton value="monthly">{t.monthly}</ToggleButton>
-                                    <ToggleButton value="bimonthly">{t.bimonthly}</ToggleButton>
-                                </ToggleButtonGroup>
+                                    <MenuItem value="weekly">{t.weekly}</MenuItem>
+                                    <MenuItem value="monthly">{t.monthly}</MenuItem>
+                                    <MenuItem value="bimonthly">{t.bimonthly}</MenuItem>
+                                    <MenuItem value="everyNMonths">{t.everyNMonths}</MenuItem>
+                                    <MenuItem value="yearly">{t.yearly}</MenuItem>
+                                </Select>
                             </Box>
+                            {periodDraft[cat.value] === "everyNMonths" && (
+                                <TextField
+                                    type="number"
+                                    size="small"
+                                    label={t.intervalMonthsLabel}
+                                    value={intervalDraft[cat.value] ?? ""}
+                                    onChange={(e) => setIntervalDraft((d) => ({ ...d, [cat.value]: e.target.value }))}
+                                    sx={{ maxWidth: 180 }}
+                                />
+                            )}
                         </Box>
                     ))}
                 </Stack>

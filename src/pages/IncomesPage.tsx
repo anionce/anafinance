@@ -14,7 +14,7 @@ import { accent } from "../theme/colors";
 export default function IncomesPage() {
     const { t } = useTranslation();
     const uid = useAuthStore((s) => s.user?.uid ?? "");
-    const { transactions, hasLoaded, resolveCategory, updateNotes } = useFinanceStore();
+    const { transactions, hasLoaded, resolveCategory, updateNotes, splitTransaction } = useFinanceStore();
     const { selectedMonth, setSelectedMonth } = useUIStore();
     const { categories } = useSettingsStore();
 
@@ -22,7 +22,8 @@ export default function IncomesPage() {
         return <Layout scrollMode="contained"><p>{t.loading}</p></Layout>;
     }
 
-    const incomes = transactions.filter((tx) => tx.amount > 0 && tx.category !== "no_computable");
+    const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
+    const incomes = transactions.filter((tx) => tx.amount > 0 && !noComputableValues.has(tx.category));
     const months = getAvailableMonths(incomes);
     const visible = selectedMonth === "all" ? incomes : filterByMonth(incomes, selectedMonth);
     const total = visible.reduce((sum, tx) => sum + tx.amount, 0);
@@ -62,6 +63,7 @@ export default function IncomesPage() {
                     categories={categories}
                     onCategoryChange={(id, category) => resolveCategory(uid, id, category)}
                     onNotesChange={(id, notes) => updateNotes(uid, id, notes)}
+                    onSplit={(id, portions) => splitTransaction(uid, id, portions)}
                 />
             </div>
         </Layout>

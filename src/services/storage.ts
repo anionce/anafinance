@@ -63,6 +63,10 @@ export async function mergeTransactions(
     };
 }
 
+export async function deleteTransaction(uid: string, id: string): Promise<void> {
+    await deleteDoc(doc(db, transactionsPath(uid), id));
+}
+
 export async function updateTransactionCategory(uid: string, id: string, category: string): Promise<void> {
     await setDoc(doc(db, transactionsPath(uid), id), { category }, { merge: true });
 }
@@ -105,6 +109,7 @@ export async function loadSettings(uid: string): Promise<Settings> {
         estimatedIncome: (data.ingresosEstimados as number) ?? DEFAULT_SETTINGS.estimatedIncome,
         categoryBudgets: normalizeCategoryBudgets(data.categoryBudgets),
         categories: (data.categories as Settings["categories"]) ?? DEFAULT_SETTINGS.categories,
+        categorizationRules: (data.categorizationRules as Settings["categorizationRules"]) ?? DEFAULT_SETTINGS.categorizationRules,
         onboardingComplete: (data.onboardingComplete as boolean) ?? DEFAULT_SETTINGS.onboardingComplete,
     };
 }
@@ -159,6 +164,7 @@ export async function loadLegacySettings(): Promise<Settings & { colchon: number
         estimatedIncome: (data.ingresosEstimados as number) ?? DEFAULT_SETTINGS.estimatedIncome,
         categoryBudgets: normalizeCategoryBudgets(data.categoryBudgets),
         categories: (data.categories as Settings["categories"]) ?? DEFAULT_SETTINGS.categories,
+        categorizationRules: (data.categorizationRules as Settings["categorizationRules"]) ?? DEFAULT_SETTINGS.categorizationRules,
         onboardingComplete: true,
         colchon: (data.colchon as number) ?? 1719,
         colchonMeta: (data.colchonMeta as number) ?? 8000,

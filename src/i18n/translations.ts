@@ -63,8 +63,30 @@ export interface TranslationSet {
     spentMoreMessage: (pct: string) => string;
     daysWithoutSpending: (emoji: string, days: number, categoryName: string) => string;
 
+    weekly: string;
     monthly: string;
     bimonthly: string;
+    everyNMonths: string;
+    everyNMonthsChip: (n: number) => string;
+    yearly: string;
+    intervalMonthsLabel: string;
+
+    noComputableLabel: string;
+
+    manageRulesTooltip: string;
+    rulesDialogTitle: string;
+    rulesHint: string;
+    ruleKeywordPlaceholder: string;
+    noRulesYet: string;
+    ruleGoesTo: string;
+
+    splitTooltip: string;
+    splitDialogTitle: string;
+    splitDialogHint: string;
+    splitAddPortion: string;
+    splitRemainingLabel: (amount: string) => string;
+    splitAllAssignedLabel: string;
+    splitConfirm: string;
 
     appName: string;
     signInTitle: string;
@@ -163,8 +185,30 @@ export const translations: Record<Locale, TranslationSet> = {
         spentMoreMessage: (pct) => `⚠️ Este mes has gastado un ${pct}% más que el anterior.`,
         daysWithoutSpending: (emoji, days, categoryName) => `${emoji} Llevas ${days} días sin gastar en ${categoryName}.`,
 
+        weekly: "Semanal",
         monthly: "Mensual",
         bimonthly: "Bimestral",
+        everyNMonths: "Cada X meses",
+        everyNMonthsChip: (n) => `Cada ${n} meses`,
+        yearly: "Anual",
+        intervalMonthsLabel: "Cada cuántos meses",
+
+        noComputableLabel: "No computable (no cuenta como gasto ni ingreso)",
+
+        manageRulesTooltip: "Reglas de categorización",
+        rulesDialogTitle: "Reglas de categorización",
+        rulesHint: "Si la descripción de un movimiento importado incluye esta palabra, se le asignará automáticamente la categoría elegida.",
+        ruleKeywordPlaceholder: "Palabra clave (ej: netflix)",
+        noRulesYet: "Todavía no tienes reglas de categorización.",
+        ruleGoesTo: "va a",
+
+        splitTooltip: "Dividir movimiento",
+        splitDialogTitle: "Dividir movimiento",
+        splitDialogHint: "Reparte el importe en varias porciones, cada una con su propia categoría.",
+        splitAddPortion: "Añadir porción",
+        splitRemainingLabel: (amount) => `Quedan ${amount} por asignar`,
+        splitAllAssignedLabel: "Todo el importe está asignado",
+        splitConfirm: "Dividir",
 
         appName: "Ana Finance",
         signInTitle: "Bienvenido a Ana Finance",
@@ -261,8 +305,30 @@ export const translations: Record<Locale, TranslationSet> = {
         spentMoreMessage: (pct) => `⚠️ You've spent ${pct}% more than last month.`,
         daysWithoutSpending: (emoji, days, categoryName) => `${emoji} You haven't spent on ${categoryName} in ${days} days.`,
 
+        weekly: "Weekly",
         monthly: "Monthly",
         bimonthly: "Bimonthly",
+        everyNMonths: "Every X months",
+        everyNMonthsChip: (n) => `Every ${n} months`,
+        yearly: "Yearly",
+        intervalMonthsLabel: "Every how many months",
+
+        noComputableLabel: "Not counted (doesn't count as expense or income)",
+
+        manageRulesTooltip: "Categorization rules",
+        rulesDialogTitle: "Categorization rules",
+        rulesHint: "If an imported transaction's description includes this word, it'll automatically get the chosen category.",
+        ruleKeywordPlaceholder: "Keyword (e.g. netflix)",
+        noRulesYet: "You don't have any categorization rules yet.",
+        ruleGoesTo: "goes to",
+
+        splitTooltip: "Split transaction",
+        splitDialogTitle: "Split transaction",
+        splitDialogHint: "Divide the amount into several portions, each with its own category.",
+        splitAddPortion: "Add portion",
+        splitRemainingLabel: (amount) => `${amount} left to assign`,
+        splitAllAssignedLabel: "The full amount is assigned",
+        splitConfirm: "Split",
 
         appName: "Ana Finance",
         signInTitle: "Welcome to Ana Finance",

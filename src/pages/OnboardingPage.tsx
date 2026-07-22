@@ -11,8 +11,10 @@ import {
     IconButton,
     Button,
     Stack,
-    ToggleButtonGroup,
-    ToggleButton,
+    Select,
+    MenuItem,
+    Checkbox,
+    FormControlLabel,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
@@ -22,9 +24,11 @@ import { useAuthStore } from "../store/authStore";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useTranslation } from "../i18n/useTranslation";
+import { getCategoryLabel } from "../i18n/categoryTranslations";
 import type { BudgetPeriod, CategoryBudget } from "../types/Budget";
+import type { Category } from "../types/Category";
 
-const EXCLUDED_FROM_BUDGET = ["ahorro", "transferencia", "no_computable", "vinted_wallapop"];
+const EXCLUDED_FROM_BUDGET = ["transferencia"];
 
 function slugify(label: string): string {
     return label
@@ -117,21 +121,22 @@ export default function OnboardingPage() {
 
 function CategoriesStep({ uid, categories, setCategories }: {
     uid: string;
-    categories: { value: string; label: string }[];
-    setCategories: (uid: string, categories: { value: string; label: string }[]) => Promise<void>;
+    categories: Category[];
+    setCategories: (uid: string, categories: Category[]) => Promise<void>;
 }) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
 
     useEffect(() => {
-        setDrafts(Object.fromEntries(categories.map((c) => [c.value, c.label])));
-    }, [categories]);
+        setDrafts(Object.fromEntries(categories.map((c) => [c.value, getCategoryLabel(c, locale)])));
+    }, [categories, locale]);
 
     function handleLabelBlur(value: string) {
         const label = drafts[value]?.trim();
-        const original = categories.find((c) => c.value === value)?.label;
-        if (label && label !== original) {
+        const original = categories.find((c) => c.value === value);
+        const originalDisplay = original ? getCategoryLabel(original, locale) : undefined;
+        if (label && label !== originalDisplay) {
             setCategories(uid, categories.map((c) => (c.value === value ? { ...c, label } : c)));
         }
     }
@@ -149,21 +154,38 @@ function CategoriesStep({ uid, categories, setCategories }: {
         setCategories(uid, categories.filter((c) => c.value !== value));
     }
 
+    function handleToggleNoComputable(value: string, noComputable: boolean) {
+        setCategories(uid, categories.map((c) => (c.value === value ? { ...c, noComputable } : c)));
+    }
+
     return (
         <Stack spacing={1.5}>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>{t.onboardingCategoriesHint}</Typography>
             {categories.map((cat) => (
-                <Box key={cat.value} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <TextField
-                        size="small"
-                        value={drafts[cat.value] ?? cat.label}
-                        onChange={(e) => setDrafts((d) => ({ ...d, [cat.value]: e.target.value }))}
-                        onBlur={() => handleLabelBlur(cat.value)}
-                        fullWidth
+                <Box key={cat.value} sx={{ display: "flex", flexDirection: "column" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <TextField
+                            size="small"
+                            value={drafts[cat.value] ?? cat.label}
+                            onChange={(e) => setDrafts((d) => ({ ...d, [cat.value]: e.target.value }))}
+                            onBlur={() => handleLabelBlur(cat.value)}
+                            fullWidth
+                        />
+                        <IconButton size="small" onClick={() => handleRemove(cat.value)}>
+                            <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
+                        </IconButton>
+                    </Box>
+                    <FormControlLabel
+                        sx={{ ml: 0.5 }}
+                        control={
+                            <Checkbox
+                                size="small"
+                                checked={!!cat.noComputable}
+                                onChange={(e) => handleToggleNoComputable(cat.value, e.target.checked)}
+                            />
+                        }
+                        label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
                     />
-                    <IconButton size="small" onClick={() => handleRemove(cat.value)}>
-                        <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
-                    </IconButton>
                 </Box>
             ))}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
@@ -185,25 +207,33 @@ function CategoriesStep({ uid, categories, setCategories }: {
 
 function BudgetsStep({ uid, categories, budgets, setCategoryBudgets }: {
     uid: string;
-    categories: { value: string; label: string }[];
+    categories: Category[];
     budgets: Record<string, CategoryBudget>;
     setCategoryBudgets: (uid: string, budgets: Record<string, CategoryBudget>) => Promise<void>;
 }) {
-    const { t } = useTranslation();
-    const editableCategories = categories.filter((c) => !EXCLUDED_FROM_BUDGET.includes(c.value));
+    const { t, locale } = useTranslation();
+    const editableCategories = categories.filter((c) => !EXCLUDED_FROM_BUDGET.includes(c.value) && !c.noComputable);
     const [amountDraft, setAmountDraft] = useState<Record<string, string>>(
         Object.fromEntries(editableCategories.map((c) => [c.value, String(budgets[c.value]?.amount ?? "")])),
     );
     const [periodDraft, setPeriodDraft] = useState<Record<string, BudgetPeriod>>(
         Object.fromEntries(editableCategories.map((c) => [c.value, budgets[c.value]?.period ?? "monthly"])),
     );
+    const [intervalDraft, setIntervalDraft] = useState<Record<string, string>>(
+        Object.fromEntries(editableCategories.map((c) => [c.value, String(budgets[c.value]?.intervalMonths ?? 3)])),
+    );
 
-    function persist(nextAmount: Record<string, string>, nextPeriod: Record<string, BudgetPeriod>) {
+    function persist(nextAmount: Record<string, string>, nextPeriod: Record<string, BudgetPeriod>, nextInterval: Record<string, string>) {
         const parsed: Record<string, CategoryBudget> = {};
         for (const [key, value] of Object.entries(nextAmount)) {
             const num = Number(value);
             if (value.trim() !== "" && !isNaN(num) && num > 0) {
-                parsed[key] = { amount: num, period: nextPeriod[key] ?? "monthly" };
+                const period = nextPeriod[key] ?? "monthly";
+                parsed[key] = {
+                    amount: num,
+                    period,
+                    ...(period === "everyNMonths" ? { intervalMonths: Math.max(Number(nextInterval[key]) || 1, 1) } : {}),
+                };
             }
         }
         setCategoryBudgets(uid, parsed);
@@ -214,7 +244,7 @@ function BudgetsStep({ uid, categories, budgets, setCategoryBudgets }: {
             <Typography variant="body2" sx={{ color: "text.secondary" }}>{t.onboardingBudgetsHint}</Typography>
             {editableCategories.map((cat) => (
                 <Box key={cat.value} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2">{cat.label}</Typography>
+                    <Typography variant="body2">{getCategoryLabel(cat, locale)}</Typography>
                     <Box sx={{ display: "flex", gap: 1 }}>
                         <TextField
                             type="number"
@@ -224,24 +254,40 @@ function BudgetsStep({ uid, categories, budgets, setCategoryBudgets }: {
                                 const next = { ...amountDraft, [cat.value]: e.target.value };
                                 setAmountDraft(next);
                             }}
-                            onBlur={() => persist(amountDraft, periodDraft)}
+                            onBlur={() => persist(amountDraft, periodDraft, intervalDraft)}
                             sx={{ flex: 1 }}
                         />
-                        <ToggleButtonGroup
+                        <Select
                             size="small"
-                            exclusive
                             value={periodDraft[cat.value] ?? "monthly"}
-                            onChange={(_, value: BudgetPeriod | null) => {
-                                if (!value) return;
-                                const next = { ...periodDraft, [cat.value]: value };
+                            onChange={(e) => {
+                                const next = { ...periodDraft, [cat.value]: e.target.value as BudgetPeriod };
                                 setPeriodDraft(next);
-                                persist(amountDraft, next);
+                                persist(amountDraft, next, intervalDraft);
                             }}
+                            sx={{ minWidth: 140 }}
                         >
-                            <ToggleButton value="monthly">{t.monthly}</ToggleButton>
-                            <ToggleButton value="bimonthly">{t.bimonthly}</ToggleButton>
-                        </ToggleButtonGroup>
+                            <MenuItem value="weekly">{t.weekly}</MenuItem>
+                            <MenuItem value="monthly">{t.monthly}</MenuItem>
+                            <MenuItem value="bimonthly">{t.bimonthly}</MenuItem>
+                            <MenuItem value="everyNMonths">{t.everyNMonths}</MenuItem>
+                            <MenuItem value="yearly">{t.yearly}</MenuItem>
+                        </Select>
                     </Box>
+                    {periodDraft[cat.value] === "everyNMonths" && (
+                        <TextField
+                            type="number"
+                            size="small"
+                            label={t.intervalMonthsLabel}
+                            value={intervalDraft[cat.value] ?? ""}
+                            onChange={(e) => {
+                                const next = { ...intervalDraft, [cat.value]: e.target.value };
+                                setIntervalDraft(next);
+                                persist(amountDraft, periodDraft, next);
+                            }}
+                            sx={{ maxWidth: 180 }}
+                        />
+                    )}
                 </Box>
             ))}
         </Stack>
