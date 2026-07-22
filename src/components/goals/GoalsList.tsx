@@ -18,6 +18,7 @@ import type { Goal } from "../../types/Goal";
 import { formatCurrency } from "../../utils/currency";
 import { calculatePercentage, calculateRawPercentage } from "../../services/budget";
 import { useTranslation } from "../../i18n/useTranslation";
+import { accent } from "../../theme/colors";
 
 interface Props {
     goals: Goal[];
@@ -44,11 +45,11 @@ export default function GoalsList({ goals, onAdd, onUpdateAmount, onUpdateName, 
     }
 
     return (
-        <Card sx={{ borderRadius: 1, p: 3, boxShadow: "none" }}>
+        <Card sx={{ p: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <FlagOutlinedIcon />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>{t.savingsGoalsTitle}</Typography>
+                    <FlagOutlinedIcon sx={{ color: accent.savings }} />
+                    <Typography variant="h6">{t.savingsGoalsTitle}</Typography>
                 </Box>
                 <IconButton size="small" onClick={() => setAdding((v) => !v)}>
                     <AddIcon />
@@ -135,7 +136,7 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                     </Box>
                 ) : (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>{goal.name}</Typography>
+                        <Typography variant="h6">{goal.name}</Typography>
                         <IconButton size="small" onClick={() => { setNameInput(goal.name); setEditingName(true); }}>
                             <EditIcon sx={{ fontSize: 16, opacity: 0.75 }} />
                         </IconButton>
@@ -193,9 +194,9 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                 variant="determinate"
                 value={pct}
                 sx={{
-                    height: 10, borderRadius: 5, mt: 1,
-                    bgcolor: "rgba(0,0,0,0.08)",
-                    "& .MuiLinearProgress-bar": { bgcolor: "#9575CD" },
+                    height: 8, mt: 1,
+                    bgcolor: accent.savingsSoft,
+                    "& .MuiLinearProgress-bar": { bgcolor: accent.savings },
                 }}
             />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

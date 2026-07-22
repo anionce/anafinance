@@ -6,6 +6,7 @@ import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import type { Goal } from "../../types/Goal";
 import { formatCurrency } from "../../utils/currency";
 import { calculatePercentage, calculateRawPercentage } from "../../services/budget";
+import { accent } from "../../theme/colors";
 
 interface Props {
     goal: Goal;
@@ -44,9 +45,18 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
     }
 
     return (
-        <Card sx={{ bgcolor: "#E8E1F5", borderRadius: 1, p: 3, height: "100%", boxShadow: "none" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                <SavingsOutlinedIcon />
+        <Card sx={{ p: 3, height: "100%" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                <Box
+                    sx={{
+                        width: 36, height: 36, borderRadius: "50%",
+                        bgcolor: accent.savingsSoft, color: accent.savings,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0,
+                    }}
+                >
+                    <SavingsOutlinedIcon sx={{ fontSize: 20 }} />
+                </Box>
                 {editingName ? (
                     <>
                         <TextField
@@ -62,7 +72,7 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                     </>
                 ) : (
                     <>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>{goal.name}</Typography>
+                        <Typography variant="h6" sx={{ flex: 1 }}>{goal.name}</Typography>
                         <IconButton
                             size="small"
                             onClick={() => { setNameInput(goal.name); setEditingName(true); }}
@@ -76,9 +86,9 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                 value={pct}
                 variant="determinate"
                 sx={{
-                    my: 2, height: 8, borderRadius: 1,
-                    bgcolor: "rgba(0,0,0,0.08)",
-                    "& .MuiLinearProgress-bar": { bgcolor: "#9575CD" },
+                    mb: 2, height: 8,
+                    bgcolor: accent.savingsSoft,
+                    "& .MuiLinearProgress-bar": { bgcolor: accent.savings },
                 }}
             />
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
@@ -98,7 +108,7 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                     </>
                 ) : (
                     <>
-                        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                        <Typography variant="h4">
                             {formatCurrency(goal.currentAmount)}
                         </Typography>
                         <IconButton
@@ -111,7 +121,7 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                 )}
                 {editingTarget ? (
                     <>
-                        <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/</Typography>
+                        <Typography component="span" variant="body2" sx={{ color: "text.secondary" }}>/</Typography>
                         <TextField
                             size="small"
                             type="number"
@@ -128,14 +138,14 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                     <Typography
                         component="span"
                         variant="body2"
-                        sx={{ opacity: 0.75, cursor: "pointer", borderBottom: "1px dashed", borderColor: "text.disabled" }}
+                        sx={{ color: "text.secondary", cursor: "pointer", borderBottom: "1px dashed", borderColor: "text.disabled" }}
                         onClick={() => { setTargetInput(String(goal.targetAmount)); setEditingTarget(true); }}
                     >
                         / {formatCurrency(goal.targetAmount)}
                     </Typography>
                 )}
             </Box>
-            <Typography variant="body2" sx={{ opacity: 0.6, mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                 {pctRaw.toFixed(0)}%
             </Typography>
         </Card>

@@ -3,37 +3,72 @@ import type { Transaction } from '../types/Transaction';
 import { categorize } from "./categorizer";
 import { hashTransaction } from "./hash";
 
-export async function parseExcel(file: File): Promise<Transaction[]> {
+export interface ColumnMapping {
+    headerRowIndex: number;
+    dateCol: number;
+    descriptionCol: number;
+    amountCol: number;
+}
 
+export class UnrecognizedBankFormatError extends Error {
+    rows: unknown[][];
+
+    constructor(rows: unknown[][]) {
+        super('Could not find the header row ("Concepto") in the Excel file.');
+        this.name = "UnrecognizedBankFormatError";
+        this.rows = rows;
+    }
+}
+
+export async function readSheetRows(file: File): Promise<unknown[][]> {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-    const rows: any[][] = XLSX.utils.sheet_to_json(sheet, {
+    return XLSX.utils.sheet_to_json(sheet, {
         header: 1,
         defval: null,
     });
+}
 
+/** Best-guess header row: the row with the most non-empty cells among the first 20 rows. */
+export function guessHeaderRowIndex(rows: unknown[][]): number {
+    let best = 0;
+    let bestCount = -1;
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+        const count = rows[i].filter((cell) => cell != null && String(cell).trim() !== "").length;
+        if (count > bestCount) {
+            bestCount = count;
+            best = i;
+        }
+    }
+    return best;
+}
+
+function detectBbvaMapping(rows: unknown[][]): { headerRowIndex: number; col: Record<string, number> } | null {
     const headerRowIndex = rows.findIndex((row) =>
         row.some((cell) => typeof cell === "string" && cell.trim().toLowerCase() === "concepto")
     );
 
-    if (headerRowIndex === -1) {
-        throw new Error('Could not find the header row ("Concepto") in the Excel file.');
-    }
+    if (headerRowIndex === -1) return null;
 
     const headerRow = rows[headerRowIndex].map((h) =>
         typeof h === "string" ? h.trim().toLowerCase() : h
     );
 
-    const col = {
-        fecha: headerRow.indexOf("fecha"),
-        fValor: headerRow.indexOf("f.valor"),
-        concepto: headerRow.indexOf("concepto"),
-        movimiento: headerRow.indexOf("movimiento"),
-        importe: headerRow.indexOf("importe"),
+    return {
+        headerRowIndex,
+        col: {
+            fecha: headerRow.indexOf("fecha"),
+            fValor: headerRow.indexOf("f.valor"),
+            concepto: headerRow.indexOf("concepto"),
+            movimiento: headerRow.indexOf("movimiento"),
+            importe: headerRow.indexOf("importe"),
+        },
     };
+}
 
+function transactionsFromBbvaRows(rows: unknown[][], headerRowIndex: number, col: Record<string, number>): Transaction[] {
     const dataRows = rows.slice(headerRowIndex + 1);
     const transactions: Transaction[] = [];
 
@@ -63,11 +98,52 @@ export async function parseExcel(file: File): Promise<Transaction[]> {
             date: isoDate,
             description,
             amount,
-	    category: categorize(description, amount) ?? "",
+            category: categorize(description, amount) ?? "",
         });
     }
 
     return transactions;
+}
+
+export function transactionsFromMapping(rows: unknown[][], mapping: ColumnMapping): Transaction[] {
+    const dataRows = rows.slice(mapping.headerRowIndex + 1);
+    const transactions: Transaction[] = [];
+    const occurrenceCount = new Map<string, number>();
+
+    for (const row of dataRows) {
+        const rawDescription = row[mapping.descriptionCol];
+        const rawAmount = row[mapping.amountCol];
+        if (rawDescription == null || rawAmount == null) continue;
+
+        const amount = Number(String(rawAmount).replace(",", "."));
+        if (isNaN(amount)) continue;
+
+        const description = String(rawDescription).trim();
+        const isoDate = excelDateToISO(row[mapping.dateCol]);
+
+        const baseKey = `${isoDate}|${description}|${amount}`;
+        const occurrence = occurrenceCount.get(baseKey) ?? 0;
+        occurrenceCount.set(baseKey, occurrence + 1);
+
+        transactions.push({
+            id: hashTransaction(isoDate, description, amount, occurrence),
+            date: isoDate,
+            description,
+            amount,
+            category: categorize(description, amount) ?? "",
+        });
+    }
+
+    return transactions;
+}
+
+export async function parseExcel(file: File): Promise<Transaction[]> {
+    const rows = await readSheetRows(file);
+    const bbva = detectBbvaMapping(rows);
+
+    if (!bbva) throw new UnrecognizedBankFormatError(rows);
+
+    return transactionsFromBbvaRows(rows, bbva.headerRowIndex, bbva.col);
 }
 
 function excelDateToISO(value: unknown): string {

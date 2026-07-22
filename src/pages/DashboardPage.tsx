@@ -2,11 +2,12 @@ import { useState } from "react";
 import Layout from "../components/Layout";
 import Dashboard from "../components/dashboard/Dashboard";
 import InsightsCard from "../components/dashboard/InsightsCard";
-import ImportExcelButton from "../components/transactions/ImportExcelButton";
+import ImportExcelFlow from "../components/transactions/ImportExcelFlow";
 import BudgetList from "../components/budget/BudgetList";
 import EditBudgetsDialog from "../components/budget/EditBudgetsDialog";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
+import { useAuthStore } from "../store/authStore";
 import { calculateTotalSpent, calculateTotalIncome, calculateTotalBudget } from "../services/budget";
 import { generateInsights } from "../services/insights";
 import { getCurrentMonth, filterByMonth } from "../utils/dates";
@@ -15,9 +16,10 @@ import { useTranslation } from "../i18n/useTranslation";
 
 export default function DashboardPage() {
     const { t, locale } = useTranslation();
+    const uid = useAuthStore((s) => s.user?.uid ?? "");
     const [budgetsDialogOpen, setBudgetsDialogOpen] = useState(false);
     const {
-        transactions, hasLoaded, importFile,
+        transactions, hasLoaded,
         goals, updateGoalAmount, updateGoalTarget, updateGoalName,
     } = useFinanceStore();
     const {
@@ -40,8 +42,8 @@ export default function DashboardPage() {
 
     return (
         <Layout>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-                <ImportExcelButton onImport={importFile} />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+                <ImportExcelFlow uid={uid} />
             </div>
 
             {featuredGoal && (
@@ -50,11 +52,11 @@ export default function DashboardPage() {
                     budget={totalBudget}
                     income={totalIncomeThisMonth}
                     estimatedIncome={estimatedIncome}
-                    onEstimatedIncomeChange={setEstimatedIncome}
+                    onEstimatedIncomeChange={(v) => setEstimatedIncome(uid, v)}
                     featuredGoal={featuredGoal}
-                    onFeaturedGoalAmountChange={(v) => updateGoalAmount(FEATURED_GOAL_ID, v)}
-                    onFeaturedGoalTargetChange={(v) => updateGoalTarget(FEATURED_GOAL_ID, v)}
-                    onFeaturedGoalNameChange={(n) => updateGoalName(FEATURED_GOAL_ID, n)}
+                    onFeaturedGoalAmountChange={(v) => updateGoalAmount(uid, FEATURED_GOAL_ID, v)}
+                    onFeaturedGoalTargetChange={(v) => updateGoalTarget(uid, FEATURED_GOAL_ID, v)}
+                    onFeaturedGoalNameChange={(n) => updateGoalName(uid, FEATURED_GOAL_ID, n)}
                     onEditBudget={() => setBudgetsDialogOpen(true)}
                 />
             )}
@@ -64,9 +66,9 @@ export default function DashboardPage() {
                 categories={categories}
                 budgets={categoryBudgets}
                 onEditBudget={() => setBudgetsDialogOpen(true)}
-                onUpdateCategoryLabel={updateCategoryLabel}
-                onAddCategory={addCategory}
-                onRemoveCategory={removeCategory}
+                onUpdateCategoryLabel={(value, label) => updateCategoryLabel(uid, value, label)}
+                onAddCategory={(value, label) => addCategory(uid, value, label)}
+                onRemoveCategory={(value) => removeCategory(uid, value)}
             />
 
             <div style={{ marginTop: 16, marginBottom: 16 }}>
@@ -78,7 +80,7 @@ export default function DashboardPage() {
                 onClose={() => setBudgetsDialogOpen(false)}
                 categories={categories}
                 budgets={categoryBudgets}
-                onSave={setCategoryBudgets}
+                onSave={(budgets) => setCategoryBudgets(uid, budgets)}
             />
         </Layout>
     );

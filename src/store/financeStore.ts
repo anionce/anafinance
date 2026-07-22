@@ -2,13 +2,13 @@ import { create } from "zustand";
 import type { Transaction } from "../types/Transaction";
 import type { Goal } from "../types/Goal";
 import { FEATURED_GOAL_ID } from "../types/Goal";
-import { parseExcel } from "../services/excelParser";
+import { parseExcel, transactionsFromMapping } from "../services/excelParser";
+import type { ColumnMapping } from "../services/excelParser";
 import {
     loadTransactions,
     mergeTransactions,
     updateTransactionCategory,
     updateTransactionNotes,
-    loadLegacyColchon,
     loadGoals,
     saveGoal,
     deleteGoal,
@@ -18,103 +18,108 @@ import { sortByDateDesc } from "../utils/dates";
 interface FinanceState {
     transactions: Transaction[];
     hasLoaded: boolean;
-    load: () => Promise<void>;
-    importFile: (file: File) => Promise<void>;
-    resolveCategory: (id: string, category: string) => Promise<void>;
-    updateNotes: (id: string, notes: string) => Promise<void>;
+    load: (uid: string) => Promise<void>;
+    reset: () => void;
+    importFile: (uid: string, file: File) => Promise<void>;
+    importFileWithMapping: (uid: string, rows: unknown[][], mapping: ColumnMapping) => Promise<void>;
+    resolveCategory: (uid: string, id: string, category: string) => Promise<void>;
+    updateNotes: (uid: string, id: string, notes: string) => Promise<void>;
 
     goals: Goal[];
-    addGoal: (goal: Omit<Goal, "id">) => Promise<void>;
-    updateGoalAmount: (id: string, currentAmount: number) => Promise<void>;
-    updateGoalName: (id: string, name: string) => Promise<void>;
-    updateGoalTarget: (id: string, targetAmount: number) => Promise<void>;
-    removeGoal: (id: string) => Promise<void>;
+    addGoal: (uid: string, goal: Omit<Goal, "id">, makeFeatured?: boolean) => Promise<void>;
+    updateGoalAmount: (uid: string, id: string, currentAmount: number) => Promise<void>;
+    updateGoalName: (uid: string, id: string, name: string) => Promise<void>;
+    updateGoalTarget: (uid: string, id: string, targetAmount: number) => Promise<void>;
+    removeGoal: (uid: string, id: string) => Promise<void>;
 }
 
 function generateId(): string {
     return crypto.randomUUID();
 }
 
-export const useFinanceStore = create<FinanceState>((set, get) => ({
-    transactions: [],
+const INITIAL_STATE = {
+    transactions: [] as Transaction[],
     hasLoaded: false,
-    goals: [],
+    goals: [] as Goal[],
+};
 
-    async load() {
-        const [transactions, legacyColchon, goals] = await Promise.all([
-            loadTransactions(),
-            loadLegacyColchon(),
-            loadGoals(),
+export const useFinanceStore = create<FinanceState>((set, get) => ({
+    ...INITIAL_STATE,
+
+    async load(uid) {
+        const [transactions, goals] = await Promise.all([
+            loadTransactions(uid),
+            loadGoals(uid),
         ]);
-
-        let finalGoals = goals;
-        if (!goals.some((g) => g.id === FEATURED_GOAL_ID)) {
-            const featuredGoal: Goal = {
-                id: FEATURED_GOAL_ID,
-                name: "Colchón Revolut",
-                targetAmount: legacyColchon.meta,
-                currentAmount: legacyColchon.current,
-            };
-            await saveGoal(featuredGoal);
-            finalGoals = [...goals, featuredGoal];
-        }
-
-        set({ transactions: sortByDateDesc(transactions), goals: finalGoals, hasLoaded: true });
+        set({ transactions: sortByDateDesc(transactions), goals, hasLoaded: true });
     },
 
-    async importFile(file) {
+    reset() {
+        set({ ...INITIAL_STATE });
+    },
+
+    async importFile(uid, file) {
         const incoming = await parseExcel(file);
-        const { merged, addedCount } = await mergeTransactions(get().transactions, incoming);
+        const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
         console.log(`${addedCount} new transactions added out of ${incoming.length} in the file`);
         set({ transactions: sortByDateDesc(merged) });
     },
 
-    async resolveCategory(id, category) {
-        await updateTransactionCategory(id, category);
+    async importFileWithMapping(uid, rows, mapping) {
+        const incoming = transactionsFromMapping(rows, mapping);
+        const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
+        console.log(`${addedCount} new transactions added out of ${incoming.length} in the file`);
+        set({ transactions: sortByDateDesc(merged) });
+    },
+
+    async resolveCategory(uid, id, category) {
+        await updateTransactionCategory(uid, id, category);
         set((state) => ({
             transactions: state.transactions.map((t) => (t.id === id ? { ...t, category } : t)),
         }));
     },
 
-    async updateNotes(id, notes) {
-        await updateTransactionNotes(id, notes);
+    async updateNotes(uid, id, notes) {
+        await updateTransactionNotes(uid, id, notes);
         set((state) => ({
             transactions: state.transactions.map((t) => (t.id === id ? { ...t, notes } : t)),
         }));
     },
 
-    async addGoal(goal) {
-        const newGoal: Goal = { ...goal, id: generateId() };
-        await saveGoal(newGoal);
+    async addGoal(uid, goal, makeFeatured) {
+        const hasFeatured = get().goals.some((g) => g.id === FEATURED_GOAL_ID);
+        const id = makeFeatured && !hasFeatured ? FEATURED_GOAL_ID : generateId();
+        const newGoal: Goal = { ...goal, id };
+        await saveGoal(uid, newGoal);
         set((state) => ({ goals: [...state.goals, newGoal] }));
     },
 
-    async updateGoalAmount(id, currentAmount) {
+    async updateGoalAmount(uid, id, currentAmount) {
         const goal = get().goals.find((g) => g.id === id);
         if (!goal) return;
         const updated = { ...goal, currentAmount };
-        await saveGoal(updated);
+        await saveGoal(uid, updated);
         set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
     },
 
-    async updateGoalName(id, name) {
+    async updateGoalName(uid, id, name) {
         const goal = get().goals.find((g) => g.id === id);
         if (!goal) return;
         const updated = { ...goal, name };
-        await saveGoal(updated);
+        await saveGoal(uid, updated);
         set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
     },
 
-    async updateGoalTarget(id, targetAmount) {
+    async updateGoalTarget(uid, id, targetAmount) {
         const goal = get().goals.find((g) => g.id === id);
         if (!goal) return;
         const updated = { ...goal, targetAmount };
-        await saveGoal(updated);
+        await saveGoal(uid, updated);
         set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
     },
 
-    async removeGoal(id) {
-        await deleteGoal(id);
+    async removeGoal(uid, id) {
+        await deleteGoal(uid, id);
         set((state) => ({ goals: state.goals.filter((g) => g.id !== id) }));
     },
 }));

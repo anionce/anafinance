@@ -103,6 +103,15 @@ export default function TransactionsTable({ transactions, categories, onCategory
                 pageSizeOptions={[25]}
                 processRowUpdate={processRowUpdate}
                 onProcessRowUpdateError={(error) => console.error(error)}
+                sx={{
+                    height: "100%",
+                    border: "1px solid",
+                    borderColor: "#EFEBE3",
+                    borderRadius: "16px",
+                    bgcolor: "background.paper",
+                    boxShadow: "0 1px 2px rgba(43,42,40,0.04), 0 6px 16px rgba(43,42,40,0.05)",
+                    "& .MuiDataGrid-columnHeaders": { bgcolor: "background.default" },
+                }}
             />
         </div>
     );

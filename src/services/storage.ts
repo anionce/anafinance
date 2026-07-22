@@ -15,15 +15,27 @@ import type { CategoryBudget } from "../types/Budget";
 
 const TRANSACTIONS_COLLECTION = "transactions";
 const GOALS_COLLECTION = "goals";
-const SETTINGS_DOC = "settings/general";
+const SETTINGS_DOC_ID = "general";
 
-export async function loadTransactions(): Promise<Transaction[]> {
-    const snapshot = await getDocs(collection(db, TRANSACTIONS_COLLECTION));
+function transactionsPath(uid: string) {
+    return `users/${uid}/${TRANSACTIONS_COLLECTION}`;
+}
+
+function goalsPath(uid: string) {
+    return `users/${uid}/${GOALS_COLLECTION}`;
+}
+
+function settingsDocPath(uid: string) {
+    return `users/${uid}/settings/${SETTINGS_DOC_ID}`;
+}
+
+export async function loadTransactions(uid: string): Promise<Transaction[]> {
+    const snapshot = await getDocs(collection(db, transactionsPath(uid)));
     return snapshot.docs.map((d) => d.data() as Transaction);
 }
 
-export async function saveTransaction(t: Transaction): Promise<void> {
-    await setDoc(doc(db, TRANSACTIONS_COLLECTION, t.id), t);
+export async function saveTransaction(uid: string, t: Transaction): Promise<void> {
+    await setDoc(doc(db, transactionsPath(uid), t.id), t);
 }
 
 /**
@@ -32,6 +44,7 @@ export async function saveTransaction(t: Transaction): Promise<void> {
  * Returns { merged, addedCount }.
  */
 export async function mergeTransactions(
+    uid: string,
     existing: Transaction[],
     incoming: Transaction[]
 ): Promise<{ merged: Transaction[]; addedCount: number }> {
@@ -40,7 +53,7 @@ export async function mergeTransactions(
 
     const batch = writeBatch(db);
     for (const t of newOnes) {
-        batch.set(doc(db, TRANSACTIONS_COLLECTION, t.id), t);
+        batch.set(doc(db, transactionsPath(uid), t.id), t);
     }
     await batch.commit();
 
@@ -50,31 +63,12 @@ export async function mergeTransactions(
     };
 }
 
-export async function updateTransactionCategory(id: string, category: string): Promise<void> {
-    await setDoc(doc(db, TRANSACTIONS_COLLECTION, id), { category }, { merge: true });
+export async function updateTransactionCategory(uid: string, id: string, category: string): Promise<void> {
+    await setDoc(doc(db, transactionsPath(uid), id), { category }, { merge: true });
 }
 
-export async function updateTransactionNotes(id: string, notes: string): Promise<void> {
-    await setDoc(doc(db, TRANSACTIONS_COLLECTION, id), { notes }, { merge: true });
-}
-
-async function getSettingsDocData(): Promise<Record<string, unknown>> {
-    const snapshot = await getDocs(collection(db, "settings"));
-    const found = snapshot.docs.find((d) => d.id === "general");
-    return found?.data() ?? {};
-}
-
-/**
- * Reads the legacy `colchon`/`colchonMeta` fields from before the featured
- * goal was migrated into the `goals` collection. Only used once, to seed
- * that Goal the first time we detect it doesn't exist yet.
- */
-export async function loadLegacyColchon(): Promise<{ current: number; meta: number }> {
-    const data = await getSettingsDocData();
-    return {
-        current: (data.colchon as number) ?? 1719,
-        meta: (data.colchonMeta as number) ?? 8000,
-    };
+export async function updateTransactionNotes(uid: string, id: string, notes: string): Promise<void> {
+    await setDoc(doc(db, transactionsPath(uid), id), { notes }, { merge: true });
 }
 
 /**
@@ -96,36 +90,77 @@ function normalizeCategoryBudgets(raw: unknown): Record<string, CategoryBudget> 
     return result;
 }
 
-// The Firestore field is still named `ingresosEstimados` from before the
-// codebase was translated to English; mapped to `estimatedIncome` in code
-// here so we don't have to migrate existing documents.
-export async function loadSettings(): Promise<Settings> {
-    const data = await getSettingsDocData();
+async function getSettingsDocData(uid: string): Promise<Record<string, unknown>> {
+    const snapshot = await getDocs(collection(db, `users/${uid}/settings`));
+    const found = snapshot.docs.find((d) => d.id === SETTINGS_DOC_ID);
+    return found?.data() ?? {};
+}
+
+// The settings document field is still named `ingresosEstimados` from before
+// the codebase was translated to English; mapped to `estimatedIncome` here so
+// existing documents don't need a migration for this one field.
+export async function loadSettings(uid: string): Promise<Settings> {
+    const data = await getSettingsDocData(uid);
     return {
         estimatedIncome: (data.ingresosEstimados as number) ?? DEFAULT_SETTINGS.estimatedIncome,
         categoryBudgets: normalizeCategoryBudgets(data.categoryBudgets),
         categories: (data.categories as Settings["categories"]) ?? DEFAULT_SETTINGS.categories,
+        onboardingComplete: (data.onboardingComplete as boolean) ?? DEFAULT_SETTINGS.onboardingComplete,
     };
 }
 
-export async function saveSettings(settings: Partial<Settings>): Promise<void> {
+export async function saveSettings(uid: string, settings: Partial<Settings>): Promise<void> {
     const { estimatedIncome, ...rest } = settings;
     const data: Record<string, unknown> = { ...rest };
     if (estimatedIncome !== undefined) {
         data.ingresosEstimados = estimatedIncome;
     }
-    await setDoc(doc(db, SETTINGS_DOC), data, { merge: true });
+    await setDoc(doc(db, settingsDocPath(uid)), data, { merge: true });
 }
 
-export async function loadGoals(): Promise<Goal[]> {
+export async function loadGoals(uid: string): Promise<Goal[]> {
+    const snapshot = await getDocs(collection(db, goalsPath(uid)));
+    return snapshot.docs.map((d) => d.data() as Goal);
+}
+
+export async function saveGoal(uid: string, goal: Goal): Promise<void> {
+    await setDoc(doc(db, goalsPath(uid), goal.id), goal);
+}
+
+export async function deleteGoal(uid: string, id: string): Promise<void> {
+    await deleteDoc(doc(db, goalsPath(uid), id));
+}
+
+// ---------------------------------------------------------------------------
+// Legacy (pre-auth) flat collections, read-only. Used only to migrate a
+// single existing account's data into its new users/{uid}/... location the
+// first time that person signs in. See services/migration.ts.
+// ---------------------------------------------------------------------------
+
+export async function loadLegacyTransactions(): Promise<Transaction[]> {
+    const snapshot = await getDocs(collection(db, TRANSACTIONS_COLLECTION));
+    return snapshot.docs.map((d) => d.data() as Transaction);
+}
+
+export async function loadLegacyGoals(): Promise<Goal[]> {
     const snapshot = await getDocs(collection(db, GOALS_COLLECTION));
     return snapshot.docs.map((d) => d.data() as Goal);
 }
 
-export async function saveGoal(goal: Goal): Promise<void> {
-    await setDoc(doc(db, GOALS_COLLECTION, goal.id), goal);
+async function getLegacySettingsDocData(): Promise<Record<string, unknown>> {
+    const snapshot = await getDocs(collection(db, "settings"));
+    const found = snapshot.docs.find((d) => d.id === SETTINGS_DOC_ID);
+    return found?.data() ?? {};
 }
 
-export async function deleteGoal(id: string): Promise<void> {
-    await deleteDoc(doc(db, GOALS_COLLECTION, id));
+export async function loadLegacySettings(): Promise<Settings & { colchon: number; colchonMeta: number }> {
+    const data = await getLegacySettingsDocData();
+    return {
+        estimatedIncome: (data.ingresosEstimados as number) ?? DEFAULT_SETTINGS.estimatedIncome,
+        categoryBudgets: normalizeCategoryBudgets(data.categoryBudgets),
+        categories: (data.categories as Settings["categories"]) ?? DEFAULT_SETTINGS.categories,
+        onboardingComplete: true,
+        colchon: (data.colchon as number) ?? 1719,
+        colchonMeta: (data.colchonMeta as number) ?? 8000,
+    };
 }

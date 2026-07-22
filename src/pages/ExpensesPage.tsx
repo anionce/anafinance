@@ -5,12 +5,15 @@ import CategoryPieChart from "../components/transactions/CategoryPieChart";
 import { useFinanceStore } from "../store/financeStore";
 import { useUIStore } from "../store/uiStore";
 import { useSettingsStore } from "../store/settingsStore";
+import { useAuthStore } from "../store/authStore";
 import { useTranslation } from "../i18n/useTranslation";
 import { getAvailableMonths, filterByMonth } from "../utils/dates";
 import { formatCurrency } from "../utils/currency";
+import { accent } from "../theme/colors";
 
 export default function ExpensesPage() {
     const { t } = useTranslation();
+    const uid = useAuthStore((s) => s.user?.uid ?? "");
     const { transactions, hasLoaded, resolveCategory, updateNotes } = useFinanceStore();
     const { selectedMonth, setSelectedMonth } = useUIStore();
     const { categories } = useSettingsStore();
@@ -28,13 +31,13 @@ export default function ExpensesPage() {
         <Layout scrollMode="contained">
             <Grid container spacing={2} sx={{ mb: 2, flexShrink: 0 }}>
                 <Grid size={{ xs: 12, md: 5 }}>
-                    <Card sx={{ bgcolor: "#FFE3E3", borderRadius: 1, p: 3, height: "100%", boxShadow: "none" }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>{t.totalSpentTitle}</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 700 }}>{formatCurrency(total)}</Typography>
+                    <Card sx={{ p: 3, height: "100%", borderLeft: "4px solid", borderLeftColor: accent.budget }}>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>{t.totalSpentTitle}</Typography>
+                        <Typography variant="h3" sx={{ color: accent.budget }}>{formatCurrency(total)}</Typography>
                     </Card>
                 </Grid>
                 <Grid size={{ xs: 12, md: 7 }}>
-                    <Card sx={{ borderRadius: 1, p: 2, height: "100%", boxShadow: "none" }}>
+                    <Card sx={{ p: 2, height: "100%" }}>
                         <CategoryPieChart transactions={visible} categories={categories} />
                     </Card>
                 </Grid>
@@ -57,8 +60,8 @@ export default function ExpensesPage() {
                 <TransactionsTable
                     transactions={visible}
                     categories={categories}
-                    onCategoryChange={resolveCategory}
-                    onNotesChange={updateNotes}
+                    onCategoryChange={(id, category) => resolveCategory(uid, id, category)}
+                    onNotesChange={(id, notes) => updateNotes(uid, id, notes)}
                 />
             </div>
         </Layout>

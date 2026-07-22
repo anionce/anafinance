@@ -15,6 +15,7 @@ import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { formatCurrency } from "../../utils/currency";
 import { calculateRawPercentage } from "../../services/budget";
 import { useTranslation } from "../../i18n/useTranslation";
+import { accent } from "../../theme/colors";
 import FeaturedGoalCard from "../goals/FeaturedGoalCard";
 import type { Goal } from "../../types/Goal";
 
@@ -29,6 +30,21 @@ interface Props {
     onFeaturedGoalTargetChange: (value: number) => void;
     onFeaturedGoalNameChange: (name: string) => void;
     onEditBudget: () => void;
+}
+
+function IconBadge({ color, bg, children }: { color: string; bg: string; children: React.ReactNode }) {
+    return (
+        <Box
+            sx={{
+                width: 36, height: 36, borderRadius: "50%",
+                bgcolor: bg, color,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+            }}
+        >
+            {children}
+        </Box>
+    );
 }
 
 export default function Dashboard({
@@ -56,19 +72,23 @@ export default function Dashboard({
 
     let statusEmoji = "🎉";
     let statusText = t.statusGreatTitle;
-    let statusColor = "#B8E6C9";
+    let statusColor = accent.statusGreat;
+    let statusBg = accent.statusGreatSoft;
     if (overBudget) {
         statusEmoji = "😬";
         statusText = t.statusOverTitle;
-        statusColor = "#FFC9C9";
+        statusColor = accent.statusOver;
+        statusBg = accent.statusOverSoft;
     } else if (budgetPct > 75) {
         statusEmoji = "😅";
         statusText = t.statusTightTitle;
-        statusColor = "#FFE3B8";
+        statusColor = accent.statusTight;
+        statusBg = accent.statusTightSoft;
     } else if (budgetPct > 40) {
         statusEmoji = "🙂";
         statusText = t.statusOkTitle;
-        statusColor = "#D6E8FF";
+        statusColor = accent.statusOk;
+        statusBg = accent.statusOkSoft;
     }
 
     function handleSaveIncome() {
@@ -85,20 +105,19 @@ export default function Dashboard({
             <Grid size={{ xs: 12, md: 6 }}>
                 <Card
                     sx={{
-                        bgcolor: statusColor,
-                        borderRadius: 1,
+                        bgcolor: statusBg,
+                        borderColor: "transparent",
                         p: 3,
                         height: "100%",
-                        boxShadow: "none",
                     }}
                 >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                        <Typography sx={{ fontSize: 32 }}>{statusEmoji}</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+                        <Typography sx={{ fontSize: 32, lineHeight: 1 }}>{statusEmoji}</Typography>
+                        <Typography variant="h6" sx={{ color: statusColor }}>
                             {statusText}
                         </Typography>
                     </Box>
-                    <Typography variant="body1" sx={{ opacity: 0.8 }}>
+                    <Typography variant="body1" sx={{ color: "text.secondary" }}>
                         {overBudget
                             ? t.overBudgetBy(formatCurrency(Math.abs(remaining)))
                             : t.remainingToSpend(formatCurrency(remaining))}
@@ -108,10 +127,12 @@ export default function Dashboard({
 
             {/* Budget */}
             <Grid size={{ xs: 12, md: 6 }}>
-                <Card sx={{ bgcolor: "#FFE3E3", borderRadius: 1, p: 3, height: "100%", boxShadow: "none" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                        <ShoppingBagOutlinedIcon />
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>{t.budgetCardTitle}</Typography>
+                <Card sx={{ p: 3, height: "100%" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                        <IconBadge color={accent.budget} bg={accent.budgetSoft}>
+                            <ShoppingBagOutlinedIcon sx={{ fontSize: 20 }} />
+                        </IconBadge>
+                        <Typography variant="h6" sx={{ flex: 1 }}>{t.budgetCardTitle}</Typography>
                         <IconButton size="small" onClick={onEditBudget} title={t.editBudgetTooltip}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
@@ -120,15 +141,15 @@ export default function Dashboard({
                         value={budgetPct}
                         variant="determinate"
                         sx={{
-                            my: 2, height: 8, borderRadius: 1,
-                            bgcolor: "rgba(0,0,0,0.08)",
-                            "& .MuiLinearProgress-bar": { bgcolor: overBudget ? "#E57373" : "#F28B82" },
+                            mb: 2, height: 8,
+                            bgcolor: accent.budgetSoft,
+                            "& .MuiLinearProgress-bar": { bgcolor: overBudget ? "error.main" : accent.budget },
                         }}
                     />
-                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                        {formatCurrency(spent)} <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/ {formatCurrency(budget)}</Typography>
+                    <Typography variant="h4">
+                        {formatCurrency(spent)} <Typography component="span" variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>/ {formatCurrency(budget)}</Typography>
                     </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.6, mt: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                         {budgetPctRaw.toFixed(0)}%
                     </Typography>
                 </Card>
@@ -136,53 +157,53 @@ export default function Dashboard({
 
             {/* Income */}
             <Grid size={{ xs: 12, md: 6 }}>
-                <Card sx={{ bgcolor: "#DFF5E1", borderRadius: 1, p: 3, height: "100%", boxShadow: "none" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                        <TrendingUpOutlinedIcon />
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>{t.incomeCardTitle}</Typography>
+                <Card sx={{ p: 3, height: "100%" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                        <IconBadge color={accent.income} bg={accent.incomeSoft}>
+                            <TrendingUpOutlinedIcon sx={{ fontSize: 20 }} />
+                        </IconBadge>
+                        <Typography variant="h6" sx={{ flex: 1 }}>{t.incomeCardTitle}</Typography>
+                        {!editingIncome && (
+                            <IconButton
+                                size="small"
+                                onClick={() => {
+                                    setIncomeInput(String(estimatedIncome));
+                                    setEditingIncome(true);
+                                }}
+                            >
+                                <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
+                            </IconButton>
+                        )}
                     </Box>
                     <LinearProgress
                         value={incomePct}
                         variant="determinate"
                         sx={{
-                            my: 2, height: 8, borderRadius: 1,
-                            bgcolor: "rgba(0,0,0,0.08)",
-                            "& .MuiLinearProgress-bar": { bgcolor: "#66BB6A" },
+                            mb: 2, height: 8,
+                            bgcolor: accent.incomeSoft,
+                            "& .MuiLinearProgress-bar": { bgcolor: accent.income },
                         }}
                     />
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        {editingIncome ? (
-                            <>
-                                <TextField
-                                    size="small"
-                                    type="number"
-                                    value={incomeInput}
-                                    onChange={(e) => setIncomeInput(e.target.value)}
-                                    autoFocus
-                                    sx={{ maxWidth: 140 }}
-                                />
-                                <IconButton onClick={handleSaveIncome} size="small">
-                                    <CheckIcon />
-                                </IconButton>
-                            </>
-                        ) : (
-                            <>
-                                <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                    {formatCurrency(income)} <Typography component="span" variant="body2" sx={{ opacity: 0.6 }}>/ {formatCurrency(estimatedIncome)}</Typography>
-                                </Typography>
-                                <IconButton
-                                    size="small"
-                                    onClick={() => {
-                                        setIncomeInput(String(estimatedIncome));
-                                        setEditingIncome(true);
-                                    }}
-                                >
-                                    <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
-                                </IconButton>
-                            </>
-                        )}
-                    </Box>
-                    <Typography variant="body2" sx={{ opacity: 0.6, mt: 0.5 }}>
+                    {editingIncome ? (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <TextField
+                                size="small"
+                                type="number"
+                                value={incomeInput}
+                                onChange={(e) => setIncomeInput(e.target.value)}
+                                autoFocus
+                                sx={{ maxWidth: 140 }}
+                            />
+                            <IconButton onClick={handleSaveIncome} size="small">
+                                <CheckIcon />
+                            </IconButton>
+                        </Box>
+                    ) : (
+                        <Typography variant="h4">
+                            {formatCurrency(income)} <Typography component="span" variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>/ {formatCurrency(estimatedIncome)}</Typography>
+                        </Typography>
+                    )}
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                         {incomePctRaw.toFixed(0)}%
                     </Typography>
                 </Card>
