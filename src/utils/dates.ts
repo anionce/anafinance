@@ -11,6 +11,12 @@ export function getAvailableMonths(transactions: Transaction[]): string[] {
         .reverse();
 }
 
+export function getAvailableYears(transactions: Transaction[]): string[] {
+    return Array.from(new Set(transactions.map((t) => t.date.slice(0, 4))))
+        .sort()
+        .reverse();
+}
+
 export function filterByMonth(transactions: Transaction[], month: string): Transaction[] {
     return transactions.filter((t) => t.date.startsWith(month));
 }
@@ -117,6 +123,31 @@ export function monthlyEquivalentAmount(budget: CategoryBudget): number {
         case "monthly":
         default:
             return budget.amount;
+    }
+}
+
+export interface DateFilter {
+    mode: "monthly" | "annual" | "custom";
+    month: string;
+    year: string;
+    from: string;
+    to: string;
+}
+
+export function defaultDateFilter(): DateFilter {
+    const now = getCurrentMonth();
+    return { mode: "monthly", month: now, year: now.slice(0, 4), from: now + "-01", to: now + "-28" };
+}
+
+export function filterByDateFilter(transactions: Transaction[], filter: DateFilter): Transaction[] {
+    switch (filter.mode) {
+        case "annual":
+            return filterByYear(transactions, filter.year);
+        case "custom":
+            return transactions.filter((t) => t.date >= filter.from && t.date <= filter.to);
+        case "monthly":
+        default:
+            return filterByMonth(transactions, filter.month);
     }
 }
 

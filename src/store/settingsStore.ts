@@ -10,6 +10,7 @@ interface SettingsState {
     categoryBudgets: Record<string, CategoryBudget>;
     categories: Category[];
     categorizationRules: CategorizationRule[];
+    featuredGoalId: string;
     onboardingComplete: boolean;
     hasLoaded: boolean;
     load: (uid: string) => Promise<void>;
@@ -20,9 +21,11 @@ interface SettingsState {
     addCategory: (uid: string, value: string, label: string) => Promise<void>;
     updateCategoryLabel: (uid: string, value: string, label: string) => Promise<void>;
     setCategoryNoComputable: (uid: string, value: string, noComputable: boolean) => Promise<void>;
+    setCategoryIncomeOnly: (uid: string, value: string, incomeOnly: boolean) => Promise<void>;
     removeCategory: (uid: string, value: string) => Promise<void>;
     addRule: (uid: string, keyword: string, category: string) => Promise<void>;
     removeRule: (uid: string, id: string) => Promise<void>;
+    setFeaturedGoalId: (uid: string, id: string) => Promise<void>;
     completeOnboarding: (uid: string) => Promise<void>;
 }
 
@@ -81,6 +84,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         ]);
     },
 
+    async setCategoryIncomeOnly(uid, value, incomeOnly) {
+        const categories = get().categories.map((c) => (c.value === value ? { ...c, incomeOnly } : c));
+        const categoryBudgets = { ...get().categoryBudgets };
+        if (incomeOnly) delete categoryBudgets[value];
+        set({ categories, categoryBudgets });
+        await Promise.all([
+            saveSettings(uid, { categories }),
+            saveSettings(uid, { categoryBudgets }),
+        ]);
+    },
+
     async removeCategory(uid, value) {
         const categories = get().categories.filter((c) => c.value !== value);
         const categoryBudgets = { ...get().categoryBudgets };
@@ -103,6 +117,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const categorizationRules = get().categorizationRules.filter((r) => r.id !== id);
         set({ categorizationRules });
         await saveSettings(uid, { categorizationRules });
+    },
+
+    async setFeaturedGoalId(uid, id) {
+        set({ featuredGoalId: id });
+        await saveSettings(uid, { featuredGoalId: id });
     },
 
     async completeOnboarding(uid) {

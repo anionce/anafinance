@@ -7,6 +7,8 @@ import {
     TextField,
     IconButton,
     LinearProgress,
+    Select,
+    MenuItem,
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
@@ -23,9 +25,12 @@ interface Props {
     spent: number;
     budget: number;
     income: number;
+    hasIncomeData: boolean;
     estimatedIncome: number;
     onEstimatedIncomeChange: (value: number) => void;
-    featuredGoal: Goal;
+    goals: Goal[];
+    featuredGoal?: Goal;
+    onSelectFeaturedGoal: (id: string) => void;
     onFeaturedGoalAmountChange: (value: number) => void;
     onFeaturedGoalTargetChange: (value: number) => void;
     onFeaturedGoalNameChange: (name: string) => void;
@@ -51,9 +56,12 @@ export default function Dashboard({
     spent,
     budget,
     income,
+    hasIncomeData,
     estimatedIncome,
     onEstimatedIncomeChange,
+    goals,
     featuredGoal,
+    onSelectFeaturedGoal,
     onFeaturedGoalAmountChange,
     onFeaturedGoalTargetChange,
     onFeaturedGoalNameChange,
@@ -65,7 +73,7 @@ export default function Dashboard({
 
     const remaining = budget - spent;
     const overBudget = remaining < 0;
-    const budgetPct = Math.min((spent / budget) * 100, 100);
+    const budgetPct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
     const budgetPctRaw = calculateRawPercentage(spent, budget);
     const incomePct = Math.min((income / estimatedIncome) * 100, 100);
     const incomePctRaw = calculateRawPercentage(income, estimatedIncome);
@@ -132,7 +140,7 @@ export default function Dashboard({
                         <IconBadge color={accent.budget} bg={accent.budgetSoft}>
                             <ShoppingBagOutlinedIcon sx={{ fontSize: 20 }} />
                         </IconBadge>
-                        <Typography variant="h6" sx={{ flex: 1 }}>{t.budgetCardTitle}</Typography>
+                        <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>{t.budgetCardTitle}</Typography>
                         <IconButton size="small" onClick={onEditBudget} title={t.editBudgetTooltip}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
@@ -146,7 +154,7 @@ export default function Dashboard({
                             "& .MuiLinearProgress-bar": { bgcolor: overBudget ? "error.main" : accent.budget },
                         }}
                     />
-                    <Typography variant="h4">
+                    <Typography variant="h4" sx={{ lineHeight: 1 }}>
                         {formatCurrency(spent)} <Typography component="span" variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>/ {formatCurrency(budget)}</Typography>
                     </Typography>
                     <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
@@ -155,69 +163,93 @@ export default function Dashboard({
                 </Card>
             </Grid>
 
-            {/* Income */}
-            <Grid size={{ xs: 12, md: 6 }}>
-                <Card sx={{ p: 3, height: "100%" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                        <IconBadge color={accent.income} bg={accent.incomeSoft}>
-                            <TrendingUpOutlinedIcon sx={{ fontSize: 20 }} />
-                        </IconBadge>
-                        <Typography variant="h6" sx={{ flex: 1 }}>{t.incomeCardTitle}</Typography>
-                        {!editingIncome && (
-                            <IconButton
+            {/* Income - only once there's real income data to show */}
+            {hasIncomeData && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Card sx={{ p: 3, height: "100%" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                            <IconBadge color={accent.income} bg={accent.incomeSoft}>
+                                <TrendingUpOutlinedIcon sx={{ fontSize: 20 }} />
+                            </IconBadge>
+                            <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>{t.incomeCardTitle}</Typography>
+                            {!editingIncome && (
+                                <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                        setIncomeInput(String(estimatedIncome));
+                                        setEditingIncome(true);
+                                    }}
+                                >
+                                    <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
+                                </IconButton>
+                            )}
+                        </Box>
+                        <LinearProgress
+                            value={incomePct}
+                            variant="determinate"
+                            sx={{
+                                mb: 2, height: 8,
+                                bgcolor: accent.incomeSoft,
+                                "& .MuiLinearProgress-bar": { bgcolor: accent.income },
+                            }}
+                        />
+                        {editingIncome ? (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <TextField
+                                    size="small"
+                                    type="number"
+                                    value={incomeInput}
+                                    onChange={(e) => setIncomeInput(e.target.value)}
+                                    onBlur={handleSaveIncome}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSaveIncome()}
+                                    autoFocus
+                                    sx={{ maxWidth: 140 }}
+                                />
+                                <IconButton onClick={handleSaveIncome} size="small">
+                                    <CheckIcon />
+                                </IconButton>
+                            </Box>
+                        ) : (
+                            <Typography variant="h4" sx={{ lineHeight: 1 }}>
+                                {formatCurrency(income)} <Typography component="span" variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>/ {formatCurrency(estimatedIncome)}</Typography>
+                            </Typography>
+                        )}
+                        <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                            {incomePctRaw.toFixed(0)}%
+                        </Typography>
+                    </Card>
+                </Grid>
+            )}
+
+            {/* Featured goal - persisted like any other Goal; only shown once at least one goal exists */}
+            {featuredGoal && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Box sx={{ position: "relative", height: "100%" }}>
+                        {goals.length > 1 && (
+                            <Select
                                 size="small"
-                                onClick={() => {
-                                    setIncomeInput(String(estimatedIncome));
-                                    setEditingIncome(true);
+                                value={featuredGoal.id}
+                                onChange={(e) => onSelectFeaturedGoal(e.target.value)}
+                                sx={{
+                                    position: "absolute", top: 12, right: 52, zIndex: 1,
+                                    fontSize: "0.8rem",
+                                    "& .MuiSelect-select": { py: 0.5 },
                                 }}
                             >
-                                <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
-                            </IconButton>
+                                {goals.map((g) => (
+                                    <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+                                ))}
+                            </Select>
                         )}
+                        <FeaturedGoalCard
+                            goal={featuredGoal}
+                            onAmountChange={onFeaturedGoalAmountChange}
+                            onTargetChange={onFeaturedGoalTargetChange}
+                            onNameChange={onFeaturedGoalNameChange}
+                        />
                     </Box>
-                    <LinearProgress
-                        value={incomePct}
-                        variant="determinate"
-                        sx={{
-                            mb: 2, height: 8,
-                            bgcolor: accent.incomeSoft,
-                            "& .MuiLinearProgress-bar": { bgcolor: accent.income },
-                        }}
-                    />
-                    {editingIncome ? (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <TextField
-                                size="small"
-                                type="number"
-                                value={incomeInput}
-                                onChange={(e) => setIncomeInput(e.target.value)}
-                                autoFocus
-                                sx={{ maxWidth: 140 }}
-                            />
-                            <IconButton onClick={handleSaveIncome} size="small">
-                                <CheckIcon />
-                            </IconButton>
-                        </Box>
-                    ) : (
-                        <Typography variant="h4">
-                            {formatCurrency(income)} <Typography component="span" variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>/ {formatCurrency(estimatedIncome)}</Typography>
-                        </Typography>
-                    )}
-                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-                        {incomePctRaw.toFixed(0)}%
-                    </Typography>
-                </Card>
-            </Grid>
-
-            {/* Featured goal - persisted like any other Goal */}
-            <Grid size={{ xs: 12, md: 6 }}>
-                <FeaturedGoalCard
-                    goal={featuredGoal}
-                    onAmountChange={onFeaturedGoalAmountChange}
-                    onTargetChange={onFeaturedGoalTargetChange}
-                    onNameChange={onFeaturedGoalNameChange}
-                />
-            </Grid>
+                </Grid>
+            )}
         </Grid>
     );
 }

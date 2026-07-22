@@ -20,9 +20,10 @@ export function calculateSpentByCategory(
     return spentByCategory;
 }
 
-export function calculateTotalSpent(transactions: Transaction[], budgets: Record<string, CategoryBudget>): number {
+/** Assumes `transactions` has already been filtered to exclude non-computable categories. */
+export function calculateTotalSpent(transactions: Transaction[]): number {
     return transactions
-        .filter((t) => t.amount < 0 && t.category in budgets)
+        .filter((t) => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 }
 

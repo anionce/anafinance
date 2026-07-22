@@ -26,24 +26,29 @@ export default function DashboardPage() {
         goals, updateGoalAmount, updateGoalTarget, updateGoalName,
     } = useFinanceStore();
     const {
-        estimatedIncome, categoryBudgets, categories, categorizationRules, hasLoaded: settingsLoaded,
+        estimatedIncome, categoryBudgets, categories, categorizationRules, featuredGoalId, hasLoaded: settingsLoaded,
         setEstimatedIncome, setCategoryBudgets,
-        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable,
-        addRule, removeRule,
+        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly,
+        addRule, removeRule, setFeaturedGoalId,
     } = useSettingsStore();
 
     if (!hasLoaded || !settingsLoaded) {
         return <Layout><p>{t.loading}</p></Layout>;
     }
 
-    const featuredGoal = goals.find((g) => g.id === FEATURED_GOAL_ID);
+    const featuredGoal =
+        goals.find((g) => g.id === featuredGoalId) ??
+        goals.find((g) => g.id === FEATURED_GOAL_ID) ??
+        goals[0];
     const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
+    const hasIncomeData = transactions.some((tx) => tx.amount > 0 && !noComputableValues.has(tx.category));
 
-    const currentMonthTransactions = filterByMonth(transactions, getCurrentMonth());
+    const currentMonthTransactions = filterByMonth(transactions, getCurrentMonth())
+        .filter((tx) => !noComputableValues.has(tx.category));
     const totalBudget = calculateTotalBudget(categoryBudgets);
-    const totalSpentThisMonth = calculateTotalSpent(currentMonthTransactions, categoryBudgets);
-    const totalIncomeThisMonth = calculateTotalIncome(currentMonthTransactions.filter((tx) => !noComputableValues.has(tx.category)));
-    const insights = generateInsights(transactions, categories, categoryBudgets, locale);
+    const totalSpentThisMonth = calculateTotalSpent(currentMonthTransactions);
+    const totalIncomeThisMonth = calculateTotalIncome(currentMonthTransactions);
+    const insights = generateInsights(transactions, categories, locale);
 
     return (
         <Layout>
@@ -61,20 +66,21 @@ export default function DashboardPage() {
                 onConfirm={(transaction) => addTransaction(uid, transaction)}
             />
 
-            {featuredGoal && (
-                <Dashboard
-                    spent={totalSpentThisMonth}
-                    budget={totalBudget}
-                    income={totalIncomeThisMonth}
-                    estimatedIncome={estimatedIncome}
-                    onEstimatedIncomeChange={(v) => setEstimatedIncome(uid, v)}
-                    featuredGoal={featuredGoal}
-                    onFeaturedGoalAmountChange={(v) => updateGoalAmount(uid, FEATURED_GOAL_ID, v)}
-                    onFeaturedGoalTargetChange={(v) => updateGoalTarget(uid, FEATURED_GOAL_ID, v)}
-                    onFeaturedGoalNameChange={(n) => updateGoalName(uid, FEATURED_GOAL_ID, n)}
-                    onEditBudget={() => setBudgetsDialogOpen(true)}
-                />
-            )}
+            <Dashboard
+                spent={totalSpentThisMonth}
+                budget={totalBudget}
+                income={totalIncomeThisMonth}
+                hasIncomeData={hasIncomeData}
+                estimatedIncome={estimatedIncome}
+                onEstimatedIncomeChange={(v) => setEstimatedIncome(uid, v)}
+                goals={goals}
+                featuredGoal={featuredGoal}
+                onSelectFeaturedGoal={(id) => setFeaturedGoalId(uid, id)}
+                onFeaturedGoalAmountChange={(v) => featuredGoal && updateGoalAmount(uid, featuredGoal.id, v)}
+                onFeaturedGoalTargetChange={(v) => featuredGoal && updateGoalTarget(uid, featuredGoal.id, v)}
+                onFeaturedGoalNameChange={(n) => featuredGoal && updateGoalName(uid, featuredGoal.id, n)}
+                onEditBudget={() => setBudgetsDialogOpen(true)}
+            />
 
             <BudgetList
                 transactions={transactions}
@@ -85,6 +91,7 @@ export default function DashboardPage() {
                 onAddCategory={(value, label) => addCategory(uid, value, label)}
                 onRemoveCategory={(value) => removeCategory(uid, value)}
                 onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
+                onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
                 categorizationRules={categorizationRules}
                 onAddRule={(keyword, category) => addRule(uid, keyword, category)}
                 onRemoveRule={(id) => removeRule(uid, id)}

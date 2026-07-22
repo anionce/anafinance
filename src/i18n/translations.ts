@@ -8,6 +8,9 @@ export interface TranslationSet {
     loading: string;
 
     importExcelButton: string;
+    importSuccessMessage: (count: number) => string;
+    importNoNewMessage: string;
+    importErrorMessage: string;
 
     statusOverTitle: string;
     statusTightTitle: string;
@@ -57,6 +60,12 @@ export interface TranslationSet {
     totalSpentTitle: string;
     totalIncomeTitle: string;
     allMonths: string;
+    dateFilterMonthly: string;
+    dateFilterAnnual: string;
+    dateFilterCustom: string;
+    dateFilterFrom: string;
+    dateFilterTo: string;
+    dateFilterApply: string;
 
     insightsTitle: string;
     spentLessMessage: (pct: string) => string;
@@ -72,6 +81,7 @@ export interface TranslationSet {
     intervalMonthsLabel: string;
 
     noComputableLabel: string;
+    incomeOnlyLabel: string;
 
     manageRulesTooltip: string;
     rulesDialogTitle: string;
@@ -92,6 +102,7 @@ export interface TranslationSet {
     addTransactionDialogTitle: string;
     transactionTypeExpense: string;
     transactionTypeIncome: string;
+    deleteTransactionTooltip: string;
 
     appName: string;
     signInTitle: string;
@@ -135,6 +146,9 @@ export const translations: Record<Locale, TranslationSet> = {
         loading: "Cargando...",
 
         importExcelButton: "Importar Excel BBVA",
+        importSuccessMessage: (count) => `${count} movimiento${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"} importado${count === 1 ? "" : "s"}`,
+        importNoNewMessage: "Ese archivo no tenía movimientos nuevos por importar.",
+        importErrorMessage: "No se pudo importar el archivo. Inténtalo de nuevo.",
 
         statusOverTitle: "Te has pasado del presupuesto",
         statusTightTitle: "Vas ajustada este mes",
@@ -184,6 +198,12 @@ export const translations: Record<Locale, TranslationSet> = {
         totalSpentTitle: "Total gastado",
         totalIncomeTitle: "Total ingresado",
         allMonths: "Todos los meses",
+        dateFilterMonthly: "Mensual",
+        dateFilterAnnual: "Anual",
+        dateFilterCustom: "Personalizado",
+        dateFilterFrom: "Desde",
+        dateFilterTo: "Hasta",
+        dateFilterApply: "Aplicar",
 
         insightsTitle: "Resumen",
         spentLessMessage: (pct) => `💚 Este mes has gastado un ${pct}% menos que el anterior.`,
@@ -199,6 +219,7 @@ export const translations: Record<Locale, TranslationSet> = {
         intervalMonthsLabel: "Cada cuántos meses",
 
         noComputableLabel: "No computable (no cuenta como gasto ni ingreso)",
+        incomeOnlyLabel: "Solo ingreso (no aparece en el presupuesto)",
 
         manageRulesTooltip: "Reglas de categorización",
         rulesDialogTitle: "Reglas de categorización",
@@ -219,9 +240,10 @@ export const translations: Record<Locale, TranslationSet> = {
         addTransactionDialogTitle: "Añadir movimiento",
         transactionTypeExpense: "Gasto",
         transactionTypeIncome: "Ingreso",
+        deleteTransactionTooltip: "Eliminar movimiento",
 
-        appName: "Ana Finance",
-        signInTitle: "Bienvenido a Ana Finance",
+        appName: "Cala",
+        signInTitle: "Bienvenido a Cala",
         signInSubtitle: "Inicia sesión para ver y gestionar tu presupuesto.",
         signInWithGoogle: "Continuar con Google",
         signInError: "No se pudo iniciar sesión. Inténtalo de nuevo.",
@@ -260,6 +282,9 @@ export const translations: Record<Locale, TranslationSet> = {
         loading: "Loading...",
 
         importExcelButton: "Import BBVA Excel",
+        importSuccessMessage: (count) => `${count} new transaction${count === 1 ? "" : "s"} imported`,
+        importNoNewMessage: "That file had no new transactions to import.",
+        importErrorMessage: "Couldn't import the file. Please try again.",
 
         statusOverTitle: "You've gone over budget",
         statusTightTitle: "It's tight this month",
@@ -309,6 +334,12 @@ export const translations: Record<Locale, TranslationSet> = {
         totalSpentTitle: "Total spent",
         totalIncomeTitle: "Total income",
         allMonths: "All months",
+        dateFilterMonthly: "Monthly",
+        dateFilterAnnual: "Annual",
+        dateFilterCustom: "Custom",
+        dateFilterFrom: "From",
+        dateFilterTo: "To",
+        dateFilterApply: "Apply",
 
         insightsTitle: "Summary",
         spentLessMessage: (pct) => `💚 You've spent ${pct}% less than last month.`,
@@ -324,6 +355,7 @@ export const translations: Record<Locale, TranslationSet> = {
         intervalMonthsLabel: "Every how many months",
 
         noComputableLabel: "Not counted (doesn't count as expense or income)",
+        incomeOnlyLabel: "Income only (excluded from the budget)",
 
         manageRulesTooltip: "Categorization rules",
         rulesDialogTitle: "Categorization rules",
@@ -344,9 +376,10 @@ export const translations: Record<Locale, TranslationSet> = {
         addTransactionDialogTitle: "Add transaction",
         transactionTypeExpense: "Expense",
         transactionTypeIncome: "Income",
+        deleteTransactionTooltip: "Delete transaction",
 
-        appName: "Ana Finance",
-        signInTitle: "Welcome to Ana Finance",
+        appName: "Cala",
+        signInTitle: "Welcome to Cala",
         signInSubtitle: "Sign in to see and manage your budget.",
         signInWithGoogle: "Continue with Google",
         signInError: "Couldn't sign in. Please try again.",

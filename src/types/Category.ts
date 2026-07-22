@@ -3,6 +3,8 @@ export interface Category {
     label: string;
     /** True if transactions in this category should not count as expense or income anywhere in the app. */
     noComputable?: boolean;
+    /** True if this category only ever represents income — excluded from the Budget list. */
+    incomeOnly?: boolean;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [
@@ -17,7 +19,6 @@ export const DEFAULT_CATEGORIES: Category[] = [
     { value: "regalos", label: "🎁 Regalos" },
     { value: "transferencia", label: "🔄 Transferencia" },
     { value: "servicios_online", label: "💻 Servicios online" },
-    { value: "no_computable", label: "🚫 No computable", noComputable: true },
 ];
 
 export type CategoryValue = string;

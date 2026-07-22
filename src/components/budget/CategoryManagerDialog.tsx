@@ -27,6 +27,7 @@ interface Props {
     onRemove: (value: string) => void;
     onAdd: (value: string, label: string) => void;
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
+    onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
 }
 
 function slugify(label: string): string {
@@ -39,7 +40,7 @@ function slugify(label: string): string {
         .replace(/\s+/g, "_");
 }
 
-export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable }: Props) {
+export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly }: Props) {
     const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
@@ -97,6 +98,17 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
                                     />
                                 }
                                 label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
+                            />
+                            <FormControlLabel
+                                sx={{ ml: 0.5 }}
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        checked={!!cat.incomeOnly}
+                                        onChange={(e) => onToggleIncomeOnly(cat.value, e.target.checked)}
+                                    />
+                                }
+                                label={<Typography variant="caption" color="text.secondary">{t.incomeOnlyLabel}</Typography>}
                             />
                         </Box>
                     ))}

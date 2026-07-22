@@ -25,6 +25,7 @@ interface Props {
     onAddCategory: (value: string, label: string) => void;
     onRemoveCategory: (value: string) => void;
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
+    onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
     categorizationRules: CategorizationRule[];
     onAddRule: (keyword: string, category: string) => void;
     onRemoveRule: (id: string) => void;
@@ -50,6 +51,7 @@ export default function BudgetList({
     onAddCategory,
     onRemoveCategory,
     onToggleNoComputable,
+    onToggleIncomeOnly,
     categorizationRules,
     onAddRule,
     onRemoveRule,
@@ -58,10 +60,11 @@ export default function BudgetList({
     const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
     const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
     const spentByCategory = calculateSpentByCategory(transactions, budgets);
+    const hasBudgets = Object.keys(budgets).length > 0;
 
     return (
         <Card sx={{ mt: 4, p: 3 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: hasBudgets ? 3 : 0 }}>
                 <Typography variant="h6">{t.budgetByCategoryTitle}</Typography>
                 <Box>
                     <IconButton size="small" onClick={() => setCategoriesDialogOpen(true)} title={t.manageCategoriesTooltip}>
@@ -76,7 +79,7 @@ export default function BudgetList({
                 </Box>
             </Box>
 
-            <Grid container spacing={2}>
+            {hasBudgets && <Grid container spacing={2}>
                 {Object.entries(budgets).map(([key, budget]) => {
                     const spent = spentByCategory[key] ?? 0;
                     const pct = calculatePercentage(spent, budget.amount);
@@ -121,7 +124,7 @@ export default function BudgetList({
                         </Grid>
                     );
                 })}
-            </Grid>
+            </Grid>}
 
             <CategoryManagerDialog
                 open={categoriesDialogOpen}
@@ -131,6 +134,7 @@ export default function BudgetList({
                 onAdd={onAddCategory}
                 onRemove={onRemoveCategory}
                 onToggleNoComputable={onToggleNoComputable}
+                onToggleIncomeOnly={onToggleIncomeOnly}
             />
 
             <CategorizationRulesDialog

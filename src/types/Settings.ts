@@ -9,6 +9,8 @@ export interface Settings {
     categoryBudgets: Record<string, CategoryBudget>;
     categories: Category[];
     categorizationRules: CategorizationRule[];
+    /** Which goal to show in the Dashboard's featured-goal card. Empty means "pick automatically". */
+    featuredGoalId: string;
     onboardingComplete: boolean;
 }
 
@@ -17,5 +19,6 @@ export const DEFAULT_SETTINGS: Settings = {
     categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
     categories: DEFAULT_CATEGORIES,
     categorizationRules: [],
+    featuredGoalId: "",
     onboardingComplete: false,
 };

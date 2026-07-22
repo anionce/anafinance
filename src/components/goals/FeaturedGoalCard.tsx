@@ -63,6 +63,7 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                             size="small"
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
+                            onBlur={saveName}
                             onKeyDown={(e) => e.key === "Enter" && saveName()}
                             autoFocus
                         />
@@ -72,12 +73,12 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                     </>
                 ) : (
                     <>
-                        <Typography variant="h6" sx={{ flex: 1 }}>{goal.name}</Typography>
+                        <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>{goal.name}</Typography>
                         <IconButton
                             size="small"
                             onClick={() => { setNameInput(goal.name); setEditingName(true); }}
                         >
-                            <EditIcon sx={{ fontSize: 16, opacity: 0.75 }} />
+                            <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
                     </>
                 )}
@@ -99,6 +100,8 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                             type="number"
                             value={amountInput}
                             onChange={(e) => setAmountInput(e.target.value)}
+                            onBlur={saveAmount}
+                            onKeyDown={(e) => e.key === "Enter" && saveAmount()}
                             autoFocus
                             sx={{ maxWidth: 140 }}
                         />
@@ -108,7 +111,7 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                     </>
                 ) : (
                     <>
-                        <Typography variant="h4">
+                        <Typography variant="h4" sx={{ lineHeight: 1 }}>
                             {formatCurrency(goal.currentAmount)}
                         </Typography>
                         <IconButton
@@ -127,6 +130,8 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                             type="number"
                             value={targetInput}
                             onChange={(e) => setTargetInput(e.target.value)}
+                            onBlur={saveTarget}
+                            onKeyDown={(e) => e.key === "Enter" && saveTarget()}
                             autoFocus
                             sx={{ maxWidth: 110 }}
                         />

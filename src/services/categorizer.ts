@@ -66,7 +66,10 @@ export function applyCategorizationRules(transactions: Transaction[], rules: Cat
 
   return transactions.map((tx) => {
     const normalized = tx.description.toLowerCase();
-    const match = rules.find((r) => r.keyword.trim() && normalized.includes(r.keyword.trim().toLowerCase()));
+    const match = rules.find((r) => {
+      const keyword = r.keyword?.trim().toLowerCase();
+      return keyword && normalized.includes(keyword);
+    });
     return match ? { ...tx, category: match.category } : tx;
   });
 }

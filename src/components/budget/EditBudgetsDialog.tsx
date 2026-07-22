@@ -25,8 +25,6 @@ interface Props {
     onSave: (budgets: Record<string, CategoryBudget>) => void;
 }
 
-const EXCLUDED = ["transferencia"];
-
 export default function EditBudgetsDialog({ open, onClose, categories, budgets, onSave }: Props) {
     const { t, locale } = useTranslation();
     const [amountDraft, setAmountDraft] = useState<Record<string, string>>({});
@@ -58,7 +56,7 @@ export default function EditBudgetsDialog({ open, onClose, categories, budgets, 
         onClose();
     }
 
-    const editableCategories = categories.filter((c) => !EXCLUDED.includes(c.value) && !c.noComputable);
+    const editableCategories = categories.filter((c) => !c.noComputable && !c.incomeOnly);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
