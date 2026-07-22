@@ -4,16 +4,20 @@ import type { Goal } from "../types/Goal";
 import { FEATURED_GOAL_ID } from "../types/Goal";
 import { parseExcel, transactionsFromMapping } from "../services/excelParser";
 import type { ColumnMapping } from "../services/excelParser";
+import { applyCategorizationRules } from "../services/categorizer";
 import {
     loadTransactions,
     mergeTransactions,
     updateTransactionCategory,
     updateTransactionNotes,
+    saveTransaction,
+    deleteTransaction,
     loadGoals,
     saveGoal,
     deleteGoal,
 } from "../services/storage";
 import { sortByDateDesc } from "../utils/dates";
+import { useSettingsStore } from "./settingsStore";
 
 interface FinanceState {
     transactions: Transaction[];
@@ -24,6 +28,7 @@ interface FinanceState {
     importFileWithMapping: (uid: string, rows: unknown[][], mapping: ColumnMapping) => Promise<void>;
     resolveCategory: (uid: string, id: string, category: string) => Promise<void>;
     updateNotes: (uid: string, id: string, notes: string) => Promise<void>;
+    splitTransaction: (uid: string, id: string, portions: { category: string; amount: number }[]) => Promise<void>;
 
     goals: Goal[];
     addGoal: (uid: string, goal: Omit<Goal, "id">, makeFeatured?: boolean) => Promise<void>;
@@ -59,14 +64,16 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     },
 
     async importFile(uid, file) {
-        const incoming = await parseExcel(file);
+        const parsed = await parseExcel(file);
+        const incoming = applyCategorizationRules(parsed, useSettingsStore.getState().categorizationRules);
         const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
         console.log(`${addedCount} new transactions added out of ${incoming.length} in the file`);
         set({ transactions: sortByDateDesc(merged) });
     },
 
     async importFileWithMapping(uid, rows, mapping) {
-        const incoming = transactionsFromMapping(rows, mapping);
+        const parsed = transactionsFromMapping(rows, mapping);
+        const incoming = applyCategorizationRules(parsed, useSettingsStore.getState().categorizationRules);
         const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
         console.log(`${addedCount} new transactions added out of ${incoming.length} in the file`);
         set({ transactions: sortByDateDesc(merged) });
@@ -83,6 +90,31 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         await updateTransactionNotes(uid, id, notes);
         set((state) => ({
             transactions: state.transactions.map((t) => (t.id === id ? { ...t, notes } : t)),
+        }));
+    },
+
+    async splitTransaction(uid, id, portions) {
+        const original = get().transactions.find((t) => t.id === id);
+        if (!original || portions.length < 2) return;
+
+        const sign = original.amount < 0 ? -1 : 1;
+        const splitTransactions: Transaction[] = portions.map((p, i) => ({
+            id: `${original.id}_split${i}_${Date.now()}`,
+            date: original.date,
+            description: `${original.description} (${i + 1}/${portions.length})`,
+            amount: sign * Math.abs(p.amount),
+            category: p.category,
+            notes: original.notes,
+        }));
+
+        await deleteTransaction(uid, id);
+        await Promise.all(splitTransactions.map((t) => saveTransaction(uid, t)));
+
+        set((state) => ({
+            transactions: sortByDateDesc([
+                ...state.transactions.filter((t) => t.id !== id),
+                ...splitTransactions,
+            ]),
         }));
     },
 

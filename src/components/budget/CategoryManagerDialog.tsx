@@ -10,11 +10,14 @@ import {
     Box,
     Stack,
     Typography,
+    Checkbox,
+    FormControlLabel,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
+import { getCategoryLabel } from "../../i18n/categoryTranslations";
 
 interface Props {
     open: boolean;
@@ -23,6 +26,7 @@ interface Props {
     onUpdateLabel: (value: string, label: string) => void;
     onRemove: (value: string) => void;
     onAdd: (value: string, label: string) => void;
+    onToggleNoComputable: (value: string, noComputable: boolean) => void;
 }
 
 function slugify(label: string): string {
@@ -35,21 +39,22 @@ function slugify(label: string): string {
         .replace(/\s+/g, "_");
 }
 
-export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd }: Props) {
-    const { t } = useTranslation();
+export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable }: Props) {
+    const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
 
     useEffect(() => {
         if (open) {
-            setDrafts(Object.fromEntries(categories.map((c) => [c.value, c.label])));
+            setDrafts(Object.fromEntries(categories.map((c) => [c.value, getCategoryLabel(c, locale)])));
         }
-    }, [open, categories]);
+    }, [open, categories, locale]);
 
     function handleLabelBlur(value: string) {
         const label = drafts[value]?.trim();
-        const original = categories.find((c) => c.value === value)?.label;
-        if (label && label !== original) {
+        const original = categories.find((c) => c.value === value);
+        const originalDisplay = original ? getCategoryLabel(original, locale) : undefined;
+        if (label && label !== originalDisplay) {
             onUpdateLabel(value, label);
         }
     }
@@ -69,17 +74,30 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
             <DialogContent>
                 <Stack spacing={1.5}>
                     {categories.map((cat) => (
-                        <Box key={cat.value} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <TextField
-                                size="small"
-                                value={drafts[cat.value] ?? cat.label}
-                                onChange={(e) => setDrafts((d) => ({ ...d, [cat.value]: e.target.value }))}
-                                onBlur={() => handleLabelBlur(cat.value)}
-                                fullWidth
+                        <Box key={cat.value} sx={{ display: "flex", flexDirection: "column" }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <TextField
+                                    size="small"
+                                    value={drafts[cat.value] ?? cat.label}
+                                    onChange={(e) => setDrafts((d) => ({ ...d, [cat.value]: e.target.value }))}
+                                    onBlur={() => handleLabelBlur(cat.value)}
+                                    fullWidth
+                                />
+                                <IconButton size="small" onClick={() => onRemove(cat.value)}>
+                                    <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
+                                </IconButton>
+                            </Box>
+                            <FormControlLabel
+                                sx={{ ml: 0.5 }}
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        checked={!!cat.noComputable}
+                                        onChange={(e) => onToggleNoComputable(cat.value, e.target.checked)}
+                                    />
+                                }
+                                label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
                             />
-                            <IconButton size="small" onClick={() => onRemove(cat.value)}>
-                                <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
-                            </IconButton>
                         </Box>
                     ))}
 

@@ -65,12 +65,7 @@ export function generateInsights(
 
     for (const cat of categories) {
         // Categories that never represent an expense (income/internal transfers only)
-        if (
-            cat.value === "no_computable" ||
-            cat.value === "transferencia" ||
-            cat.value === "ahorro" ||
-            cat.value === "vinted_wallapop"
-        ) continue;
+        if (cat.noComputable || cat.value === "transferencia") continue;
 
         const lastPurchaseDate = transactions
             .filter((tx) => tx.category === cat.value && tx.amount < 0)

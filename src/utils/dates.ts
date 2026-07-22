@@ -1,4 +1,5 @@
 import type { Transaction } from "../types/Transaction";
+import type { CategoryBudget } from "../types/Budget";
 
 export function getCurrentMonth(): string {
     return new Date().toISOString().slice(0, 7);
@@ -35,6 +36,88 @@ export function filterByBimonthlyPeriod(transactions: Transaction[], period: str
         const [txYear, txMonth] = t.date.split("-").map(Number);
         return txYear === year && (txMonth === startMonth || txMonth === endMonth);
     });
+}
+
+/** Calendar-aligned blocks of `intervalMonths`, counted from January, identified as "YYYY-N{interval}-{blockIndex}". */
+export function getCurrentNMonthPeriod(intervalMonths: number): string {
+    const [year, month] = getCurrentMonth().split("-").map(Number);
+    const blockIndex = Math.ceil(month / intervalMonths);
+    return `${year}-N${intervalMonths}-${blockIndex}`;
+}
+
+export function filterByNMonthPeriod(transactions: Transaction[], period: string, intervalMonths: number): Transaction[] {
+    const match = period.match(/^(\d+)-N\d+-(\d+)$/);
+    if (!match) return [];
+    const year = Number(match[1]);
+    const blockIndex = Number(match[2]);
+    const startMonth = (blockIndex - 1) * intervalMonths + 1;
+    const endMonth = startMonth + intervalMonths - 1;
+
+    return transactions.filter((t) => {
+        const [txYear, txMonth] = t.date.split("-").map(Number);
+        return txYear === year && txMonth >= startMonth && txMonth <= endMonth;
+    });
+}
+
+export function getCurrentYear(): string {
+    return String(new Date().getFullYear());
+}
+
+export function filterByYear(transactions: Transaction[], year: string): Transaction[] {
+    return transactions.filter((t) => t.date.startsWith(year));
+}
+
+function getISOWeekString(date: Date): string {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+export function getCurrentWeek(): string {
+    return getISOWeekString(new Date());
+}
+
+export function filterByWeek(transactions: Transaction[], week: string): Transaction[] {
+    return transactions.filter((t) => getISOWeekString(new Date(t.date)) === week);
+}
+
+/** Filters transactions down to a budget's own current period, whatever that period is. */
+export function filterByBudgetPeriod(transactions: Transaction[], budget: CategoryBudget): Transaction[] {
+    switch (budget.period) {
+        case "weekly":
+            return filterByWeek(transactions, getCurrentWeek());
+        case "bimonthly":
+            return filterByBimonthlyPeriod(transactions, getCurrentBimonthlyPeriod());
+        case "everyNMonths": {
+            const interval = Math.max(budget.intervalMonths ?? 1, 1);
+            return filterByNMonthPeriod(transactions, getCurrentNMonthPeriod(interval), interval);
+        }
+        case "yearly":
+            return filterByYear(transactions, getCurrentYear());
+        case "monthly":
+        default:
+            return filterByMonth(transactions, getCurrentMonth());
+    }
+}
+
+/** Converts any budget period's amount into its monthly-equivalent, so periods can blend into a single monthly view. */
+export function monthlyEquivalentAmount(budget: CategoryBudget): number {
+    switch (budget.period) {
+        case "weekly":
+            return budget.amount * (52 / 12);
+        case "bimonthly":
+            return budget.amount / 2;
+        case "everyNMonths":
+            return budget.amount / Math.max(budget.intervalMonths ?? 1, 1);
+        case "yearly":
+            return budget.amount / 12;
+        case "monthly":
+        default:
+            return budget.amount;
+    }
 }
 
 export function sortByDateDesc(transactions: Transaction[]): Transaction[] {

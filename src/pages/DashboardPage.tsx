@@ -23,9 +23,10 @@ export default function DashboardPage() {
         goals, updateGoalAmount, updateGoalTarget, updateGoalName,
     } = useFinanceStore();
     const {
-        estimatedIncome, categoryBudgets, categories, hasLoaded: settingsLoaded,
+        estimatedIncome, categoryBudgets, categories, categorizationRules, hasLoaded: settingsLoaded,
         setEstimatedIncome, setCategoryBudgets,
-        addCategory, updateCategoryLabel, removeCategory,
+        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable,
+        addRule, removeRule,
     } = useSettingsStore();
 
     if (!hasLoaded || !settingsLoaded) {
@@ -33,11 +34,12 @@ export default function DashboardPage() {
     }
 
     const featuredGoal = goals.find((g) => g.id === FEATURED_GOAL_ID);
+    const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
 
     const currentMonthTransactions = filterByMonth(transactions, getCurrentMonth());
     const totalBudget = calculateTotalBudget(categoryBudgets);
     const totalSpentThisMonth = calculateTotalSpent(currentMonthTransactions, categoryBudgets);
-    const totalIncomeThisMonth = calculateTotalIncome(currentMonthTransactions);
+    const totalIncomeThisMonth = calculateTotalIncome(currentMonthTransactions.filter((tx) => !noComputableValues.has(tx.category)));
     const insights = generateInsights(transactions, categories, categoryBudgets, locale);
 
     return (
@@ -69,6 +71,10 @@ export default function DashboardPage() {
                 onUpdateCategoryLabel={(value, label) => updateCategoryLabel(uid, value, label)}
                 onAddCategory={(value, label) => addCategory(uid, value, label)}
                 onRemoveCategory={(value) => removeCategory(uid, value)}
+                onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
+                categorizationRules={categorizationRules}
+                onAddRule={(keyword, category) => addRule(uid, keyword, category)}
+                onRemoveRule={(id) => removeRule(uid, id)}
             />
 
             <div style={{ marginTop: 16, marginBottom: 16 }}>

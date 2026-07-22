@@ -1,11 +1,13 @@
 import type { CategoryValue } from "../types/Category";
+import type { CategorizationRule } from "../types/CategorizationRule";
+import type { Transaction } from "../types/Transaction";
 
 // Only Amazon needs manual review (all sorts of purchases, no clear pattern)
 const MANUAL_REVIEW_KEYWORDS = ["amazon, biz"];
 
 const RULES: { keywords: string[]; category: CategoryValue }[] = [
   { keywords: ["aeat"], category: "transferencia" },
-  { keywords: ["transferencia recibida"], category: "vinted_wallapop" },
+  { keywords: ["transferencia recibida"], category: "transferencia" },
   { keywords: ["farmacia", "dentista", "fisio", "clinica", "clínica", "médico", "medico"], category: "salud" },
   { keywords: ["gimnasio", "yoga", "pilates", "spa"], category: "wellness" },
   {
@@ -39,9 +41,10 @@ const RULES: { keywords: string[]; category: CategoryValue }[] = [
 export function categorize(text: string, amount: number): CategoryValue | null {
   const normalized = text.toLowerCase();
 
-  // Special case: Vinted depends on whether it's a sale (income) or purchase (expense)
+  // Special case: a Vinted purchase looks like clothing spend; a Vinted sale
+  // isn't a clear category match, so it's left for manual review.
   if (normalized.includes("vinted")) {
-    return amount < 0 ? "ropa" : "vinted_wallapop";
+    return amount < 0 ? "ropa" : null;
   }
 
   if (MANUAL_REVIEW_KEYWORDS.some((kw) => normalized.includes(kw))) {
@@ -55,4 +58,15 @@ export function categorize(text: string, amount: number): CategoryValue | null {
   }
 
   return null;
+}
+
+/** User-defined keyword rules take priority over the built-in categorizer above. */
+export function applyCategorizationRules(transactions: Transaction[], rules: CategorizationRule[]): Transaction[] {
+  if (rules.length === 0) return transactions;
+
+  return transactions.map((tx) => {
+    const normalized = tx.description.toLowerCase();
+    const match = rules.find((r) => r.keyword.trim() && normalized.includes(r.keyword.trim().toLowerCase()));
+    return match ? { ...tx, category: match.category } : tx;
+  });
 }
