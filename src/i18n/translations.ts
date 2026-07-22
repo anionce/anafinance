@@ -65,6 +65,38 @@ export interface TranslationSet {
 
     monthly: string;
     bimonthly: string;
+
+    appName: string;
+    signInTitle: string;
+    signInSubtitle: string;
+    signInWithGoogle: string;
+    signInError: string;
+    signOut: string;
+
+    onboardingWelcomeTitle: string;
+    onboardingWelcomeSubtitle: string;
+    onboardingStepCategories: string;
+    onboardingStepBudgets: string;
+    onboardingStepGoals: string;
+    onboardingStepImport: string;
+    onboardingCategoriesHint: string;
+    onboardingBudgetsHint: string;
+    onboardingGoalsHint: string;
+    onboardingImportHint: string;
+    onboardingImportSkipHint: string;
+    onboardingBack: string;
+    onboardingSkip: string;
+    onboardingFinish: string;
+    onboardingAddedGoals: (count: number) => string;
+
+    mappingTitle: string;
+    mappingHint: string;
+    mappingDateColumn: string;
+    mappingDescriptionColumn: string;
+    mappingAmountColumn: string;
+    mappingNotACurrency: string;
+    mappingConfirm: string;
+    mappingPreviewTitle: string;
 }
 
 export const translations: Record<Locale, TranslationSet> = {
@@ -133,6 +165,38 @@ export const translations: Record<Locale, TranslationSet> = {
 
         monthly: "Mensual",
         bimonthly: "Bimestral",
+
+        appName: "Ana Finance",
+        signInTitle: "Bienvenido a Ana Finance",
+        signInSubtitle: "Inicia sesión para ver y gestionar tu presupuesto.",
+        signInWithGoogle: "Continuar con Google",
+        signInError: "No se pudo iniciar sesión. Inténtalo de nuevo.",
+        signOut: "Cerrar sesión",
+
+        onboardingWelcomeTitle: "Vamos a configurar tu presupuesto",
+        onboardingWelcomeSubtitle: "Cuatro pasos rápidos y ya puedes empezar a usar la app.",
+        onboardingStepCategories: "Categorías",
+        onboardingStepBudgets: "Presupuesto",
+        onboardingStepGoals: "Objetivos",
+        onboardingStepImport: "Importar",
+        onboardingCategoriesHint: "Estas son las categorías de partida. Puedes editarlas, borrarlas o añadir las tuyas — también podrás cambiarlas más adelante.",
+        onboardingBudgetsHint: "Ponle un límite mensual a las categorías que quieras controlar. Puedes dejar el resto vacías y añadirlas cuando quieras.",
+        onboardingGoalsHint: "Añade algún objetivo de ahorro si quieres empezar a trackearlo ya. Es opcional, puedes saltarte este paso.",
+        onboardingImportHint: "Importa tu primer Excel del banco para empezar a ver tus movimientos.",
+        onboardingImportSkipHint: "Puedes hacerlo más tarde desde el Dashboard.",
+        onboardingBack: "Atrás",
+        onboardingSkip: "Saltar",
+        onboardingFinish: "Empezar",
+        onboardingAddedGoals: (count) => `${count} objetivo${count === 1 ? "" : "s"} añadido${count === 1 ? "" : "s"}`,
+
+        mappingTitle: "No reconocemos este formato de Excel",
+        mappingHint: "Parece que no es de BBVA. Dinos qué columna es cada cosa y lo importamos igual.",
+        mappingDateColumn: "Columna de fecha",
+        mappingDescriptionColumn: "Columna de concepto",
+        mappingAmountColumn: "Columna de importe",
+        mappingNotACurrency: "Alguna fila no tiene un importe numérico válido y se ignorará.",
+        mappingConfirm: "Importar con este mapeo",
+        mappingPreviewTitle: "Vista previa de las primeras filas",
     },
     en: {
         navDashboard: "Dashboard",
@@ -199,5 +263,37 @@ export const translations: Record<Locale, TranslationSet> = {
 
         monthly: "Monthly",
         bimonthly: "Bimonthly",
+
+        appName: "Ana Finance",
+        signInTitle: "Welcome to Ana Finance",
+        signInSubtitle: "Sign in to see and manage your budget.",
+        signInWithGoogle: "Continue with Google",
+        signInError: "Couldn't sign in. Please try again.",
+        signOut: "Sign out",
+
+        onboardingWelcomeTitle: "Let's set up your budget",
+        onboardingWelcomeSubtitle: "Four quick steps and you're ready to go.",
+        onboardingStepCategories: "Categories",
+        onboardingStepBudgets: "Budget",
+        onboardingStepGoals: "Goals",
+        onboardingStepImport: "Import",
+        onboardingCategoriesHint: "These are the starting categories. Edit, delete, or add your own — you can always change them later.",
+        onboardingBudgetsHint: "Set a monthly limit for the categories you want to track. You can leave the rest empty and add them later.",
+        onboardingGoalsHint: "Add a savings goal if you want to start tracking one now. This step is optional.",
+        onboardingImportHint: "Import your first bank Excel file to start seeing your transactions.",
+        onboardingImportSkipHint: "You can do this later from the Dashboard.",
+        onboardingBack: "Back",
+        onboardingSkip: "Skip",
+        onboardingFinish: "Get started",
+        onboardingAddedGoals: (count) => `${count} goal${count === 1 ? "" : "s"} added`,
+
+        mappingTitle: "We don't recognize this Excel format",
+        mappingHint: "This doesn't look like a BBVA export. Tell us which column is which and we'll import it anyway.",
+        mappingDateColumn: "Date column",
+        mappingDescriptionColumn: "Description column",
+        mappingAmountColumn: "Amount column",
+        mappingNotACurrency: "Some rows don't have a valid numeric amount and will be skipped.",
+        mappingConfirm: "Import with this mapping",
+        mappingPreviewTitle: "Preview of the first rows",
     },
 };

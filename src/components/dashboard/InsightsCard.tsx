@@ -11,8 +11,8 @@ export default function InsightsCard({ insights }: Props) {
     if (insights.length === 0) return null;
 
     return (
-        <Card sx={{ borderRadius: 1, p: 3, boxShadow: "none" }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5 }}>{t.insightsTitle}</Typography>
+        <Card sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 1.5 }}>{t.insightsTitle}</Typography>
             <Stack spacing={1}>
                 {insights.map((insight, i) => (
                     <Typography key={i} variant="body2">{insight}</Typography>

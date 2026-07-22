@@ -13,8 +13,8 @@ interface Props {
 }
 
 const COLORS = [
-    "#9575CD", "#66BB6A", "#F28B82", "#4FC3F7", "#FFB74D",
-    "#BA68C8", "#4DB6AC", "#F06292", "#A1887F", "#90A4AE",
+    "#D97757", "#5B9279", "#8B7FB8", "#6B93B8", "#D9A05B",
+    "#C9A876", "#C97B84", "#6FA8A0", "#A67B9E", "#8A94A6",
 ];
 
 export default function CategoryPieChart({ transactions, categories }: Props) {

@@ -1,10 +1,11 @@
-import { useEffect } from "react";
 import type { ReactNode } from "react";
-import { Container, Tabs, Tab, Box, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import { Container, Tabs, Tab, Box, Typography, Avatar, IconButton, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReviewDialog from "./transactions/ReviewDialog";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
+import { useAuthStore } from "../store/authStore";
 import { useTranslation } from "../i18n/useTranslation";
 import type { Locale } from "../store/localeStore";
 
@@ -22,14 +23,12 @@ interface Props {
 export default function Layout({ children, scrollMode = "page" }: Props) {
     const location = useLocation();
     const navigate = useNavigate();
-    const { hasLoaded, load, transactions, resolveCategory } = useFinanceStore();
-    const { hasLoaded: settingsHasLoaded, load: loadSettings, categories } = useSettingsStore();
+    const uid = useAuthStore((s) => s.user?.uid ?? "");
+    const user = useAuthStore((s) => s.user);
+    const signOut = useAuthStore((s) => s.signOut);
+    const { transactions, resolveCategory } = useFinanceStore();
+    const { categories } = useSettingsStore();
     const { t, locale, setLocale } = useTranslation();
-
-    useEffect(() => {
-        if (!hasLoaded) load();
-        if (!settingsHasLoaded) loadSettings();
-    }, [hasLoaded, load, settingsHasLoaded, loadSettings]);
 
     const navItems = [
         { label: t.navDashboard, path: "/" },
@@ -51,21 +50,52 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 : { py: 3, minHeight: "100vh", display: "flex", flexDirection: "column" }
             }
         >
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: 1, borderColor: "divider", mb: 3, flexShrink: 0 }}>
-                <Tabs value={currentTab} onChange={(_, value) => navigate(value)}>
-                    {navItems.map((item) => (
-                        <Tab key={item.path} label={item.label} value={item.path} />
-                    ))}
-                </Tabs>
-                <ToggleButtonGroup
-                    value={locale}
-                    exclusive
-                    size="small"
-                    onChange={(_, value: Locale | null) => value && setLocale(value)}
-                >
-                    <ToggleButton value="es">ES</ToggleButton>
-                    <ToggleButton value="en">EN</ToggleButton>
-                </ToggleButtonGroup>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1.5, borderBottom: 1, borderColor: "divider", mb: 2, flexShrink: 0 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 2, sm: 5 } }}>
+                    <Typography variant="h6" sx={{ color: "primary.main", whiteSpace: "nowrap" }}>
+                        {t.appName}
+                    </Typography>
+                    <Tabs value={currentTab} onChange={(_, value) => navigate(value)} sx={{ minHeight: 0 }}>
+                        {navItems.map((item) => (
+                            <Tab key={item.path} label={item.label} value={item.path} sx={{ minHeight: 0, py: 1 }} />
+                        ))}
+                    </Tabs>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <ToggleButtonGroup
+                        value={locale}
+                        exclusive
+                        size="small"
+                        onChange={(_, value: Locale | null) => value && setLocale(value)}
+                        sx={{
+                            "& .MuiToggleButton-root": {
+                                border: "none",
+                                borderRadius: "999px !important",
+                                px: 1.5,
+                                color: "text.secondary",
+                                "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } },
+                            },
+                            bgcolor: "background.default",
+                            borderRadius: "999px",
+                            p: 0.5,
+                        }}
+                    >
+                        <ToggleButton value="es">ES</ToggleButton>
+                        <ToggleButton value="en">EN</ToggleButton>
+                    </ToggleButtonGroup>
+                    {user && (
+                        <>
+                            <Avatar
+                                src={user.photoURL ?? undefined}
+                                alt={user.displayName ?? user.email ?? ""}
+                                sx={{ width: 32, height: 32 }}
+                            />
+                            <IconButton size="small" onClick={() => signOut()} title={t.signOut}>
+                                <LogoutIcon sx={{ fontSize: 20, opacity: 0.75 }} />
+                            </IconButton>
+                        </>
+                    )}
+                </Box>
             </Box>
             {contained ? (
                 <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
@@ -74,7 +104,12 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
             ) : (
                 children
             )}
-            <ReviewDialog pending={pending} categories={categories} onResolve={resolveCategory} onFinish={() => {}} />
+            <ReviewDialog
+                pending={pending}
+                categories={categories}
+                onResolve={(id, category) => resolveCategory(uid, id, category)}
+                onFinish={() => {}}
+            />
         </Container>
     );
 }

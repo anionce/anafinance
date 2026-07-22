@@ -7,10 +7,12 @@ export interface Settings {
     estimatedIncome: number;
     categoryBudgets: Record<string, CategoryBudget>;
     categories: Category[];
+    onboardingComplete: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
     estimatedIncome: 2300,
     categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
     categories: DEFAULT_CATEGORIES,
+    onboardingComplete: false,
 };
