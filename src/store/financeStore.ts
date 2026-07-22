@@ -24,12 +24,13 @@ interface FinanceState {
     hasLoaded: boolean;
     load: (uid: string) => Promise<void>;
     reset: () => void;
-    importFile: (uid: string, file: File) => Promise<void>;
-    importFileWithMapping: (uid: string, rows: unknown[][], mapping: ColumnMapping) => Promise<void>;
+    importFile: (uid: string, file: File) => Promise<number>;
+    importFileWithMapping: (uid: string, rows: unknown[][], mapping: ColumnMapping) => Promise<number>;
     addTransaction: (uid: string, transaction: Omit<Transaction, "id">) => Promise<void>;
     resolveCategory: (uid: string, id: string, category: string) => Promise<void>;
     updateNotes: (uid: string, id: string, notes: string) => Promise<void>;
     splitTransaction: (uid: string, id: string, portions: { category: string; amount: number }[]) => Promise<void>;
+    removeTransaction: (uid: string, id: string) => Promise<void>;
 
     goals: Goal[];
     addGoal: (uid: string, goal: Omit<Goal, "id">, makeFeatured?: boolean) => Promise<void>;
@@ -68,16 +69,16 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         const parsed = await parseExcel(file);
         const incoming = applyCategorizationRules(parsed, useSettingsStore.getState().categorizationRules);
         const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
-        console.log(`${addedCount} new transactions added out of ${incoming.length} in the file`);
         set({ transactions: sortByDateDesc(merged) });
+        return addedCount;
     },
 
     async importFileWithMapping(uid, rows, mapping) {
         const parsed = transactionsFromMapping(rows, mapping);
         const incoming = applyCategorizationRules(parsed, useSettingsStore.getState().categorizationRules);
         const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
-        console.log(`${addedCount} new transactions added out of ${incoming.length} in the file`);
         set({ transactions: sortByDateDesc(merged) });
+        return addedCount;
     },
 
     async addTransaction(uid, transaction) {
@@ -111,7 +112,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
             description: `${original.description} (${i + 1}/${portions.length})`,
             amount: sign * Math.abs(p.amount),
             category: p.category,
-            notes: original.notes,
+            ...(original.notes !== undefined ? { notes: original.notes } : {}),
         }));
 
         await deleteTransaction(uid, id);
@@ -123,6 +124,11 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
                 ...splitTransactions,
             ]),
         }));
+    },
+
+    async removeTransaction(uid, id) {
+        await deleteTransaction(uid, id);
+        set((state) => ({ transactions: state.transactions.filter((t) => t.id !== id) }));
     },
 
     async addGoal(uid, goal, makeFeatured) {

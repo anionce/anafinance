@@ -20,6 +20,8 @@ import { getCategoryLabel } from "../../i18n/categoryTranslations";
 interface Props {
     open: boolean;
     categories: Category[];
+    /** When set, locks the transaction to this type and hides the expense/income toggle. */
+    fixedType?: "expense" | "income";
     onClose: () => void;
     onConfirm: (transaction: Omit<Transaction, "id">) => void;
 }
@@ -28,9 +30,9 @@ function todayISO(): string {
     return new Date().toISOString().slice(0, 10);
 }
 
-export default function AddTransactionDialog({ open, categories, onClose, onConfirm }: Props) {
+export default function AddTransactionDialog({ open, categories, fixedType, onClose, onConfirm }: Props) {
     const { t, locale } = useTranslation();
-    const [type, setType] = useState<"expense" | "income">("expense");
+    const [type, setType] = useState<"expense" | "income">(fixedType ?? "expense");
     const [date, setDate] = useState(todayISO());
     const [description, setDescription] = useState("");
     const [amount, setAmount] = useState("");
@@ -39,7 +41,7 @@ export default function AddTransactionDialog({ open, categories, onClose, onConf
     const canConfirm = description.trim() !== "" && Number(amount) > 0 && !!date && !!category;
 
     function reset() {
-        setType("expense");
+        setType(fixedType ?? "expense");
         setDate(todayISO());
         setDescription("");
         setAmount("");
@@ -56,6 +58,7 @@ export default function AddTransactionDialog({ open, categories, onClose, onConf
             category,
         });
         reset();
+        onClose();
     }
 
     function handleClose() {
@@ -68,15 +71,17 @@ export default function AddTransactionDialog({ open, categories, onClose, onConf
             <DialogTitle>{t.addTransactionDialogTitle}</DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 1 }}>
-                    <ToggleButtonGroup
-                        value={type}
-                        exclusive
-                        fullWidth
-                        onChange={(_, value: "expense" | "income" | null) => value && setType(value)}
-                    >
-                        <ToggleButton value="expense">{t.transactionTypeExpense}</ToggleButton>
-                        <ToggleButton value="income">{t.transactionTypeIncome}</ToggleButton>
-                    </ToggleButtonGroup>
+                    {!fixedType && (
+                        <ToggleButtonGroup
+                            value={type}
+                            exclusive
+                            fullWidth
+                            onChange={(_, value: "expense" | "income" | null) => value && setType(value)}
+                        >
+                            <ToggleButton value="expense">{t.transactionTypeExpense}</ToggleButton>
+                            <ToggleButton value="income">{t.transactionTypeIncome}</ToggleButton>
+                        </ToggleButtonGroup>
+                    )}
 
                     <TextField
                         type="date"

@@ -3,6 +3,7 @@ import { Container, Tabs, Tab, Box, Typography, Avatar, IconButton, ToggleButton
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReviewDialog from "./transactions/ReviewDialog";
+import Logo from "./Logo";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useAuthStore } from "../store/authStore";
@@ -52,9 +53,12 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
         >
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1.5, borderBottom: 1, borderColor: "divider", mb: 2, flexShrink: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 2, sm: 5 } }}>
-                    <Typography variant="h6" sx={{ color: "primary.main", whiteSpace: "nowrap" }}>
-                        {t.appName}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Logo size={26} />
+                        <Typography variant="h6" sx={{ color: "primary.main", whiteSpace: "nowrap", lineHeight: 1 }}>
+                            {t.appName}
+                        </Typography>
+                    </Box>
                     <Tabs value={currentTab} onChange={(_, value) => navigate(value)} sx={{ minHeight: 0 }}>
                         {navItems.map((item) => (
                             <Tab key={item.path} label={item.label} value={item.path} sx={{ minHeight: 0, py: 1 }} />

@@ -1,6 +1,5 @@
 import type { Transaction } from "../types/Transaction";
 import type { Category } from "../types/Category";
-import type { CategoryBudget } from "../types/Budget";
 import type { Locale } from "../store/localeStore";
 import { calculateTotalSpent } from "./budget";
 import { getCurrentMonth, filterByMonth } from "../utils/dates";
@@ -34,7 +33,6 @@ function splitEmoji(label: string): { emoji: string; name: string } {
 export function generateInsights(
     transactions: Transaction[],
     categories: Category[],
-    budgets: Record<string, CategoryBudget>,
     locale: Locale
 ): string[] {
     if (transactions.length === 0) return [];
@@ -44,9 +42,11 @@ export function generateInsights(
     const today = new Date();
     const currentMonth = getCurrentMonth();
     const previousMonth = shiftMonth(currentMonth, -1);
+    const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
+    const computableTransactions = transactions.filter((tx) => !noComputableValues.has(tx.category));
 
-    const currentSpent = calculateTotalSpent(filterByMonth(transactions, currentMonth), budgets);
-    const previousSpent = calculateTotalSpent(filterByMonth(transactions, previousMonth), budgets);
+    const currentSpent = calculateTotalSpent(filterByMonth(computableTransactions, currentMonth));
+    const previousSpent = calculateTotalSpent(filterByMonth(computableTransactions, previousMonth));
 
     if (previousSpent > 0) {
         const changePct = ((currentSpent - previousSpent) / previousSpent) * 100;
@@ -64,8 +64,8 @@ export function generateInsights(
     const historyStart = new Date(earliestDate);
 
     for (const cat of categories) {
-        // Categories that never represent an expense (income/internal transfers only)
-        if (cat.noComputable || cat.value === "transferencia") continue;
+        // Categories that never represent an expense
+        if (cat.noComputable) continue;
 
         const lastPurchaseDate = transactions
             .filter((tx) => tx.category === cat.value && tx.amount < 0)

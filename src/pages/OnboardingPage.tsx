@@ -28,8 +28,6 @@ import { getCategoryLabel } from "../i18n/categoryTranslations";
 import type { BudgetPeriod, CategoryBudget } from "../types/Budget";
 import type { Category } from "../types/Category";
 
-const EXCLUDED_FROM_BUDGET = ["transferencia"];
-
 function slugify(label: string): string {
     return label
         .normalize("NFD")
@@ -45,7 +43,7 @@ export default function OnboardingPage() {
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const [step, setStep] = useState(0);
 
-    const { categories, categoryBudgets, setCategories, setCategoryBudgets, completeOnboarding } = useSettingsStore();
+    const { categories, setCategories, setCategoryBudgets, completeOnboarding } = useSettingsStore();
     const { goals, addGoal, updateGoalAmount, updateGoalName, updateGoalTarget, removeGoal } = useFinanceStore();
 
     const steps = [t.onboardingStepCategories, t.onboardingStepBudgets, t.onboardingStepGoals, t.onboardingStepImport];
@@ -72,7 +70,6 @@ export default function OnboardingPage() {
                         <BudgetsStep
                             uid={uid}
                             categories={categories}
-                            budgets={categoryBudgets}
                             setCategoryBudgets={setCategoryBudgets}
                         />
                     )}
@@ -158,6 +155,10 @@ function CategoriesStep({ uid, categories, setCategories }: {
         setCategories(uid, categories.map((c) => (c.value === value ? { ...c, noComputable } : c)));
     }
 
+    function handleToggleIncomeOnly(value: string, incomeOnly: boolean) {
+        setCategories(uid, categories.map((c) => (c.value === value ? { ...c, incomeOnly } : c)));
+    }
+
     return (
         <Stack spacing={1.5}>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>{t.onboardingCategoriesHint}</Typography>
@@ -186,6 +187,17 @@ function CategoriesStep({ uid, categories, setCategories }: {
                         }
                         label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
                     />
+                    <FormControlLabel
+                        sx={{ ml: 0.5 }}
+                        control={
+                            <Checkbox
+                                size="small"
+                                checked={!!cat.incomeOnly}
+                                onChange={(e) => handleToggleIncomeOnly(cat.value, e.target.checked)}
+                            />
+                        }
+                        label={<Typography variant="caption" color="text.secondary">{t.incomeOnlyLabel}</Typography>}
+                    />
                 </Box>
             ))}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
@@ -205,22 +217,24 @@ function CategoriesStep({ uid, categories, setCategories }: {
     );
 }
 
-function BudgetsStep({ uid, categories, budgets, setCategoryBudgets }: {
+function BudgetsStep({ uid, categories, setCategoryBudgets }: {
     uid: string;
     categories: Category[];
-    budgets: Record<string, CategoryBudget>;
     setCategoryBudgets: (uid: string, budgets: Record<string, CategoryBudget>) => Promise<void>;
 }) {
     const { t, locale } = useTranslation();
-    const editableCategories = categories.filter((c) => !EXCLUDED_FROM_BUDGET.includes(c.value) && !c.noComputable);
+    const editableCategories = categories.filter((c) => !c.noComputable && !c.incomeOnly);
+    // Onboarding always starts blank — even for categories that already have a
+    // baked-in default budget — so the user enters her own numbers instead of
+    // silently inheriting values she never chose.
     const [amountDraft, setAmountDraft] = useState<Record<string, string>>(
-        Object.fromEntries(editableCategories.map((c) => [c.value, String(budgets[c.value]?.amount ?? "")])),
+        Object.fromEntries(editableCategories.map((c) => [c.value, ""])),
     );
     const [periodDraft, setPeriodDraft] = useState<Record<string, BudgetPeriod>>(
-        Object.fromEntries(editableCategories.map((c) => [c.value, budgets[c.value]?.period ?? "monthly"])),
+        Object.fromEntries(editableCategories.map((c) => [c.value, "monthly" as BudgetPeriod])),
     );
     const [intervalDraft, setIntervalDraft] = useState<Record<string, string>>(
-        Object.fromEntries(editableCategories.map((c) => [c.value, String(budgets[c.value]?.intervalMonths ?? 3)])),
+        Object.fromEntries(editableCategories.map((c) => [c.value, "3"])),
     );
 
     function persist(nextAmount: Record<string, string>, nextPeriod: Record<string, BudgetPeriod>, nextInterval: Record<string, string>) {
@@ -238,6 +252,15 @@ function BudgetsStep({ uid, categories, budgets, setCategoryBudgets }: {
         }
         setCategoryBudgets(uid, parsed);
     }
+
+    // Explicitly save an empty budget the moment this step is reached, so
+    // skipping it (never focusing a field) doesn't leave categoryBudgets
+    // unset in Firestore — an unset field falls back to the app's hardcoded
+    // defaults, silently reintroducing amounts the user never chose.
+    useEffect(() => {
+        persist(amountDraft, periodDraft, intervalDraft);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <Stack spacing={2}>

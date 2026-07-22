@@ -1,21 +1,25 @@
-import { Card, Grid, Typography } from "@mui/material";
+import { useState } from "react";
+import { Card, Grid, Typography, Button } from "@mui/material";
 import Layout from "../components/Layout";
 import TransactionsTable from "../components/transactions/TransactionsTable";
 import CategoryPieChart from "../components/transactions/CategoryPieChart";
+import DateRangeFilter from "../components/transactions/DateRangeFilter";
+import AddTransactionDialog from "../components/transactions/AddTransactionDialog";
 import { useFinanceStore } from "../store/financeStore";
 import { useUIStore } from "../store/uiStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useAuthStore } from "../store/authStore";
 import { useTranslation } from "../i18n/useTranslation";
-import { getAvailableMonths, filterByMonth } from "../utils/dates";
+import { filterByDateFilter } from "../utils/dates";
 import { formatCurrency } from "../utils/currency";
 import { accent } from "../theme/colors";
 
 export default function IncomesPage() {
     const { t } = useTranslation();
     const uid = useAuthStore((s) => s.user?.uid ?? "");
-    const { transactions, hasLoaded, resolveCategory, updateNotes, splitTransaction } = useFinanceStore();
-    const { selectedMonth, setSelectedMonth } = useUIStore();
+    const [addOpen, setAddOpen] = useState(false);
+    const { transactions, hasLoaded, resolveCategory, updateNotes, splitTransaction, removeTransaction, addTransaction } = useFinanceStore();
+    const { dateFilter, setDateFilter } = useUIStore();
     const { categories } = useSettingsStore();
 
     if (!hasLoaded) {
@@ -24,8 +28,7 @@ export default function IncomesPage() {
 
     const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
     const incomes = transactions.filter((tx) => tx.amount > 0 && !noComputableValues.has(tx.category));
-    const months = getAvailableMonths(incomes);
-    const visible = selectedMonth === "all" ? incomes : filterByMonth(incomes, selectedMonth);
+    const visible = filterByDateFilter(incomes, dateFilter);
     const total = visible.reduce((sum, tx) => sum + tx.amount, 0);
 
     return (
@@ -44,17 +47,9 @@ export default function IncomesPage() {
                 </Grid>
             </Grid>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16, flexShrink: 0 }}>
-                <select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    style={{ padding: 8 }}
-                >
-                    <option value="all">{t.allMonths}</option>
-                    {months.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                    ))}
-                </select>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16, flexShrink: 0, flexWrap: "wrap" }}>
+                <DateRangeFilter transactions={incomes} value={dateFilter} onChange={setDateFilter} />
+                <Button variant="outlined" onClick={() => setAddOpen(true)}>{t.addTransactionButton}</Button>
             </div>
 
             <div style={{ flex: 1, minHeight: 320 }}>
@@ -64,8 +59,17 @@ export default function IncomesPage() {
                     onCategoryChange={(id, category) => resolveCategory(uid, id, category)}
                     onNotesChange={(id, notes) => updateNotes(uid, id, notes)}
                     onSplit={(id, portions) => splitTransaction(uid, id, portions)}
+                    onDelete={(id) => removeTransaction(uid, id)}
                 />
             </div>
+
+            <AddTransactionDialog
+                open={addOpen}
+                categories={categories}
+                fixedType="income"
+                onClose={() => setAddOpen(false)}
+                onConfirm={(transaction) => addTransaction(uid, transaction)}
+            />
         </Layout>
     );
 }

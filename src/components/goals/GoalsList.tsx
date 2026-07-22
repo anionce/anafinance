@@ -127,6 +127,7 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                             size="small"
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
+                            onBlur={saveName}
                             onKeyDown={(e) => e.key === "Enter" && saveName()}
                             autoFocus
                         />
@@ -136,9 +137,9 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                     </Box>
                 ) : (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <Typography variant="h6">{goal.name}</Typography>
+                        <Typography variant="h6" sx={{ lineHeight: 1 }}>{goal.name}</Typography>
                         <IconButton size="small" onClick={() => { setNameInput(goal.name); setEditingName(true); }}>
-                            <EditIcon sx={{ fontSize: 16, opacity: 0.75 }} />
+                            <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
                     </Box>
                 )}
