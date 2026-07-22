@@ -88,6 +88,11 @@ export interface TranslationSet {
     splitAllAssignedLabel: string;
     splitConfirm: string;
 
+    addTransactionButton: string;
+    addTransactionDialogTitle: string;
+    transactionTypeExpense: string;
+    transactionTypeIncome: string;
+
     appName: string;
     signInTitle: string;
     signInSubtitle: string;
@@ -188,7 +193,7 @@ export const translations: Record<Locale, TranslationSet> = {
         weekly: "Semanal",
         monthly: "Mensual",
         bimonthly: "Bimestral",
-        everyNMonths: "Cada X meses",
+        everyNMonths: "Personalizado",
         everyNMonthsChip: (n) => `Cada ${n} meses`,
         yearly: "Anual",
         intervalMonthsLabel: "Cada cuántos meses",
@@ -209,6 +214,11 @@ export const translations: Record<Locale, TranslationSet> = {
         splitRemainingLabel: (amount) => `Quedan ${amount} por asignar`,
         splitAllAssignedLabel: "Todo el importe está asignado",
         splitConfirm: "Dividir",
+
+        addTransactionButton: "Añadir movimiento",
+        addTransactionDialogTitle: "Añadir movimiento",
+        transactionTypeExpense: "Gasto",
+        transactionTypeIncome: "Ingreso",
 
         appName: "Ana Finance",
         signInTitle: "Bienvenido a Ana Finance",
@@ -308,7 +318,7 @@ export const translations: Record<Locale, TranslationSet> = {
         weekly: "Weekly",
         monthly: "Monthly",
         bimonthly: "Bimonthly",
-        everyNMonths: "Every X months",
+        everyNMonths: "Custom",
         everyNMonthsChip: (n) => `Every ${n} months`,
         yearly: "Yearly",
         intervalMonthsLabel: "Every how many months",
@@ -329,6 +339,11 @@ export const translations: Record<Locale, TranslationSet> = {
         splitRemainingLabel: (amount) => `${amount} left to assign`,
         splitAllAssignedLabel: "The full amount is assigned",
         splitConfirm: "Split",
+
+        addTransactionButton: "Add transaction",
+        addTransactionDialogTitle: "Add transaction",
+        transactionTypeExpense: "Expense",
+        transactionTypeIncome: "Income",
 
         appName: "Ana Finance",
         signInTitle: "Welcome to Ana Finance",
