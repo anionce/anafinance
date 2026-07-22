@@ -354,8 +354,8 @@ export const translations: Record<Locale, TranslationSet> = {
         yearly: "Yearly",
         intervalMonthsLabel: "Every how many months",
 
-        noComputableLabel: "Not counted (doesn't count as expense or income)",
-        incomeOnlyLabel: "Income only (excluded from the budget)",
+        noComputableLabel: "Not counted",
+        incomeOnlyLabel: "Income only",
 
         manageRulesTooltip: "Categorization rules",
         rulesDialogTitle: "Categorization rules",
