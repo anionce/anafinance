@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
-import { Container, Tabs, Tab, Box, Typography, Avatar, IconButton, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import {
+    Container, Tabs, Tab, Box, Typography, Avatar, IconButton, ToggleButtonGroup, ToggleButton,
+    BottomNavigation, BottomNavigationAction, Paper,
+} from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
+import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
+import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReviewDialog from "./transactions/ReviewDialog";
 import Logo from "./Logo";
@@ -32,10 +39,10 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const { t, locale, setLocale } = useTranslation();
 
     const navItems = [
-        { label: t.navDashboard, path: "/" },
-        { label: t.navExpenses, path: "/expenses" },
-        { label: t.navIncome, path: "/income" },
-        { label: t.navGoals, path: "/goals" },
+        { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
+        { label: t.navExpenses, path: "/expenses", icon: <ShoppingBagOutlinedIcon /> },
+        { label: t.navIncome, path: "/income", icon: <TrendingUpOutlinedIcon /> },
+        { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
     ];
 
     const pending = transactions.filter((tx) => tx.category === "");
@@ -47,19 +54,22 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
         <Container
             maxWidth="lg"
             sx={contained
-                ? { py: 3, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }
-                : { py: 3, minHeight: "100vh", display: "flex", flexDirection: "column" }
+                ? { py: 3, pb: { xs: 9, sm: 3 }, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }
+                : { py: 3, pb: { xs: 9, sm: 3 }, minHeight: "100vh", display: "flex", flexDirection: "column" }
             }
         >
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1.5, borderBottom: 1, borderColor: "divider", mb: 2, flexShrink: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 2, sm: 5 } }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
+                        onClick={() => navigate("/")}
+                        sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer" }}
+                    >
                         <Logo size={26} />
                         <Typography variant="h6" sx={{ color: "primary.main", whiteSpace: "nowrap", lineHeight: 1 }}>
                             {t.appName}
                         </Typography>
                     </Box>
-                    <Tabs value={currentTab} onChange={(_, value) => navigate(value)} sx={{ minHeight: 0 }}>
+                    <Tabs value={currentTab} onChange={(_, value) => navigate(value)} sx={{ minHeight: 0, display: { xs: "none", sm: "flex" } }}>
                         {navItems.map((item) => (
                             <Tab key={item.path} label={item.label} value={item.path} sx={{ minHeight: 0, py: 1 }} />
                         ))}
@@ -114,6 +124,22 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 onResolve={(id, category) => resolveCategory(uid, id, category)}
                 onFinish={() => {}}
             />
+            <Paper
+                elevation={0}
+                sx={{
+                    display: { xs: "block", sm: "none" },
+                    position: "fixed", bottom: 0, left: 0, right: 0,
+                    borderTop: 1, borderColor: "divider",
+                    borderRadius: 0,
+                    zIndex: 1100,
+                }}
+            >
+                <BottomNavigation value={currentTab} onChange={(_, value) => navigate(value)} showLabels>
+                    {navItems.map((item) => (
+                        <BottomNavigationAction key={item.path} label={item.label} value={item.path} icon={item.icon} />
+                    ))}
+                </BottomNavigation>
+            </Paper>
         </Container>
     );
 }
