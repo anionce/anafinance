@@ -20,6 +20,7 @@ interface Props {
     onNotesChange: (id: string, notes: string) => void;
     onSplit: (id: string, portions: { category: string; amount: number }[]) => void;
     onDelete: (id: string) => void;
+    onCategoryClick?: (category: string) => void;
 }
 
 function formatRowDate(iso: string, locale: string): string {
@@ -29,7 +30,7 @@ function formatRowDate(iso: string, locale: string): string {
     return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
-export default function TransactionsTable({ transactions, categories, onCategoryChange, onNotesChange, onSplit, onDelete }: Props) {
+export default function TransactionsTable({ transactions, categories, onCategoryChange, onNotesChange, onSplit, onDelete, onCategoryClick }: Props) {
     const { t, locale } = useTranslation();
     const apiRef = useGridApiRef();
     const [splitting, setSplitting] = useState<Transaction | null>(null);
@@ -103,7 +104,11 @@ export default function TransactionsTable({ transactions, categories, onCategory
                                 label={getCategoryLabel(found, locale)}
                                 size="small"
                                 variant="outlined"
-                                sx={{ bgcolor: "background.default", borderColor: "divider", fontWeight: 500 }}
+                                onClick={onCategoryClick ? (e) => { e.stopPropagation(); onCategoryClick(found.value); } : undefined}
+                                sx={{
+                                    bgcolor: "background.default", borderColor: "divider", fontWeight: 500,
+                                    cursor: onCategoryClick ? "pointer" : "default",
+                                }}
                             />
                         ) : (
                             <Typography variant="body2" sx={{ color: "text.disabled" }}>{t.noCategoryPlaceholder}</Typography>

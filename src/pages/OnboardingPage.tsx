@@ -15,9 +15,11 @@ import {
     MenuItem,
     Checkbox,
     FormControlLabel,
+    Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import GoalsList from "../components/goals/GoalsList";
 import ImportExcelFlow from "../components/transactions/ImportExcelFlow";
 import { useAuthStore } from "../store/authStore";
@@ -134,7 +136,7 @@ function CategoriesStep({ uid, categories, setCategories }: {
         const original = categories.find((c) => c.value === value);
         const originalDisplay = original ? getCategoryLabel(original, locale) : undefined;
         if (label && label !== originalDisplay) {
-            setCategories(uid, categories.map((c) => (c.value === value ? { ...c, label } : c)));
+            setCategories(uid, categories.map((c) => (c.value === value ? { ...c, label, customLabel: true } : c)));
         }
     }
 
@@ -176,28 +178,38 @@ function CategoriesStep({ uid, categories, setCategories }: {
                             <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
                         </IconButton>
                     </Box>
-                    <FormControlLabel
-                        sx={{ ml: 0.5 }}
-                        control={
-                            <Checkbox
-                                size="small"
-                                checked={!!cat.noComputable}
-                                onChange={(e) => handleToggleNoComputable(cat.value, e.target.checked)}
-                            />
-                        }
-                        label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
-                    />
-                    <FormControlLabel
-                        sx={{ ml: 0.5 }}
-                        control={
-                            <Checkbox
-                                size="small"
-                                checked={!!cat.incomeOnly}
-                                onChange={(e) => handleToggleIncomeOnly(cat.value, e.target.checked)}
-                            />
-                        }
-                        label={<Typography variant="caption" color="text.secondary">{t.incomeOnlyLabel}</Typography>}
-                    />
+                    <Box sx={{ display: "flex", alignItems: "center", ml: 0.5 }}>
+                        <FormControlLabel
+                            sx={{ mr: 0.5 }}
+                            control={
+                                <Checkbox
+                                    size="small"
+                                    checked={!!cat.noComputable}
+                                    onChange={(e) => handleToggleNoComputable(cat.value, e.target.checked)}
+                                />
+                            }
+                            label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
+                        />
+                        <Tooltip title={t.noComputableInfo} arrow placement="top">
+                            <InfoOutlinedIcon sx={{ fontSize: 15, opacity: 0.5, cursor: "help" }} />
+                        </Tooltip>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", ml: 0.5 }}>
+                        <FormControlLabel
+                            sx={{ mr: 0.5 }}
+                            control={
+                                <Checkbox
+                                    size="small"
+                                    checked={!!cat.incomeOnly}
+                                    onChange={(e) => handleToggleIncomeOnly(cat.value, e.target.checked)}
+                                />
+                            }
+                            label={<Typography variant="caption" color="text.secondary">{t.incomeOnlyLabel}</Typography>}
+                        />
+                        <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
+                            <InfoOutlinedIcon sx={{ fontSize: 15, opacity: 0.5, cursor: "help" }} />
+                        </Tooltip>
+                    </Box>
                 </Box>
             ))}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1.5, borderTop: 1, borderColor: "divider" }}>

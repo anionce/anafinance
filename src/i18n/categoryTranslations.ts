@@ -25,5 +25,6 @@ const CATEGORY_LABEL_TRANSLATIONS: Record<string, Record<Locale, string>> = {
 };
 
 export function getCategoryLabel(category: Category, locale: Locale): string {
+    if (category.customLabel) return category.label;
     return CATEGORY_LABEL_TRANSLATIONS[category.value]?.[locale] ?? category.label;
 }

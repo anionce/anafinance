@@ -12,9 +12,11 @@ import {
     Typography,
     Checkbox,
     FormControlLabel,
+    Tooltip,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddIcon from "@mui/icons-material/Add";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
@@ -88,28 +90,38 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
                                     <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
                                 </IconButton>
                             </Box>
-                            <FormControlLabel
-                                sx={{ ml: 0.5 }}
-                                control={
-                                    <Checkbox
-                                        size="small"
-                                        checked={!!cat.noComputable}
-                                        onChange={(e) => onToggleNoComputable(cat.value, e.target.checked)}
-                                    />
-                                }
-                                label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
-                            />
-                            <FormControlLabel
-                                sx={{ ml: 0.5 }}
-                                control={
-                                    <Checkbox
-                                        size="small"
-                                        checked={!!cat.incomeOnly}
-                                        onChange={(e) => onToggleIncomeOnly(cat.value, e.target.checked)}
-                                    />
-                                }
-                                label={<Typography variant="caption" color="text.secondary">{t.incomeOnlyLabel}</Typography>}
-                            />
+                            <Box sx={{ display: "flex", alignItems: "center", ml: 0.5 }}>
+                                <FormControlLabel
+                                    sx={{ mr: 0.5 }}
+                                    control={
+                                        <Checkbox
+                                            size="small"
+                                            checked={!!cat.noComputable}
+                                            onChange={(e) => onToggleNoComputable(cat.value, e.target.checked)}
+                                        />
+                                    }
+                                    label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
+                                />
+                                <Tooltip title={t.noComputableInfo} arrow placement="top">
+                                    <InfoOutlinedIcon sx={{ fontSize: 15, opacity: 0.5, cursor: "help" }} />
+                                </Tooltip>
+                            </Box>
+                            <Box sx={{ display: "flex", alignItems: "center", ml: 0.5 }}>
+                                <FormControlLabel
+                                    sx={{ mr: 0.5 }}
+                                    control={
+                                        <Checkbox
+                                            size="small"
+                                            checked={!!cat.incomeOnly}
+                                            onChange={(e) => onToggleIncomeOnly(cat.value, e.target.checked)}
+                                        />
+                                    }
+                                    label={<Typography variant="caption" color="text.secondary">{t.incomeOnlyLabel}</Typography>}
+                                />
+                                <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
+                                    <InfoOutlinedIcon sx={{ fontSize: 15, opacity: 0.5, cursor: "help" }} />
+                                </Tooltip>
+                            </Box>
                         </Box>
                     ))}
 
