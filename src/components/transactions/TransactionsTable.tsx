@@ -88,7 +88,7 @@ export default function TransactionsTable({ transactions, categories, onCategory
                 return (
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: value < 0 ? accent.budget : accent.income }}>
-                            {value < 0 ? "−" : "+"}{formatCurrency(Math.abs(value))}
+                            {value < 0 ? "−" : "+"}{formatCurrency(Math.abs(value), 2)}
                         </Typography>
                         <IconButton
                             size="small"
