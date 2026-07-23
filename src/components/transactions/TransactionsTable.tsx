@@ -6,9 +6,13 @@ import type { Category } from '../../types/Category';
 import EditIcon from '@mui/icons-material/Edit';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import { Box, IconButton, Typography, Chip } from '@mui/material';
+import NoteAltOutlinedIcon from '@mui/icons-material/NoteAltOutlined';
+import {
+    Box, IconButton, Typography, Chip, Stack, Menu, MenuItem, TextField, useMediaQuery, useTheme,
+} from '@mui/material';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getCategoryLabel } from '../../i18n/categoryTranslations';
+import type { Locale } from '../../store/localeStore';
 import { formatCurrency } from '../../utils/currency';
 import { accent } from '../../theme/colors';
 import SplitTransactionDialog from './SplitTransactionDialog';
@@ -32,6 +36,8 @@ function formatRowDate(iso: string, locale: string): string {
 
 export default function TransactionsTable({ transactions, categories, onCategoryChange, onNotesChange, onSplit, onDelete, onCategoryClick }: Props) {
     const { t, locale } = useTranslation();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const apiRef = useGridApiRef();
     const [splitting, setSplitting] = useState<Transaction | null>(null);
 
@@ -43,6 +49,39 @@ export default function TransactionsTable({ transactions, categories, onCategory
         value: c.value,
         label: getCategoryLabel(c, locale),
     }));
+
+    if (isMobile) {
+        return (
+            <>
+                <Stack spacing={1}>
+                    {transactions.map((tx) => (
+                        <MobileTransactionCard
+                            key={tx.id}
+                            tx={tx}
+                            categories={categories}
+                            locale={locale}
+                            t={t}
+                            onCategoryChange={onCategoryChange}
+                            onNotesChange={onNotesChange}
+                            onCategoryClick={onCategoryClick}
+                            onSplitClick={() => setSplitting(tx)}
+                            onDelete={() => onDelete(tx.id)}
+                        />
+                    ))}
+                </Stack>
+                <SplitTransactionDialog
+                    open={!!splitting}
+                    transaction={splitting}
+                    categories={categories}
+                    onClose={() => setSplitting(null)}
+                    onConfirm={(portions) => {
+                        if (splitting) onSplit(splitting.id, portions);
+                        setSplitting(null);
+                    }}
+                />
+            </>
+        );
+    }
 
     const columns: GridColDef[] = [
         {
@@ -206,5 +245,101 @@ export default function TransactionsTable({ transactions, categories, onCategory
                 }}
             />
         </div>
+    );
+}
+
+function MobileTransactionCard({ tx, categories, locale, t, onCategoryChange, onNotesChange, onCategoryClick, onSplitClick, onDelete }: {
+    tx: Transaction;
+    categories: Category[];
+    locale: Locale;
+    t: ReturnType<typeof useTranslation>["t"];
+    onCategoryChange: (id: string, category: string) => void;
+    onNotesChange: (id: string, notes: string) => void;
+    onCategoryClick?: (category: string) => void;
+    onSplitClick: () => void;
+    onDelete: () => void;
+}) {
+    const [categoryAnchor, setCategoryAnchor] = useState<HTMLElement | null>(null);
+    const [editingNotes, setEditingNotes] = useState(false);
+    const [notesDraft, setNotesDraft] = useState(tx.notes ?? "");
+    const found = categories.find((c) => c.value === tx.category);
+
+    function saveNotes() {
+        if (notesDraft !== (tx.notes ?? "")) onNotesChange(tx.id, notesDraft);
+        setEditingNotes(false);
+    }
+
+    return (
+        <Box sx={{ p: 1.5, borderRadius: "12px", border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, flex: 1, minWidth: 0 }}>
+                    {tx.description}
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap", color: tx.amount < 0 ? accent.budget : accent.income }}>
+                    {tx.amount < 0 ? "−" : "+"}{formatCurrency(Math.abs(tx.amount))}
+                </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mt: 0.75 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
+                    {formatRowDate(tx.date, locale)}
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, minWidth: 0 }}>
+                    {found ? (
+                        <Chip
+                            label={getCategoryLabel(found, locale)}
+                            size="small"
+                            variant="outlined"
+                            onClick={onCategoryClick ? () => onCategoryClick(found.value) : undefined}
+                            sx={{ bgcolor: "background.default", borderColor: "divider", fontWeight: 500, cursor: onCategoryClick ? "pointer" : "default" }}
+                        />
+                    ) : (
+                        <Typography variant="caption" sx={{ color: "text.disabled" }}>{t.noCategoryPlaceholder}</Typography>
+                    )}
+                    <IconButton size="small" onClick={(e) => setCategoryAnchor(e.currentTarget)}>
+                        <EditIcon sx={{ fontSize: 15, opacity: 0.75 }} />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => setEditingNotes((v) => !v)}>
+                        <NoteAltOutlinedIcon sx={{ fontSize: 15, opacity: 0.75 }} />
+                    </IconButton>
+                    <IconButton size="small" title={t.splitTooltip} onClick={onSplitClick}>
+                        <CallSplitIcon sx={{ fontSize: 15, opacity: 0.75 }} />
+                    </IconButton>
+                    <IconButton size="small" title={t.deleteTransactionTooltip} onClick={onDelete}>
+                        <DeleteOutlineIcon sx={{ fontSize: 15, opacity: 0.6 }} />
+                    </IconButton>
+                </Box>
+            </Box>
+
+            <Menu anchorEl={categoryAnchor} open={!!categoryAnchor} onClose={() => setCategoryAnchor(null)}>
+                {categories.map((c) => (
+                    <MenuItem
+                        key={c.value}
+                        selected={c.value === tx.category}
+                        onClick={() => { onCategoryChange(tx.id, c.value); setCategoryAnchor(null); }}
+                    >
+                        {getCategoryLabel(c, locale)}
+                    </MenuItem>
+                ))}
+            </Menu>
+
+            {editingNotes ? (
+                <TextField
+                    size="small"
+                    fullWidth
+                    autoFocus
+                    placeholder={t.colNotes}
+                    value={notesDraft}
+                    onChange={(e) => setNotesDraft(e.target.value)}
+                    onBlur={saveNotes}
+                    onKeyDown={(e) => e.key === "Enter" && saveNotes()}
+                    sx={{ mt: 1 }}
+                />
+            ) : tx.notes ? (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: 0.75 }} onClick={() => setEditingNotes(true)}>
+                    {tx.notes}
+                </Typography>
+            ) : null}
+        </Box>
     );
 }

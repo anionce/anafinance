@@ -7,6 +7,8 @@ import {
     DialogTitle,
     DialogContent,
     Stack,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -49,6 +51,8 @@ function monthLabel(month: string, locale: string): string {
 
 export default function CalendarView({ transactions, categories }: Props) {
     const { t, locale } = useTranslation();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [viewMonth, setViewMonth] = useState(currentMonth());
     const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
@@ -115,7 +119,7 @@ export default function CalendarView({ transactions, categories }: Props) {
                                 key={i}
                                 onClick={() => dateStr && dayTransactions.length > 0 && setSelectedDay(dateStr)}
                                 sx={{
-                                    minHeight: 96,
+                                    minHeight: isMobile ? 52 : 96,
                                     p: 0.75,
                                     borderTop: "1px solid",
                                     borderLeft: "1px solid",
@@ -125,7 +129,7 @@ export default function CalendarView({ transactions, categories }: Props) {
                                     "&:hover": dateStr && dayTransactions.length > 0 ? { bgcolor: "background.default" } : undefined,
                                 }}
                             >
-                                {dateStr && (
+                {dateStr && (
                                     <>
                                         <Typography
                                             variant="caption"
@@ -140,24 +144,37 @@ export default function CalendarView({ transactions, categories }: Props) {
                                         >
                                             {Number(dateStr.slice(-2))}
                                         </Typography>
-                                        <Stack spacing={0.25} sx={{ mt: 0.5 }}>
-                                            {visible.map((tx) => (
-                                                <Box key={tx.id} sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
-                                                    <Box sx={{
-                                                        width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                                                        bgcolor: tx.amount < 0 ? accent.budget : accent.income,
-                                                    }} />
-                                                    <Typography variant="caption" noWrap sx={{ fontSize: "0.68rem", color: "text.primary" }}>
-                                                        {tx.description}
-                                                    </Typography>
+                                        {isMobile ? (
+                                            dayTransactions.length > 0 && (
+                                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.375, mt: 0.5 }}>
+                                                    {dayTransactions.slice(0, 6).map((tx) => (
+                                                        <Box key={tx.id} sx={{
+                                                            width: 5, height: 5, borderRadius: "50%", flexShrink: 0,
+                                                            bgcolor: tx.amount < 0 ? accent.budget : accent.income,
+                                                        }} />
+                                                    ))}
                                                 </Box>
-                                            ))}
-                                            {extra > 0 && (
-                                                <Typography variant="caption" sx={{ fontSize: "0.68rem", color: "text.disabled" }}>
-                                                    {t.calendarMoreCount(extra)}
-                                                </Typography>
-                                            )}
-                                        </Stack>
+                                            )
+                                        ) : (
+                                            <Stack spacing={0.25} sx={{ mt: 0.5 }}>
+                                                {visible.map((tx) => (
+                                                    <Box key={tx.id} sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+                                                        <Box sx={{
+                                                            width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                                                            bgcolor: tx.amount < 0 ? accent.budget : accent.income,
+                                                        }} />
+                                                        <Typography variant="caption" noWrap sx={{ fontSize: "0.68rem", color: "text.primary" }}>
+                                                            {tx.description}
+                                                        </Typography>
+                                                    </Box>
+                                                ))}
+                                                {extra > 0 && (
+                                                    <Typography variant="caption" sx={{ fontSize: "0.68rem", color: "text.disabled" }}>
+                                                        {t.calendarMoreCount(extra)}
+                                                    </Typography>
+                                                )}
+                                            </Stack>
+                                        )}
                                     </>
                                 )}
                             </Box>
