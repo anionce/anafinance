@@ -10,6 +10,7 @@ import {
     ToggleButtonGroup,
     Box,
 } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import type { Category } from "../../types/Category";
 import type { Transaction } from "../../types/Transaction";
 import { formatCurrency } from "../../utils/currency";
@@ -64,8 +65,13 @@ export default function ReviewDialog({ pending, categories, onResolve, onFinish 
                     onChange={(_, value) => setSelected(value)}
                 >
                     {categories.map((cat) => (
-                        <ToggleButton key={cat.value} value={cat.value} sx={{ justifyContent: "flex-start" }}>
+                        <ToggleButton
+                            key={cat.value}
+                            value={cat.value}
+                            sx={{ justifyContent: "space-between", display: "flex" }}
+                        >
                             {getCategoryLabel(cat, locale)}
+                            {selected === cat.value && <CheckCircleIcon sx={{ fontSize: 20 }} />}
                         </ToggleButton>
                     ))}
                 </ToggleButtonGroup>

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Snackbar, Alert } from "@mui/material";
+import { Snackbar, Alert, Box, Tooltip } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ImportExcelButton from "./ImportExcelButton";
 import ImportMappingDialog from "./ImportMappingDialog";
 import { UnrecognizedBankFormatError } from "../../services/excelParser";
@@ -19,6 +20,7 @@ export default function ImportExcelFlow({ uid }: Props) {
     const importFileWithMapping = useFinanceStore((s) => s.importFileWithMapping);
     const [pendingRows, setPendingRows] = useState<unknown[][] | null>(null);
     const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [importing, setImporting] = useState(false);
 
     function reportAddedCount(addedCount: number) {
         setFeedback(
@@ -29,6 +31,7 @@ export default function ImportExcelFlow({ uid }: Props) {
     }
 
     async function handleImport(file: File) {
+        setImporting(true);
         try {
             const addedCount = await importFile(uid, file);
             reportAddedCount(addedCount);
@@ -39,24 +42,34 @@ export default function ImportExcelFlow({ uid }: Props) {
                 console.error(err);
                 setFeedback({ severity: "error", message: t.importErrorMessage });
             }
+        } finally {
+            setImporting(false);
         }
     }
 
     async function handleConfirmMapping(mapping: ColumnMapping) {
         if (!pendingRows) return;
+        setImporting(true);
         try {
             const addedCount = await importFileWithMapping(uid, pendingRows, mapping);
             reportAddedCount(addedCount);
         } catch (err) {
             console.error(err);
             setFeedback({ severity: "error", message: t.importErrorMessage });
+        } finally {
+            setImporting(false);
         }
         setPendingRows(null);
     }
 
     return (
         <>
-            <ImportExcelButton onImport={handleImport} />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <ImportExcelButton onImport={handleImport} loading={importing} />
+                <Tooltip title={t.importHelpInfo} arrow placement="top">
+                    <InfoOutlinedIcon sx={{ fontSize: 18, opacity: 0.5, cursor: "help" }} />
+                </Tooltip>
+            </Box>
             {pendingRows && (
                 <ImportMappingDialog
                     open

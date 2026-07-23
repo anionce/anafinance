@@ -52,7 +52,7 @@ export default function DashboardPage() {
 
     return (
         <Layout>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                 <Button variant="outlined" onClick={() => setAddTransactionOpen(true)}>
                     {t.addTransactionButton}
                 </Button>
