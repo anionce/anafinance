@@ -138,6 +138,7 @@ export interface TranslationSet {
     mappingTitle: string;
     mappingHint: string;
     mappingDateColumn: string;
+    mappingDateColumnHint: string;
     mappingDescriptionColumn: string;
     mappingAmountColumn: string;
     mappingNotACurrency: string;
@@ -301,6 +302,7 @@ export const translations: Record<Locale, TranslationSet> = {
         mappingTitle: "No reconocemos este formato de Excel",
         mappingHint: "Parece que no es de BBVA. Dinos qué columna es cada cosa y lo importamos igual.",
         mappingDateColumn: "Columna de fecha",
+        mappingDateColumnHint: "Si tu banco muestra dos columnas de fecha (p. ej. \"Fecha\" y \"F. Valor\"), elige \"Fecha\" — es la fecha real de la operación; \"F. Valor\" es cuándo se liquida y puede variar por fines de semana o festivos.",
         mappingDescriptionColumn: "Columna de concepto",
         mappingAmountColumn: "Columna de importe",
         mappingNotACurrency: "Alguna fila no tiene un importe numérico válido y se ignorará.",
@@ -322,7 +324,7 @@ export const translations: Record<Locale, TranslationSet> = {
         bulkAssignCategoryTitle: "Asignar categoría a los movimientos seleccionados",
 
         importingMessage: "Importando movimientos...",
-        importHelpInfo: "¿Cómo consigo el Excel? En BBVA: entra en la cuenta > Movimientos > pulsa el icono de descarga (⬇) > elige formato Excel y el rango de fechas > descarga el archivo y súbelo aquí.",
+        importHelpInfo: "¿Cómo consigo el Excel? En BBVA: entra en la cuenta > Movimientos > pulsa el icono de descarga (⬇) > elige formato Excel y el rango de fechas > descarga el archivo y súbelo aquí. Si el formato se reconoce automáticamente, usamos la columna \"Fecha\" (fecha de la operación), no \"F. Valor\".",
     },
     en: {
         navDashboard: "Dashboard",
@@ -462,6 +464,7 @@ export const translations: Record<Locale, TranslationSet> = {
         mappingTitle: "We don't recognize this Excel format",
         mappingHint: "This doesn't look like a BBVA export. Tell us which column is which and we'll import it anyway.",
         mappingDateColumn: "Date column",
+        mappingDateColumnHint: "If your bank shows two date columns (e.g. \"Fecha\" and \"F. Valor\"), pick \"Fecha\" — that's the actual transaction date; \"F. Valor\" is the value/settlement date and can shift on weekends or holidays.",
         mappingDescriptionColumn: "Description column",
         mappingAmountColumn: "Amount column",
         mappingNotACurrency: "Some rows don't have a valid numeric amount and will be skipped.",
@@ -483,6 +486,6 @@ export const translations: Record<Locale, TranslationSet> = {
         bulkAssignCategoryTitle: "Assign a category to the selected transactions",
 
         importingMessage: "Importing transactions...",
-        importHelpInfo: "How do I get the Excel file? In BBVA: open your account > Movimientos (Transactions) > tap the download icon (⬇) > choose Excel format and the date range > download the file and upload it here.",
+        importHelpInfo: "How do I get the Excel file? In BBVA: open your account > Movimientos (Transactions) > tap the download icon (⬇) > choose Excel format and the date range > download the file and upload it here. When the format is auto-detected, we use the \"Fecha\" column (transaction date), not \"F. Valor\".",
     },
 };

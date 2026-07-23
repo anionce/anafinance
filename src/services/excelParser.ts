@@ -45,9 +45,20 @@ export function guessHeaderRowIndex(rows: unknown[][]): number {
     return best;
 }
 
+// BBVA's export headers change with the account's display language. Each
+// entry lists the accepted header text (lowercased) per language so the file
+// is still auto-recognized instead of falling back to manual column mapping.
+const BBVA_HEADER_ALIASES = {
+    fecha: ["fecha", "data"],
+    fValor: ["f.valor", "data valor"],
+    concepto: ["concepto", "concepte"],
+    movimiento: ["movimiento", "moviment"],
+    importe: ["importe", "import"],
+};
+
 function detectBbvaMapping(rows: unknown[][]): { headerRowIndex: number; col: Record<string, number> } | null {
     const headerRowIndex = rows.findIndex((row) =>
-        row.some((cell) => typeof cell === "string" && cell.trim().toLowerCase() === "concepto")
+        row.some((cell) => typeof cell === "string" && BBVA_HEADER_ALIASES.concepto.includes(cell.trim().toLowerCase()))
     );
 
     if (headerRowIndex === -1) return null;
@@ -56,14 +67,22 @@ function detectBbvaMapping(rows: unknown[][]): { headerRowIndex: number; col: Re
         typeof h === "string" ? h.trim().toLowerCase() : h
     );
 
+    function findCol(aliases: string[]): number {
+        for (const alias of aliases) {
+            const idx = headerRow.indexOf(alias);
+            if (idx !== -1) return idx;
+        }
+        return -1;
+    }
+
     return {
         headerRowIndex,
         col: {
-            fecha: headerRow.indexOf("fecha"),
-            fValor: headerRow.indexOf("f.valor"),
-            concepto: headerRow.indexOf("concepto"),
-            movimiento: headerRow.indexOf("movimiento"),
-            importe: headerRow.indexOf("importe"),
+            fecha: findCol(BBVA_HEADER_ALIASES.fecha),
+            fValor: findCol(BBVA_HEADER_ALIASES.fValor),
+            concepto: findCol(BBVA_HEADER_ALIASES.concepto),
+            movimiento: findCol(BBVA_HEADER_ALIASES.movimiento),
+            importe: findCol(BBVA_HEADER_ALIASES.importe),
         },
     };
 }
@@ -89,12 +108,14 @@ function transactionsFromBbvaRows(rows: unknown[][], headerRowIndex: number, col
         const isoDate = excelDateToISO(rawDate);
         const amount = Number(importe);
 
-        const baseKey = `${isoDate}|${description}|${amount}`;
+        // Keyed by date+amount only (not description) so the same file
+        // re-exported in another language still dedupes correctly.
+        const baseKey = `${isoDate}|${amount}`;
         const occurrence = occurrenceCount.get(baseKey) ?? 0;
         occurrenceCount.set(baseKey, occurrence + 1);
 
         transactions.push({
-            id: hashTransaction(isoDate, description, amount, occurrence),
+            id: hashTransaction(isoDate, amount, occurrence),
             date: isoDate,
             description,
             amount,
@@ -121,12 +142,12 @@ export function transactionsFromMapping(rows: unknown[][], mapping: ColumnMappin
         const description = String(rawDescription).trim();
         const isoDate = excelDateToISO(row[mapping.dateCol]);
 
-        const baseKey = `${isoDate}|${description}|${amount}`;
+        const baseKey = `${isoDate}|${amount}`;
         const occurrence = occurrenceCount.get(baseKey) ?? 0;
         occurrenceCount.set(baseKey, occurrence + 1);
 
         transactions.push({
-            id: hashTransaction(isoDate, description, amount, occurrence),
+            id: hashTransaction(isoDate, amount, occurrence),
             date: isoDate,
             description,
             amount,
