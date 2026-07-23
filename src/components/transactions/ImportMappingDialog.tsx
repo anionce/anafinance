@@ -55,13 +55,18 @@ export default function ImportMappingDialog({ open, rows, onClose, onConfirm }: 
                 <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>{t.mappingHint}</Typography>
 
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-                        <Typography variant="body2">{t.mappingDateColumn}</Typography>
-                        <Select size="small" value={dateCol} onChange={(e) => setDateCol(e.target.value as number)} sx={{ minWidth: 200 }}>
-                            {columnOptions.map((c) => (
-                                <MenuItem key={c.index} value={c.index}>{c.label}</MenuItem>
-                            ))}
-                        </Select>
+                    <Box>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+                            <Typography variant="body2">{t.mappingDateColumn}</Typography>
+                            <Select size="small" value={dateCol} onChange={(e) => setDateCol(e.target.value as number)} sx={{ minWidth: 200 }}>
+                                {columnOptions.map((c) => (
+                                    <MenuItem key={c.index} value={c.index}>{c.label}</MenuItem>
+                                ))}
+                            </Select>
+                        </Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                            {t.mappingDateColumnHint}
+                        </Typography>
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
                         <Typography variant="body2">{t.mappingDescriptionColumn}</Typography>

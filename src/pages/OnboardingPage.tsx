@@ -91,7 +91,9 @@ export default function OnboardingPage() {
                     {step === 3 && (
                         <Box sx={{ textAlign: "center", py: 2 }}>
                             <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>{t.onboardingImportHint}</Typography>
-                            <ImportExcelFlow uid={uid} />
+                            <Box sx={{ display: "flex", justifyContent: "center" }}>
+                                <ImportExcelFlow uid={uid} />
+                            </Box>
                             <Typography variant="caption" sx={{ display: "block", color: "text.disabled", mt: 2 }}>
                                 {t.onboardingImportSkipHint}
                             </Typography>
@@ -178,37 +180,41 @@ function CategoriesStep({ uid, categories, setCategories }: {
                             <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
                         </IconButton>
                     </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", ml: 0.5 }}>
-                        <FormControlLabel
-                            sx={{ mr: 0.5 }}
-                            control={
-                                <Checkbox
-                                    size="small"
-                                    checked={!!cat.noComputable}
-                                    onChange={(e) => handleToggleNoComputable(cat.value, e.target.checked)}
-                                />
-                            }
-                            label={<Typography variant="caption" color="text.secondary">{t.noComputableLabel}</Typography>}
-                        />
-                        <Tooltip title={t.noComputableInfo} arrow placement="top">
-                            <InfoOutlinedIcon sx={{ fontSize: 15, opacity: 0.5, cursor: "help" }} />
-                        </Tooltip>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", ml: 0.5 }}>
-                        <FormControlLabel
-                            sx={{ mr: 0.5 }}
-                            control={
-                                <Checkbox
-                                    size="small"
-                                    checked={!!cat.incomeOnly}
-                                    onChange={(e) => handleToggleIncomeOnly(cat.value, e.target.checked)}
-                                />
-                            }
-                            label={<Typography variant="caption" color="text.secondary">{t.incomeOnlyLabel}</Typography>}
-                        />
-                        <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
-                            <InfoOutlinedIcon sx={{ fontSize: 15, opacity: 0.5, cursor: "help" }} />
-                        </Tooltip>
+                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "wrap", columnGap: 1, rowGap: 0.25 }}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <FormControlLabel
+                                sx={{ mr: 0, ml: 0 }}
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        sx={{ p: 0.5 }}
+                                        checked={!!cat.noComputable}
+                                        onChange={(e) => handleToggleNoComputable(cat.value, e.target.checked)}
+                                    />
+                                }
+                                label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.noComputableLabel}</Typography>}
+                            />
+                            <Tooltip title={t.noComputableInfo} arrow placement="top">
+                                <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5, cursor: "help" }} />
+                            </Tooltip>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <FormControlLabel
+                                sx={{ mr: 0, ml: 0 }}
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        sx={{ p: 0.5 }}
+                                        checked={!!cat.incomeOnly}
+                                        onChange={(e) => handleToggleIncomeOnly(cat.value, e.target.checked)}
+                                    />
+                                }
+                                label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.incomeOnlyLabel}</Typography>}
+                            />
+                            <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
+                                <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5, cursor: "help" }} />
+                            </Tooltip>
+                        </Box>
                     </Box>
                 </Box>
             ))}

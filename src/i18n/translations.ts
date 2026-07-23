@@ -54,6 +54,7 @@ export interface TranslationSet {
     reviewDialogTitle: (remaining: number) => string;
     finish: string;
     next: string;
+    reviewLaterButton: string;
 
     noTransactionsToShow: string;
 
@@ -138,11 +139,29 @@ export interface TranslationSet {
     mappingTitle: string;
     mappingHint: string;
     mappingDateColumn: string;
+    mappingDateColumnHint: string;
     mappingDescriptionColumn: string;
     mappingAmountColumn: string;
     mappingNotACurrency: string;
     mappingConfirm: string;
     mappingPreviewTitle: string;
+
+    signOutConfirmTitle: string;
+    signOutConfirmMessage: string;
+    signOutConfirmButton: string;
+
+    deleteTransactionConfirmTitle: string;
+    deleteTransactionConfirmMessage: string;
+    deleteSelectedConfirmMessage: (count: number) => string;
+    deleteConfirmButton: string;
+
+    selectedCountLabel: (count: number) => string;
+    bulkDeleteButton: string;
+    bulkCategoryButton: string;
+    bulkAssignCategoryTitle: string;
+
+    importingMessage: string;
+    importHelpInfo: string;
 }
 
 export const translations: Record<Locale, TranslationSet> = {
@@ -200,6 +219,7 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDialogTitle: (remaining) => `Clasificar movimiento (quedan ${remaining})`,
         finish: "Terminar",
         next: "Siguiente",
+        reviewLaterButton: "Clasificar más tarde",
 
         noTransactionsToShow: "No hay movimientos para mostrar.",
 
@@ -272,7 +292,7 @@ export const translations: Record<Locale, TranslationSet> = {
         onboardingStepGoals: "Objetivos",
         onboardingStepImport: "Importar",
         onboardingCategoriesHint: "Estas son las categorías de partida. Puedes editarlas, borrarlas o añadir las tuyas — también podrás cambiarlas más adelante.",
-        onboardingBudgetsHint: "Ponle un límite mensual a las categorías que quieras controlar. Puedes dejar el resto vacías y añadirlas cuando quieras.",
+        onboardingBudgetsHint: "Ponle un límite a las categorías que quieras controlar y elige cada cuánto se aplica (por defecto, mensual — puedes cambiarlo por categoría). Puedes dejar el resto vacías y añadirlas cuando quieras.",
         onboardingGoalsHint: "Añade algún objetivo de ahorro si quieres empezar a trackearlo ya. Es opcional, puedes saltarte este paso.",
         onboardingImportHint: "Importa tu primer Excel del banco para empezar a ver tus movimientos.",
         onboardingImportSkipHint: "Puedes hacerlo más tarde desde el Dashboard.",
@@ -284,11 +304,29 @@ export const translations: Record<Locale, TranslationSet> = {
         mappingTitle: "No reconocemos este formato de Excel",
         mappingHint: "Parece que no es de BBVA. Dinos qué columna es cada cosa y lo importamos igual.",
         mappingDateColumn: "Columna de fecha",
+        mappingDateColumnHint: "Si tu banco muestra dos columnas de fecha (p. ej. \"Fecha\" y \"F. Valor\"), elige \"Fecha\" — es la fecha real de la operación; \"F. Valor\" es cuándo se liquida y puede variar por fines de semana o festivos.",
         mappingDescriptionColumn: "Columna de concepto",
         mappingAmountColumn: "Columna de importe",
         mappingNotACurrency: "Alguna fila no tiene un importe numérico válido y se ignorará.",
         mappingConfirm: "Importar con este mapeo",
         mappingPreviewTitle: "Vista previa de las primeras filas",
+
+        signOutConfirmTitle: "¿Cerrar sesión?",
+        signOutConfirmMessage: "Tendrás que volver a iniciar sesión para ver tus movimientos.",
+        signOutConfirmButton: "Cerrar sesión",
+
+        deleteTransactionConfirmTitle: "¿Eliminar movimiento?",
+        deleteTransactionConfirmMessage: "Esta acción no se puede deshacer.",
+        deleteSelectedConfirmMessage: (count) => `Vas a eliminar ${count} movimiento${count === 1 ? "" : "s"}. Esta acción no se puede deshacer.`,
+        deleteConfirmButton: "Eliminar",
+
+        selectedCountLabel: (count) => `${count} seleccionado${count === 1 ? "" : "s"}`,
+        bulkDeleteButton: "Eliminar",
+        bulkCategoryButton: "Asignar categoría",
+        bulkAssignCategoryTitle: "Asignar categoría a los movimientos seleccionados",
+
+        importingMessage: "Importando movimientos...",
+        importHelpInfo: "¿Cómo consigo el Excel? En BBVA: entra en la cuenta > Movimientos > pulsa el icono de descarga (⬇) > elige formato Excel y el rango de fechas > descarga el archivo y súbelo aquí. Si el formato se reconoce automáticamente, usamos la columna \"Fecha\" (fecha de la operación), no \"F. Valor\".",
     },
     en: {
         navDashboard: "Dashboard",
@@ -344,6 +382,7 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDialogTitle: (remaining) => `Classify transaction (${remaining} left)`,
         finish: "Finish",
         next: "Next",
+        reviewLaterButton: "Classify later",
 
         noTransactionsToShow: "No transactions to show.",
 
@@ -416,7 +455,7 @@ export const translations: Record<Locale, TranslationSet> = {
         onboardingStepGoals: "Goals",
         onboardingStepImport: "Import",
         onboardingCategoriesHint: "These are the starting categories. Edit, delete, or add your own — you can always change them later.",
-        onboardingBudgetsHint: "Set a monthly limit for the categories you want to track. You can leave the rest empty and add them later.",
+        onboardingBudgetsHint: "Set a limit for the categories you want to track and choose how often it applies (monthly by default — you can change it per category). You can leave the rest empty and add them later.",
         onboardingGoalsHint: "Add a savings goal if you want to start tracking one now. This step is optional.",
         onboardingImportHint: "Import your first bank Excel file to start seeing your transactions.",
         onboardingImportSkipHint: "You can do this later from the Dashboard.",
@@ -428,10 +467,28 @@ export const translations: Record<Locale, TranslationSet> = {
         mappingTitle: "We don't recognize this Excel format",
         mappingHint: "This doesn't look like a BBVA export. Tell us which column is which and we'll import it anyway.",
         mappingDateColumn: "Date column",
+        mappingDateColumnHint: "If your bank shows two date columns (e.g. \"Fecha\" and \"F. Valor\"), pick \"Fecha\" — that's the actual transaction date; \"F. Valor\" is the value/settlement date and can shift on weekends or holidays.",
         mappingDescriptionColumn: "Description column",
         mappingAmountColumn: "Amount column",
         mappingNotACurrency: "Some rows don't have a valid numeric amount and will be skipped.",
         mappingConfirm: "Import with this mapping",
         mappingPreviewTitle: "Preview of the first rows",
+
+        signOutConfirmTitle: "Sign out?",
+        signOutConfirmMessage: "You'll need to sign in again to see your transactions.",
+        signOutConfirmButton: "Sign out",
+
+        deleteTransactionConfirmTitle: "Delete transaction?",
+        deleteTransactionConfirmMessage: "This action can't be undone.",
+        deleteSelectedConfirmMessage: (count) => `You're about to delete ${count} transaction${count === 1 ? "" : "s"}. This action can't be undone.`,
+        deleteConfirmButton: "Delete",
+
+        selectedCountLabel: (count) => `${count} selected`,
+        bulkDeleteButton: "Delete",
+        bulkCategoryButton: "Assign category",
+        bulkAssignCategoryTitle: "Assign a category to the selected transactions",
+
+        importingMessage: "Importing transactions...",
+        importHelpInfo: "How do I get the Excel file? In BBVA: open your account > Movimientos (Transactions) > tap the download icon (⬇) > choose Excel format and the date range > download the file and upload it here. When the format is auto-detected, we use the \"Fecha\" column (transaction date), not \"F. Valor\".",
     },
 };
