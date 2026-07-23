@@ -68,7 +68,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     },
 
     async updateCategoryLabel(uid, value, label) {
-        const categories = get().categories.map((c) => (c.value === value ? { ...c, label } : c));
+        const categories = get().categories.map((c) => (c.value === value ? { ...c, label, customLabel: true } : c));
         set({ categories });
         await saveSettings(uid, { categories });
     },

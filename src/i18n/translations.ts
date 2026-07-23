@@ -66,6 +66,12 @@ export interface TranslationSet {
     dateFilterFrom: string;
     dateFilterTo: string;
     dateFilterApply: string;
+    viewList: string;
+    viewCalendar: string;
+    calendarMoreCount: (n: number) => string;
+    calendarDayDialogTitle: (date: string) => string;
+    calendarNoTransactionsThisDay: string;
+    categoryFilterChip: (name: string) => string;
 
     insightsTitle: string;
     spentLessMessage: (pct: string) => string;
@@ -81,7 +87,9 @@ export interface TranslationSet {
     intervalMonthsLabel: string;
 
     noComputableLabel: string;
+    noComputableInfo: string;
     incomeOnlyLabel: string;
+    incomeOnlyInfo: string;
 
     manageRulesTooltip: string;
     rulesDialogTitle: string;
@@ -156,7 +164,7 @@ export const translations: Record<Locale, TranslationSet> = {
         statusGreatTitle: "Vas genial este mes",
         overBudgetBy: (amount) => `Te has pasado ${amount} del presupuesto`,
         remainingToSpend: (amount) => `Te quedan ${amount} por gastar este mes`,
-        budgetCardTitle: "Presupuesto",
+        budgetCardTitle: "Presupuesto mensual",
         incomeCardTitle: "Ingresos del mes",
 
         budgetByCategoryTitle: "Presupuesto por categoría",
@@ -204,6 +212,12 @@ export const translations: Record<Locale, TranslationSet> = {
         dateFilterFrom: "Desde",
         dateFilterTo: "Hasta",
         dateFilterApply: "Aplicar",
+        viewList: "Lista",
+        viewCalendar: "Calendario",
+        calendarMoreCount: (n) => `+${n} más`,
+        calendarDayDialogTitle: (date) => date,
+        calendarNoTransactionsThisDay: "No hay movimientos este día.",
+        categoryFilterChip: (name) => `Categoría: ${name}`,
 
         insightsTitle: "Resumen",
         spentLessMessage: (pct) => `💚 Este mes has gastado un ${pct}% menos que el anterior.`,
@@ -219,7 +233,9 @@ export const translations: Record<Locale, TranslationSet> = {
         intervalMonthsLabel: "Cada cuántos meses",
 
         noComputableLabel: "No computable",
+        noComputableInfo: "Los movimientos de esta categoría no cuentan ni como gasto ni como ingreso en ningún sitio de la app (totales, presupuesto, gráficos...). Útil para bizums entre cuentas propias, devoluciones, etc.",
         incomeOnlyLabel: "Solo ingreso",
+        incomeOnlyInfo: "Esta categoría es solo para ingresos, así que no tiene sentido ponerle un presupuesto de gasto — no aparecerá en la lista para asignar presupuesto.",
 
         manageRulesTooltip: "Reglas de categorización",
         rulesDialogTitle: "Reglas de categorización",
@@ -292,7 +308,7 @@ export const translations: Record<Locale, TranslationSet> = {
         statusGreatTitle: "You're doing great this month",
         overBudgetBy: (amount) => `You've gone ${amount} over budget`,
         remainingToSpend: (amount) => `You have ${amount} left to spend this month`,
-        budgetCardTitle: "Budget",
+        budgetCardTitle: "Monthly budget",
         incomeCardTitle: "Income this month",
 
         budgetByCategoryTitle: "Budget by category",
@@ -340,6 +356,12 @@ export const translations: Record<Locale, TranslationSet> = {
         dateFilterFrom: "From",
         dateFilterTo: "To",
         dateFilterApply: "Apply",
+        viewList: "List",
+        viewCalendar: "Calendar",
+        calendarMoreCount: (n) => `+${n} more`,
+        calendarDayDialogTitle: (date) => date,
+        calendarNoTransactionsThisDay: "No transactions this day.",
+        categoryFilterChip: (name) => `Category: ${name}`,
 
         insightsTitle: "Summary",
         spentLessMessage: (pct) => `💚 You've spent ${pct}% less than last month.`,
@@ -355,7 +377,9 @@ export const translations: Record<Locale, TranslationSet> = {
         intervalMonthsLabel: "Every how many months",
 
         noComputableLabel: "Not counted",
+        noComputableInfo: "Transactions in this category don't count as expense or income anywhere in the app (totals, budget, charts...). Useful for transfers between your own accounts, refunds, etc.",
         incomeOnlyLabel: "Income only",
+        incomeOnlyInfo: "This category is only ever income, so a spending budget wouldn't make sense for it — it won't show up in the list for assigning a budget.",
 
         manageRulesTooltip: "Categorization rules",
         rulesDialogTitle: "Categorization rules",

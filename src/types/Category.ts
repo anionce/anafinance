@@ -5,6 +5,8 @@ export interface Category {
     noComputable?: boolean;
     /** True if this category only ever represents income — excluded from the Budget list. */
     incomeOnly?: boolean;
+    /** True once the user has renamed this category — makes `label` win over the built-in translation. */
+    customLabel?: boolean;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [
