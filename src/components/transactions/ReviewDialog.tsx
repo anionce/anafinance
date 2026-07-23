@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -10,6 +10,7 @@ import {
     ToggleButtonGroup,
     Box,
 } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import type { Category } from "../../types/Category";
 import type { Transaction } from "../../types/Transaction";
 import { formatCurrency } from "../../utils/currency";
@@ -26,11 +27,18 @@ interface Props {
 export default function ReviewDialog({ pending, categories, onResolve, onFinish }: Props) {
     const { t, locale } = useTranslation();
     const [selected, setSelected] = useState<string | null>(null);
+    const [dismissed, setDismissed] = useState(false);
+
+    const pendingIds = pending.map((tx) => tx.id).join(",");
+    useEffect(() => {
+        setDismissed(false);
+    }, [pendingIds]);
 
     if (pending.length === 0) return null;
 
     const current = pending[0];
     const remaining = pending.length;
+    const open = !dismissed;
 
     function handleNext() {
         if (!selected) return;
@@ -43,8 +51,13 @@ export default function ReviewDialog({ pending, categories, onResolve, onFinish 
         }
     }
 
+    function handleDismiss() {
+        setDismissed(true);
+        onFinish();
+    }
+
     return (
-        <Dialog open={pending.length > 0} maxWidth="xs" fullWidth>
+        <Dialog open={open} onClose={handleDismiss} maxWidth="xs" fullWidth>
             <DialogTitle>
                 {t.reviewDialogTitle(remaining)}
             </DialogTitle>
@@ -64,13 +77,19 @@ export default function ReviewDialog({ pending, categories, onResolve, onFinish 
                     onChange={(_, value) => setSelected(value)}
                 >
                     {categories.map((cat) => (
-                        <ToggleButton key={cat.value} value={cat.value} sx={{ justifyContent: "flex-start" }}>
+                        <ToggleButton
+                            key={cat.value}
+                            value={cat.value}
+                            sx={{ justifyContent: "space-between", display: "flex" }}
+                        >
                             {getCategoryLabel(cat, locale)}
+                            {selected === cat.value && <CheckCircleIcon sx={{ fontSize: 20 }} />}
                         </ToggleButton>
                     ))}
                 </ToggleButtonGroup>
             </DialogContent>
             <DialogActions>
+                <Button onClick={handleDismiss}>{t.reviewLaterButton}</Button>
                 <Box sx={{ flexGrow: 1 }} />
                 <Button variant="contained" disabled={!selected} onClick={handleNext}>
                     {remaining === 1 ? t.finish : t.next}

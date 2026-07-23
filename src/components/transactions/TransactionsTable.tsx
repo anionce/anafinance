@@ -1,21 +1,26 @@
 import { useState } from 'react';
 import { DataGrid, useGridApiRef } from '@mui/x-data-grid';
-import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
+import type { GridColDef, GridRowModel, GridRowSelectionModel } from '@mui/x-data-grid';
 import type { Transaction } from '../../types/Transaction';
 import type { Category } from '../../types/Category';
 import EditIcon from '@mui/icons-material/Edit';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
+<<<<<<< HEAD
 import NoteAltOutlinedIcon from '@mui/icons-material/NoteAltOutlined';
 import {
     Box, IconButton, Typography, Chip, Stack, Menu, MenuItem, TextField, useMediaQuery, useTheme,
 } from '@mui/material';
+=======
+import { Box, IconButton, Typography, Chip, Select, MenuItem, Button } from '@mui/material';
+>>>>>>> origin/main
 import { useTranslation } from '../../i18n/useTranslation';
 import { getCategoryLabel } from '../../i18n/categoryTranslations';
 import type { Locale } from '../../store/localeStore';
 import { formatCurrency } from '../../utils/currency';
 import { accent } from '../../theme/colors';
 import SplitTransactionDialog from './SplitTransactionDialog';
+import ConfirmDialog from '../ConfirmDialog';
 
 interface Props {
     transactions: Transaction[];
@@ -40,6 +45,17 @@ export default function TransactionsTable({ transactions, categories, onCategory
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const apiRef = useGridApiRef();
     const [splitting, setSplitting] = useState<Transaction | null>(null);
+    const [deleting, setDeleting] = useState<string | null>(null);
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
+
+    const selectedIds: string[] = selectionModel.type === "include"
+        ? Array.from(selectionModel.ids) as string[]
+        : transactions.filter((tx) => !selectionModel.ids.has(tx.id)).map((tx) => tx.id);
+
+    function clearSelection() {
+        setSelectionModel({ type: "include", ids: new Set() });
+    }
 
     function startEditing(id: string | number, field: string) {
         apiRef.current?.startCellEditMode({ id, field });
@@ -88,6 +104,7 @@ export default function TransactionsTable({ transactions, categories, onCategory
             field: "description",
             headerName: t.colDescription,
             flex: 1.2,
+            minWidth: 160,
             renderCell: (params) => (
                 <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary" }}>
                     {params.value}
@@ -114,7 +131,7 @@ export default function TransactionsTable({ transactions, categories, onCategory
                 return (
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: value < 0 ? accent.budget : accent.income }}>
-                            {value < 0 ? "−" : "+"}{formatCurrency(Math.abs(value))}
+                            {value < 0 ? "−" : "+"}{formatCurrency(Math.abs(value), 2)}
                         </Typography>
                         <IconButton
                             size="small"
@@ -166,6 +183,7 @@ export default function TransactionsTable({ transactions, categories, onCategory
             field: "notes",
             headerName: t.colNotes,
             flex: 1,
+            minWidth: 140,
             editable: true,
             renderCell: (params) => (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
@@ -192,7 +210,7 @@ export default function TransactionsTable({ transactions, categories, onCategory
                     <IconButton
                         size="small"
                         title={t.deleteTransactionTooltip}
-                        onClick={(e) => { e.stopPropagation(); onDelete(params.id as string); }}
+                        onClick={(e) => { e.stopPropagation(); setDeleting(params.id as string); }}
                     >
                         <DeleteOutlineIcon sx={{ fontSize: 18, opacity: 0.6 }} />
                     </IconButton>
@@ -212,28 +230,71 @@ export default function TransactionsTable({ transactions, categories, onCategory
     }
 
     return (
-        <div style={{ height: "100%" }}>
-            <DataGrid
-                apiRef={apiRef}
-                rows={transactions}
-                columns={columns}
-                pageSizeOptions={[25]}
-                rowHeight={56}
-                processRowUpdate={processRowUpdate}
-                onProcessRowUpdateError={(error) => console.error(error)}
-                sx={{
-                    height: "100%",
-                    border: "1px solid",
-                    borderColor: "#EFEBE3",
-                    borderRadius: "16px",
-                    bgcolor: "background.paper",
-                    boxShadow: "0 1px 2px rgba(43,42,40,0.04), 0 6px 16px rgba(43,42,40,0.05)",
-                    "& .MuiDataGrid-columnHeaders": { bgcolor: "background.default" },
-                    "& .MuiDataGrid-columnHeaderTitle": { fontWeight: 600, color: "text.secondary" },
-                    "& .MuiDataGrid-row:hover": { bgcolor: "background.default" },
-                    "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
-                }}
-            />
+        <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+            {selectedIds.length > 0 && (
+                <Box
+                    sx={{
+                        display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap",
+                        p: 1, px: 1.5, borderRadius: "12px",
+                        bgcolor: "background.default", border: "1px solid", borderColor: "divider",
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {t.selectedCountLabel(selectedIds.length)}
+                    </Typography>
+                    <Select
+                        size="small"
+                        displayEmpty
+                        value=""
+                        onChange={(e) => {
+                            const category = e.target.value as string;
+                            selectedIds.forEach((id) => onCategoryChange(id, category));
+                            clearSelection();
+                        }}
+                        renderValue={() => t.bulkCategoryButton}
+                        sx={{ minWidth: 160 }}
+                    >
+                        {categoryValueOptions.map((opt) => (
+                            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                        ))}
+                    </Select>
+                    <Button
+                        size="small"
+                        color="error"
+                        startIcon={<DeleteOutlineIcon />}
+                        onClick={() => setBulkDeleteOpen(true)}
+                    >
+                        {t.bulkDeleteButton}
+                    </Button>
+                </Box>
+            )}
+            <div style={{ flex: 1, minHeight: 0 }}>
+                <DataGrid
+                    apiRef={apiRef}
+                    rows={transactions}
+                    columns={columns}
+                    pageSizeOptions={[25]}
+                    rowHeight={56}
+                    checkboxSelection
+                    rowSelectionModel={selectionModel}
+                    onRowSelectionModelChange={setSelectionModel}
+                    processRowUpdate={processRowUpdate}
+                    onProcessRowUpdateError={(error) => console.error(error)}
+                    sx={{
+                        height: "100%",
+                        border: "1px solid",
+                        borderColor: "#EFEBE3",
+                        borderRadius: "16px",
+                        bgcolor: "background.paper",
+                        boxShadow: "0 1px 2px rgba(43,42,40,0.04), 0 6px 16px rgba(43,42,40,0.05)",
+                        "& .MuiDataGrid-columnHeaders": { bgcolor: "background.default" },
+                        "& .MuiDataGrid-columnHeaderTitle": { fontWeight: 600, color: "text.secondary" },
+                        "& .MuiDataGrid-row:hover": { bgcolor: "background.default" },
+                        "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
+                        "& .MuiDataGrid-virtualScroller": { WebkitOverflowScrolling: "touch" },
+                    }}
+                />
+            </div>
             <SplitTransactionDialog
                 open={!!splitting}
                 transaction={splitting}
@@ -243,6 +304,24 @@ export default function TransactionsTable({ transactions, categories, onCategory
                     if (splitting) onSplit(splitting.id, portions);
                     setSplitting(null);
                 }}
+            />
+            <ConfirmDialog
+                open={!!deleting}
+                onClose={() => setDeleting(null)}
+                title={t.deleteTransactionConfirmTitle}
+                message={t.deleteTransactionConfirmMessage}
+                confirmLabel={t.deleteConfirmButton}
+                danger
+                onConfirm={() => { if (deleting) onDelete(deleting); }}
+            />
+            <ConfirmDialog
+                open={bulkDeleteOpen}
+                onClose={() => setBulkDeleteOpen(false)}
+                title={t.deleteTransactionConfirmTitle}
+                message={t.deleteSelectedConfirmMessage(selectedIds.length)}
+                confirmLabel={t.deleteConfirmButton}
+                danger
+                onConfirm={() => { selectedIds.forEach((id) => onDelete(id)); clearSelection(); }}
             />
         </div>
     );

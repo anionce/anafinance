@@ -8,3 +8,10 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Google sign-in uses a popup; without this header Chrome blocks the
+# opener's window.closed check with a COOP console error.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"

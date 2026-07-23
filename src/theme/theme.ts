@@ -93,6 +93,14 @@ export default createTheme({
                 root: {
                     textTransform: "none",
                     fontWeight: 600,
+                    "&.Mui-selected": {
+                        backgroundColor: "#5B7F6B",
+                        color: "#FFFFFF",
+                        borderColor: "#5B7F6B",
+                        "&:hover": {
+                            backgroundColor: "#456052",
+                        },
+                    },
                 },
             },
         },
