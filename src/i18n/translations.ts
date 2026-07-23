@@ -54,6 +54,7 @@ export interface TranslationSet {
     reviewDialogTitle: (remaining: number) => string;
     finish: string;
     next: string;
+    reviewLaterButton: string;
 
     noTransactionsToShow: string;
 
@@ -218,6 +219,7 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDialogTitle: (remaining) => `Clasificar movimiento (quedan ${remaining})`,
         finish: "Terminar",
         next: "Siguiente",
+        reviewLaterButton: "Clasificar más tarde",
 
         noTransactionsToShow: "No hay movimientos para mostrar.",
 
@@ -380,6 +382,7 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDialogTitle: (remaining) => `Classify transaction (${remaining} left)`,
         finish: "Finish",
         next: "Next",
+        reviewLaterButton: "Classify later",
 
         noTransactionsToShow: "No transactions to show.",
 
