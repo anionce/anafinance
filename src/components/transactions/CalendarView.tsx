@@ -186,7 +186,7 @@ export default function CalendarView({ transactions, categories }: Props) {
                                         )}
                                     </Box>
                                     <Typography variant="body2" sx={{ fontWeight: 700, color: tx.amount < 0 ? accent.budget : accent.income, whiteSpace: "nowrap" }}>
-                                        {tx.amount < 0 ? "−" : "+"}{formatCurrency(Math.abs(tx.amount))}
+                                        {tx.amount < 0 ? "−" : "+"}{formatCurrency(Math.abs(tx.amount), 2)}
                                     </Typography>
                                 </Box>
                             );
