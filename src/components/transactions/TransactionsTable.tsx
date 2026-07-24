@@ -6,14 +6,11 @@ import type { Category } from '../../types/Category';
 import EditIcon from '@mui/icons-material/Edit';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
-<<<<<<< HEAD
 import NoteAltOutlinedIcon from '@mui/icons-material/NoteAltOutlined';
 import {
     Box, IconButton, Typography, Chip, Stack, Menu, MenuItem, TextField, useMediaQuery, useTheme,
+    Select, Button,
 } from '@mui/material';
-=======
-import { Box, IconButton, Typography, Chip, Select, MenuItem, Button } from '@mui/material';
->>>>>>> origin/main
 import { useTranslation } from '../../i18n/useTranslation';
 import { getCategoryLabel } from '../../i18n/categoryTranslations';
 import type { Locale } from '../../store/localeStore';
