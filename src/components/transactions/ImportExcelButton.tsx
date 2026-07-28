@@ -21,7 +21,7 @@ export default function ImportExcelButton({ onImport, loading }: Props) {
             <input
                 hidden
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.pdf"
                 disabled={loading}
                 onChange={(e) => {
                     const file = e.target.files?.[0];

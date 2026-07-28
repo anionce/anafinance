@@ -172,7 +172,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navGoals: "Objetivos",
         loading: "Cargando...",
 
-        importExcelButton: "Importar Excel BBVA",
+        importExcelButton: "Importar Excel o PDF",
         importSuccessMessage: (count) => `${count} movimiento${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"} importado${count === 1 ? "" : "s"}`,
         importNoNewMessage: "Ese archivo no tenía movimientos nuevos por importar.",
         importErrorMessage: "No se pudo importar el archivo. Inténtalo de nuevo.",
@@ -326,7 +326,7 @@ export const translations: Record<Locale, TranslationSet> = {
         bulkAssignCategoryTitle: "Asignar categoría a los movimientos seleccionados",
 
         importingMessage: "Importando movimientos...",
-        importHelpInfo: "¿Cómo consigo el Excel? En BBVA: entra en la cuenta > Movimientos > pulsa el icono de descarga (⬇) > elige formato Excel y el rango de fechas > descarga el archivo y súbelo aquí. Si el formato se reconoce automáticamente, usamos la columna \"Fecha\" (fecha de la operación), no \"F. Valor\".",
+        importHelpInfo: "¿Cómo consigo el archivo? En BBVA: entra en la cuenta > Movimientos > pulsa el icono de descarga (⬇) > elige formato Excel o PDF y el rango de fechas > descarga el archivo y súbelo aquí. Si el formato se reconoce automáticamente, usamos la columna \"Fecha\" (fecha de la operación), no \"F. Valor\". Con PDF, si las columnas no se detectan bien, te pedimos que las indiques a mano.",
     },
     en: {
         navDashboard: "Dashboard",
@@ -335,7 +335,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navGoals: "Goals",
         loading: "Loading...",
 
-        importExcelButton: "Import BBVA Excel",
+        importExcelButton: "Import Excel or PDF",
         importSuccessMessage: (count) => `${count} new transaction${count === 1 ? "" : "s"} imported`,
         importNoNewMessage: "That file had no new transactions to import.",
         importErrorMessage: "Couldn't import the file. Please try again.",
@@ -489,6 +489,6 @@ export const translations: Record<Locale, TranslationSet> = {
         bulkAssignCategoryTitle: "Assign a category to the selected transactions",
 
         importingMessage: "Importing transactions...",
-        importHelpInfo: "How do I get the Excel file? In BBVA: open your account > Movimientos (Transactions) > tap the download icon (⬇) > choose Excel format and the date range > download the file and upload it here. When the format is auto-detected, we use the \"Fecha\" column (transaction date), not \"F. Valor\".",
+        importHelpInfo: "How do I get the file? In BBVA: open your account > Movimientos (Transactions) > tap the download icon (⬇) > choose Excel or PDF format and the date range > download the file and upload it here. When the format is auto-detected, we use the \"Fecha\" column (transaction date), not \"F. Valor\". With PDFs, if the columns aren't detected well, we'll ask you to point them out manually.",
     },
 };

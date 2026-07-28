@@ -39,17 +39,39 @@ export async function saveTransaction(uid: string, t: Transaction): Promise<void
 }
 
 /**
- * Merges existing transactions with incoming ones, skipping any that already
- * exist (same id = same transaction), and saves the new ones to Firestore.
- * Returns { merged, addedCount }.
+ * Merges existing transactions with incoming ones and saves the new ones to
+ * Firestore. Returns { merged, addedCount }.
+ *
+ * Matches on date+amount content (a multiset comparison) rather than on the
+ * transaction `id` string. The id is a hash computed from a transaction's
+ * fields, and that hash formula has changed over time (e.g. to stop
+ * description differences between language exports from creating
+ * duplicates) — comparing raw ids would make every already-imported
+ * transaction look "new" again after such a change, re-adding it and
+ * flagging it for category review. Comparing stored field values instead is
+ * immune to that.
  */
 export async function mergeTransactions(
     uid: string,
     existing: Transaction[],
     incoming: Transaction[]
 ): Promise<{ merged: Transaction[]; addedCount: number }> {
-    const existingIds = new Set(existing.map((t) => t.id));
-    const newOnes = incoming.filter((t) => !existingIds.has(t.id));
+    const existingCounts = new Map<string, number>();
+    for (const t of existing) {
+        const key = `${t.date}|${t.amount}`;
+        existingCounts.set(key, (existingCounts.get(key) ?? 0) + 1);
+    }
+
+    const newOnes: Transaction[] = [];
+    for (const t of incoming) {
+        const key = `${t.date}|${t.amount}`;
+        const remaining = existingCounts.get(key) ?? 0;
+        if (remaining > 0) {
+            existingCounts.set(key, remaining - 1);
+        } else {
+            newOnes.push(t);
+        }
+    }
 
     const batch = writeBatch(db);
     for (const t of newOnes) {
