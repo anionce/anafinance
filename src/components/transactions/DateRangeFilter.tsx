@@ -13,6 +13,7 @@ interface Props {
 
 function formatMonth(month: string, locale: string): string {
     const [year, monthIndex] = month.split("-").map(Number);
+    if (!year || !monthIndex) return month;
     const date = new Date(year, monthIndex - 1, 1);
     return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" }).format(date);
 }
