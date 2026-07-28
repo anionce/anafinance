@@ -17,6 +17,9 @@ import {
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
@@ -30,6 +33,7 @@ interface Props {
     onAdd: (value: string, label: string) => void;
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
     onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
+    onReorder: (categories: Category[]) => void;
 }
 
 function slugify(label: string): string {
@@ -42,10 +46,11 @@ function slugify(label: string): string {
         .replace(/\s+/g, "_");
 }
 
-export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly }: Props) {
+export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly, onReorder }: Props) {
     const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
     useEffect(() => {
         if (open) {
@@ -71,14 +76,67 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
         setNewLabel("");
     }
 
+    function move(index: number, delta: number) {
+        const target = index + delta;
+        if (target < 0 || target >= categories.length) return;
+        const reordered = [...categories];
+        [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+        onReorder(reordered);
+    }
+
+    function handleDrop(targetIndex: number) {
+        if (draggedIndex === null || draggedIndex === targetIndex) {
+            setDraggedIndex(null);
+            return;
+        }
+        const reordered = [...categories];
+        const [moved] = reordered.splice(draggedIndex, 1);
+        reordered.splice(targetIndex, 0, moved);
+        onReorder(reordered);
+        setDraggedIndex(null);
+    }
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogTitle>{t.manageCategoriesDialogTitle}</DialogTitle>
             <DialogContent>
                 <Stack spacing={1.5}>
-                    {categories.map((cat) => (
-                        <Box key={cat.value} sx={{ display: "flex", flexDirection: "column" }}>
+                    {categories.map((cat, index) => (
+                        <Box
+                            key={cat.value}
+                            sx={{ display: "flex", flexDirection: "column", opacity: draggedIndex === index ? 0.4 : 1 }}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => handleDrop(index)}
+                        >
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <Box
+                                    draggable
+                                    onDragStart={() => setDraggedIndex(index)}
+                                    onDragEnd={() => setDraggedIndex(null)}
+                                    sx={{ display: "flex", alignItems: "center", opacity: 0.4, cursor: "grab", "&:active": { cursor: "grabbing" } }}
+                                >
+                                    <DragIndicatorIcon fontSize="small" />
+                                </Box>
+                                <Box sx={{ display: "flex", flexDirection: "column" }}>
+                                    <IconButton
+                                        size="small"
+                                        sx={{ p: 0.25 }}
+                                        disabled={index === 0}
+                                        onClick={() => move(index, -1)}
+                                        title={t.moveCategoryUpLabel}
+                                    >
+                                        <ArrowUpwardIcon sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                    <IconButton
+                                        size="small"
+                                        sx={{ p: 0.25 }}
+                                        disabled={index === categories.length - 1}
+                                        onClick={() => move(index, 1)}
+                                        title={t.moveCategoryDownLabel}
+                                    >
+                                        <ArrowDownwardIcon sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                </Box>
                                 <TextField
                                     size="small"
                                     value={drafts[cat.value] ?? cat.label}
