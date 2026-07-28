@@ -103,11 +103,17 @@ function transactionsFromBbvaRows(rows: unknown[][], headerRowIndex: number, col
 
         if (concepto == null || importe == null) continue;
 
+        const amount = Number(importe);
+        // Repeated header rows on a PDF's continuation pages have their own
+        // label text sitting in these columns (e.g. concepto "Concepto",
+        // importe "Importe") — not a real transaction, so a non-numeric
+        // amount means this row is furniture, not data.
+        if (isNaN(amount)) continue;
+
         const rawDate = row[col.fecha] ?? row[col.fValor];
         const movimiento = String(row[col.movimiento] ?? "").trim();
         const description = movimiento ? `${String(concepto).trim()} — ${movimiento}` : String(concepto).trim();
         const isoDate = excelDateToISO(rawDate);
-        const amount = Number(importe);
 
         // Keyed by date+amount only (not description) so the same file
         // re-exported in another language still dedupes correctly.
