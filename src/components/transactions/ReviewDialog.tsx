@@ -63,6 +63,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     }
 
     function handleDiscardAll() {
+        dismissReview(pendingIds);
         onDiscardAll();
         onFinish();
     }
