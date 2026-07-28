@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -42,6 +42,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
     const [discarding, setDiscarding] = useState(false);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const reviewDismissedIds = useUIStore((s) => s.reviewDismissedIds);
     const dismissReview = useUIStore((s) => s.dismissReview);
 
@@ -63,11 +64,16 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     // which would otherwise no longer match the dismissed snapshot.
     const open = pendingIds !== reviewDismissedIds && !discardConfirmOpen && !discarding;
 
+    function scrollContentToTop() {
+        contentRef.current?.scrollTo({ top: 0 });
+    }
+
     function handleNext() {
         if (!selected) return;
 
         onResolve(current.id, selected);
         setSelected(null);
+        scrollContentToTop();
 
         if (remaining === 1) {
             onFinish();
@@ -77,6 +83,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     function handleDiscardOne() {
         onDiscardOne(current.id);
         setSelected(null);
+        scrollContentToTop();
 
         if (remaining === 1) {
             onFinish();
@@ -101,7 +108,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
                 <DialogTitle>
                     {t.reviewDialogTitle(remaining)}
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent ref={contentRef}>
                     <Typography variant="body1" sx={{ mb: 1 }}>
                         {current.description}
                     </Typography>
