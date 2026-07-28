@@ -4,6 +4,7 @@ export interface TranslationSet {
     navDashboard: string;
     navExpenses: string;
     navIncome: string;
+    navTransactions: string;
     navGoals: string;
     loading: string;
 
@@ -38,6 +39,8 @@ export interface TranslationSet {
     close: string;
     moveCategoryUpLabel: string;
     moveCategoryDownLabel: string;
+    accountMenuPreferencesLabel: string;
+    combinedTransactionsViewLabel: string;
 
     savingsGoalsTitle: string;
     goalLabel: string;
@@ -177,6 +180,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navDashboard: "Dashboard",
         navExpenses: "Gastos",
         navIncome: "Ingresos",
+        navTransactions: "Movimientos",
         navGoals: "Objetivos",
         loading: "Cargando...",
 
@@ -210,6 +214,8 @@ export const translations: Record<Locale, TranslationSet> = {
         categoriesHint: "Los cambios se guardan al momento y afectan a toda la app. Usa las flechas para ordenarlas: las primeras aparecerán antes al clasificar.",
         moveCategoryUpLabel: "Subir",
         moveCategoryDownLabel: "Bajar",
+        accountMenuPreferencesLabel: "Preferencias",
+        combinedTransactionsViewLabel: "Ver ingresos y gastos en la misma pestaña",
         close: "Cerrar",
 
         savingsGoalsTitle: "Objetivos de ahorro",
@@ -348,6 +354,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navDashboard: "Dashboard",
         navExpenses: "Expenses",
         navIncome: "Income",
+        navTransactions: "Transactions",
         navGoals: "Goals",
         loading: "Loading...",
 
@@ -381,6 +388,8 @@ export const translations: Record<Locale, TranslationSet> = {
         categoriesHint: "Changes save instantly and affect the whole app. Use the arrows to reorder them: the ones on top will show up first when classifying.",
         moveCategoryUpLabel: "Move up",
         moveCategoryDownLabel: "Move down",
+        accountMenuPreferencesLabel: "Preferences",
+        combinedTransactionsViewLabel: "Show income and expenses in the same tab",
         close: "Close",
 
         savingsGoalsTitle: "Savings goals",

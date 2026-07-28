@@ -12,6 +12,8 @@ export interface Settings {
     /** Which goal to show in the Dashboard's featured-goal card. Empty means "pick automatically". */
     featuredGoalId: string;
     onboardingComplete: boolean;
+    /** When true, Expenses and Income share a single "Transactions" tab instead of separate ones. */
+    combinedTransactionsView: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,4 +23,5 @@ export const DEFAULT_SETTINGS: Settings = {
     categorizationRules: [],
     featuredGoalId: "",
     onboardingComplete: false,
+    combinedTransactionsView: false,
 };

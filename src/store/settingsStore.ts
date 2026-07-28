@@ -12,6 +12,7 @@ interface SettingsState {
     categorizationRules: CategorizationRule[];
     featuredGoalId: string;
     onboardingComplete: boolean;
+    combinedTransactionsView: boolean;
     hasLoaded: boolean;
     load: (uid: string) => Promise<void>;
     reset: () => void;
@@ -27,6 +28,7 @@ interface SettingsState {
     removeRule: (uid: string, id: string) => Promise<void>;
     setFeaturedGoalId: (uid: string, id: string) => Promise<void>;
     completeOnboarding: (uid: string) => Promise<void>;
+    setCombinedTransactionsView: (uid: string, value: boolean) => Promise<void>;
 }
 
 const INITIAL_STATE = {
@@ -127,5 +129,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     async completeOnboarding(uid) {
         set({ onboardingComplete: true });
         await saveSettings(uid, { onboardingComplete: true });
+    },
+
+    async setCombinedTransactionsView(uid, value) {
+        set({ combinedTransactionsView: value });
+        await saveSettings(uid, { combinedTransactionsView: value });
     },
 }));
