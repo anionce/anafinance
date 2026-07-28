@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import {
-    Container, Tabs, Tab, Box, Typography, Avatar, IconButton, ToggleButtonGroup, ToggleButton,
-    BottomNavigation, BottomNavigationAction, Paper,
+    Container, Tabs, Tab, Box, Typography, Avatar, ButtonBase, ToggleButtonGroup, ToggleButton,
+    BottomNavigation, BottomNavigationAction, Paper, Drawer, Divider, Button,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
@@ -33,6 +33,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const location = useLocation();
     const navigate = useNavigate();
     const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const user = useAuthStore((s) => s.user);
     const signOut = useAuthStore((s) => s.signOut);
@@ -78,41 +79,88 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                     </Tabs>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
-                    <ToggleButtonGroup
-                        value={locale}
-                        exclusive
-                        size="small"
-                        onChange={(_, value: Locale | null) => value && setLocale(value)}
-                        sx={{
-                            "& .MuiToggleButton-root": {
-                                border: "none",
-                                borderRadius: "999px !important",
-                                px: 1.5,
-                                color: "text.secondary",
-                                "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } },
-                            },
-                            bgcolor: "background.default",
-                            borderRadius: "999px",
-                            p: 0.5,
-                        }}
-                    >
-                        <ToggleButton value="es">ES</ToggleButton>
-                        <ToggleButton value="en">EN</ToggleButton>
-                    </ToggleButtonGroup>
                     {user && (
-                        <>
+                        <ButtonBase
+                            onClick={() => setAccountMenuOpen(true)}
+                            sx={{ borderRadius: "50%" }}
+                        >
                             <Avatar
                                 src={user.photoURL ?? undefined}
                                 alt={user.displayName ?? user.email ?? ""}
                                 sx={{ width: 32, height: 32 }}
-                            />
-                            <IconButton size="small" onClick={() => setSignOutConfirmOpen(true)} title={t.signOut}>
-                                <LogoutIcon sx={{ fontSize: 20, opacity: 0.75 }} />
-                            </IconButton>
-                        </>
+                            >
+                                {!user.photoURL && (user.displayName ?? user.email ?? "?").charAt(0).toUpperCase()}
+                            </Avatar>
+                        </ButtonBase>
                     )}
                 </Box>
             </Box>
+            <Drawer anchor="right" open={accountMenuOpen} onClose={() => setAccountMenuOpen(false)}>
+                <Box sx={{ width: 280, p: 3, display: "flex", flexDirection: "column", gap: 2.5, height: "100%" }}>
+                    {user && (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            <Avatar
+                                src={user.photoURL ?? undefined}
+                                alt={user.displayName ?? user.email ?? ""}
+                                sx={{ width: 48, height: 48 }}
+                            >
+                                {!user.photoURL && (user.displayName ?? user.email ?? "?").charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                                {user.displayName && (
+                                    <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>{user.displayName}</Typography>
+                                )}
+                                <Typography variant="body2" color="text.secondary" noWrap>{user.email}</Typography>
+                            </Box>
+                        </Box>
+                    )}
+
+                    <Divider />
+
+                    <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                            {t.accountMenuLanguageLabel}
+                        </Typography>
+                        <ToggleButtonGroup
+                            value={locale}
+                            exclusive
+                            size="small"
+                            onChange={(_, value: Locale | null) => value && setLocale(value)}
+                            sx={{
+                                "& .MuiToggleButton-root": {
+                                    border: "none",
+                                    borderRadius: "999px !important",
+                                    px: 1.5,
+                                    color: "text.secondary",
+                                    "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } },
+                                },
+                                bgcolor: "background.default",
+                                borderRadius: "999px",
+                                p: 0.5,
+                            }}
+                        >
+                            <ToggleButton value="es">ES</ToggleButton>
+                            <ToggleButton value="en">EN</ToggleButton>
+                        </ToggleButtonGroup>
+                    </Box>
+
+                    <Box sx={{ flexGrow: 1 }} />
+
+                    <Divider />
+
+                    <Button
+                        startIcon={<LogoutIcon />}
+                        color="error"
+                        onClick={() => {
+                            setAccountMenuOpen(false);
+                            setSignOutConfirmOpen(true);
+                        }}
+                        sx={{ justifyContent: "flex-start" }}
+                    >
+                        {t.signOut}
+                    </Button>
+                </Box>
+            </Drawer>
             {contained ? (
                 <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
                     {children}
