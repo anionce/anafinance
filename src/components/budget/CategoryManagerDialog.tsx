@@ -11,12 +11,15 @@ import {
     Stack,
     Typography,
     Checkbox,
-    FormControlLabel,
+    Menu,
+    MenuItem,
+    Divider,
     Tooltip,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -51,6 +54,7 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [menuFor, setMenuFor] = useState<{ index: number; el: HTMLElement } | null>(null);
 
     useEffect(() => {
         if (open) {
@@ -96,94 +100,41 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
         setDraggedIndex(null);
     }
 
+    const menuCategory = menuFor ? categories[menuFor.index] : undefined;
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogTitle>{t.manageCategoriesDialogTitle}</DialogTitle>
             <DialogContent>
-                <Stack spacing={1.5}>
+                <Stack spacing={1}>
                     {categories.map((cat, index) => (
                         <Box
                             key={cat.value}
-                            sx={{ display: "flex", flexDirection: "column", opacity: draggedIndex === index ? 0.4 : 1 }}
+                            sx={{ display: "flex", alignItems: "center", gap: 0.5, opacity: draggedIndex === index ? 0.4 : 1 }}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={() => handleDrop(index)}
                         >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Box
-                                    draggable
-                                    onDragStart={() => setDraggedIndex(index)}
-                                    onDragEnd={() => setDraggedIndex(null)}
-                                    sx={{ display: "flex", alignItems: "center", opacity: 0.4, cursor: "grab", "&:active": { cursor: "grabbing" } }}
-                                >
-                                    <DragIndicatorIcon fontSize="small" />
-                                </Box>
-                                <Box sx={{ display: "flex", flexDirection: "column" }}>
-                                    <IconButton
-                                        size="small"
-                                        sx={{ p: 0.25 }}
-                                        disabled={index === 0}
-                                        onClick={() => move(index, -1)}
-                                        title={t.moveCategoryUpLabel}
-                                    >
-                                        <ArrowUpwardIcon sx={{ fontSize: 14 }} />
-                                    </IconButton>
-                                    <IconButton
-                                        size="small"
-                                        sx={{ p: 0.25 }}
-                                        disabled={index === categories.length - 1}
-                                        onClick={() => move(index, 1)}
-                                        title={t.moveCategoryDownLabel}
-                                    >
-                                        <ArrowDownwardIcon sx={{ fontSize: 14 }} />
-                                    </IconButton>
-                                </Box>
-                                <TextField
-                                    size="small"
-                                    value={drafts[cat.value] ?? cat.label}
-                                    onChange={(e) => setDrafts((d) => ({ ...d, [cat.value]: e.target.value }))}
-                                    onBlur={() => handleLabelBlur(cat.value)}
-                                    fullWidth
-                                />
-                                <IconButton size="small" onClick={() => onRemove(cat.value)}>
-                                    <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
-                                </IconButton>
+                            <Box
+                                draggable
+                                onDragStart={() => setDraggedIndex(index)}
+                                onDragEnd={() => setDraggedIndex(null)}
+                                sx={{ display: "flex", alignItems: "center", opacity: 0.4, cursor: "grab", "&:active": { cursor: "grabbing" } }}
+                            >
+                                <DragIndicatorIcon fontSize="small" />
                             </Box>
-                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "wrap", columnGap: 1, rowGap: 0.25 }}>
-                                <Box sx={{ display: "flex", alignItems: "center" }}>
-                                    <FormControlLabel
-                                        sx={{ mr: 0, ml: 0 }}
-                                        control={
-                                            <Checkbox
-                                                size="small"
-                                                sx={{ p: 0.5 }}
-                                                checked={!!cat.noComputable}
-                                                onChange={(e) => onToggleNoComputable(cat.value, e.target.checked)}
-                                            />
-                                        }
-                                        label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.noComputableLabel}</Typography>}
-                                    />
-                                    <Tooltip title={t.noComputableInfo} arrow placement="top">
-                                        <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5, cursor: "help" }} />
-                                    </Tooltip>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center" }}>
-                                    <FormControlLabel
-                                        sx={{ mr: 0, ml: 0 }}
-                                        control={
-                                            <Checkbox
-                                                size="small"
-                                                sx={{ p: 0.5 }}
-                                                checked={!!cat.incomeOnly}
-                                                onChange={(e) => onToggleIncomeOnly(cat.value, e.target.checked)}
-                                            />
-                                        }
-                                        label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.incomeOnlyLabel}</Typography>}
-                                    />
-                                    <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
-                                        <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5, cursor: "help" }} />
-                                    </Tooltip>
-                                </Box>
-                            </Box>
+                            <TextField
+                                size="small"
+                                value={drafts[cat.value] ?? cat.label}
+                                onChange={(e) => setDrafts((d) => ({ ...d, [cat.value]: e.target.value }))}
+                                onBlur={() => handleLabelBlur(cat.value)}
+                                fullWidth
+                            />
+                            <IconButton size="small" onClick={(e) => setMenuFor({ index, el: e.currentTarget })}>
+                                <MoreVertIcon fontSize="small" sx={{ opacity: 0.5 }} />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => onRemove(cat.value)}>
+                                <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
+                            </IconButton>
                         </Box>
                     ))}
 
@@ -208,6 +159,48 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
             <DialogActions>
                 <Button onClick={onClose}>{t.close}</Button>
             </DialogActions>
+
+            <Menu anchorEl={menuFor?.el} open={!!menuFor} onClose={() => setMenuFor(null)}>
+                {menuFor && menuCategory && [
+                    <MenuItem
+                        key="up"
+                        disabled={menuFor.index === 0}
+                        onClick={() => { move(menuFor.index, -1); setMenuFor(null); }}
+                    >
+                        <ArrowUpwardIcon fontSize="small" sx={{ mr: 1.5 }} />
+                        {t.moveCategoryUpLabel}
+                    </MenuItem>,
+                    <MenuItem
+                        key="down"
+                        disabled={menuFor.index === categories.length - 1}
+                        onClick={() => { move(menuFor.index, 1); setMenuFor(null); }}
+                    >
+                        <ArrowDownwardIcon fontSize="small" sx={{ mr: 1.5 }} />
+                        {t.moveCategoryDownLabel}
+                    </MenuItem>,
+                    <Divider key="divider" />,
+                    <MenuItem key="noComputable" onClick={() => onToggleNoComputable(menuCategory.value, !menuCategory.noComputable)}>
+                        <Checkbox size="small" checked={!!menuCategory.noComputable} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
+                        <Typography variant="body2" sx={{ flex: 1 }}>{t.noComputableLabel}</Typography>
+                        <Tooltip title={t.noComputableInfo} arrow placement="top">
+                            <InfoOutlinedIcon
+                                sx={{ fontSize: 16, opacity: 0.5, cursor: "help", ml: 1 }}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        </Tooltip>
+                    </MenuItem>,
+                    <MenuItem key="incomeOnly" onClick={() => onToggleIncomeOnly(menuCategory.value, !menuCategory.incomeOnly)}>
+                        <Checkbox size="small" checked={!!menuCategory.incomeOnly} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
+                        <Typography variant="body2" sx={{ flex: 1 }}>{t.incomeOnlyLabel}</Typography>
+                        <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
+                            <InfoOutlinedIcon
+                                sx={{ fontSize: 16, opacity: 0.5, cursor: "help", ml: 1 }}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        </Tooltip>
+                    </MenuItem>,
+                ]}
+            </Menu>
         </Dialog>
     );
 }

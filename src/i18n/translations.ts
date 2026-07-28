@@ -67,6 +67,7 @@ export interface TranslationSet {
     reviewDiscardAllConfirmMessage: (count: number) => string;
 
     noTransactionsToShow: string;
+    otherCategoryLabel: string;
 
     totalSpentTitle: string;
     totalIncomeTitle: string;
@@ -243,6 +244,7 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDiscardAllConfirmMessage: (count) => `Se eliminarán los ${count} movimientos pendientes de clasificar. Esta acción no se puede deshacer.`,
 
         noTransactionsToShow: "No hay movimientos para mostrar.",
+        otherCategoryLabel: "Otros",
 
         totalSpentTitle: "Total gastado",
         totalIncomeTitle: "Total ingresado",
@@ -417,6 +419,7 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDiscardAllConfirmMessage: (count) => `This will delete the ${count} transactions still pending classification. This can't be undone.`,
 
         noTransactionsToShow: "No transactions to show.",
+        otherCategoryLabel: "Other",
 
         totalSpentTitle: "Total spent",
         totalIncomeTitle: "Total income",
