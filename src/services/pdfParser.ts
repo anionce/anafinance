@@ -8,6 +8,8 @@ GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const ROW_TOLERANCE = 2.5;
 /** A horizontal gap wider than this (PDF points) is treated as a new column, not a space within one. */
 const COLUMN_GAP_THRESHOLD = 8;
+/** How far left of a column's detected start an item can still sit and count as that column. */
+const COLUMN_START_SLACK = 4;
 
 interface PositionedItem {
     text: string;
@@ -22,9 +24,14 @@ interface PositionedItem {
  * and manual column-mapping flow used for Excel files.
  *
  * PDFs have no real concept of cells — this groups text by Y position into rows,
- * then splits each row into columns wherever there's an unusually wide horizontal
- * gap. It's a heuristic: works well for cleanly aligned bank statement tables,
- * but an odd layout may need the manual column-mapping dialog to fix up.
+ * then bins each row's items onto a single shared set of column start positions
+ * (derived once from whichever row has the most distinct gap-separated groups,
+ * usually the header). Binning every row onto the same grid — instead of
+ * re-detecting gaps independently per row — is what keeps "concepto is always
+ * column 2" true for every row; independent per-row splitting would silently
+ * shift a row's column count/order whenever its spacing differed even slightly,
+ * breaking every row after the first. It's still a heuristic: an odd layout may
+ * need the manual column-mapping dialog to fix up.
  */
 export async function readPdfRows(file: File): Promise<unknown[][]> {
     const buffer = await file.arrayBuffer();
@@ -45,13 +52,21 @@ export async function readPdfRows(file: File): Promise<unknown[][]> {
                 width: item.width,
             }));
 
-        rows.push(...groupIntoRows(items));
+        rows.push(...pageToRows(items));
     }
 
     return rows;
 }
 
-function groupIntoRows(items: PositionedItem[]): string[][] {
+function pageToRows(items: PositionedItem[]): string[][] {
+    const lines = groupIntoLines(items);
+    if (lines.length === 0) return [];
+
+    const columnStarts = detectColumnStarts(lines);
+    return lines.map((line) => binIntoColumns(line, columnStarts));
+}
+
+function groupIntoLines(items: PositionedItem[]): PositionedItem[][] {
     const sortedByY = [...items].sort((a, b) => b.y - a.y);
 
     const lines: PositionedItem[][] = [];
@@ -64,27 +79,48 @@ function groupIntoRows(items: PositionedItem[]): string[][] {
         }
     }
 
-    return lines.map((line) => splitIntoColumns(line.sort((a, b) => a.x - b.x)));
+    return lines.map((line) => line.sort((a, b) => a.x - b.x));
 }
 
-function splitIntoColumns(line: PositionedItem[]): string[] {
-    const columns: string[] = [];
-    let currentText = "";
+/** The x-position where each gap-separated group starts, for one already-sorted line. */
+function columnStartsForLine(line: PositionedItem[]): number[] {
+    const starts: number[] = [];
     let currentEnd = -Infinity;
 
     for (const item of line) {
-        const gap = item.x - currentEnd;
-        if (currentText === "") {
-            currentText = item.text;
-        } else if (gap > COLUMN_GAP_THRESHOLD) {
-            columns.push(currentText.trim());
-            currentText = item.text;
-        } else {
-            currentText += (gap > 1 ? " " : "") + item.text;
+        if (item.x - currentEnd > COLUMN_GAP_THRESHOLD) {
+            starts.push(item.x);
         }
         currentEnd = item.x + item.width;
     }
-    if (currentText !== "") columns.push(currentText.trim());
 
-    return columns;
+    return starts;
+}
+
+/** Uses the line with the most gap-separated groups as the column grid for the whole page. */
+function detectColumnStarts(lines: PositionedItem[][]): number[] {
+    let best: number[] = [];
+    for (const line of lines) {
+        const starts = columnStartsForLine(line);
+        if (starts.length > best.length) best = starts;
+    }
+    return best;
+}
+
+function binIntoColumns(line: PositionedItem[], columnStarts: number[]): string[] {
+    if (columnStarts.length === 0) {
+        return [line.map((item) => item.text).join(" ").trim()];
+    }
+
+    const cells = columnStarts.map(() => "");
+
+    for (const item of line) {
+        let colIndex = 0;
+        for (let i = 0; i < columnStarts.length; i++) {
+            if (item.x >= columnStarts[i] - COLUMN_START_SLACK) colIndex = i;
+        }
+        cells[colIndex] = cells[colIndex] ? `${cells[colIndex]} ${item.text}` : item.text;
+    }
+
+    return cells.map((c) => c.trim());
 }

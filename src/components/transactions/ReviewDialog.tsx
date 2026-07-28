@@ -42,7 +42,9 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     const remaining = pending.length;
     // Stays dismissed for this exact set of pending items, even across page
     // navigation — only a genuinely new/changed pending set reopens it.
-    const open = pendingIds !== reviewDismissedIds;
+    // Hidden while the discard-all confirmation is up so the list of items
+    // shrinking (as each gets deleted) isn't visible behind/through it.
+    const open = pendingIds !== reviewDismissedIds && !discardConfirmOpen;
 
     function handleNext() {
         if (!selected) return;

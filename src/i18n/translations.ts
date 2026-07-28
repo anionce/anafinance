@@ -50,6 +50,7 @@ export interface TranslationSet {
     colCategory: string;
     colNotes: string;
     noCategoryPlaceholder: string;
+    searchPlaceholder: string;
 
     reviewDialogTitle: (remaining: number) => string;
     finish: string;
@@ -218,6 +219,7 @@ export const translations: Record<Locale, TranslationSet> = {
         colCategory: "Categoría",
         colNotes: "Notas",
         noCategoryPlaceholder: "— sin categoría —",
+        searchPlaceholder: "Buscar por concepto o importe",
 
         reviewDialogTitle: (remaining) => `Clasificar movimiento (quedan ${remaining})`,
         finish: "Terminar",
@@ -384,6 +386,7 @@ export const translations: Record<Locale, TranslationSet> = {
         colCategory: "Category",
         colNotes: "Notes",
         noCategoryPlaceholder: "— no category —",
+        searchPlaceholder: "Search by description or amount",
 
         reviewDialogTitle: (remaining) => `Classify transaction (${remaining} left)`,
         finish: "Finish",
