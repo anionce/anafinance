@@ -154,6 +154,7 @@ export interface TranslationSet {
     signOutConfirmTitle: string;
     signOutConfirmMessage: string;
     signOutConfirmButton: string;
+    accountMenuLanguageLabel: string;
 
     deleteTransactionConfirmTitle: string;
     deleteTransactionConfirmMessage: string;
@@ -324,6 +325,7 @@ export const translations: Record<Locale, TranslationSet> = {
         signOutConfirmTitle: "¿Cerrar sesión?",
         signOutConfirmMessage: "Tendrás que volver a iniciar sesión para ver tus movimientos.",
         signOutConfirmButton: "Cerrar sesión",
+        accountMenuLanguageLabel: "Idioma",
 
         deleteTransactionConfirmTitle: "¿Eliminar movimiento?",
         deleteTransactionConfirmMessage: "Esta acción no se puede deshacer.",
@@ -492,6 +494,7 @@ export const translations: Record<Locale, TranslationSet> = {
         signOutConfirmTitle: "Sign out?",
         signOutConfirmMessage: "You'll need to sign in again to see your transactions.",
         signOutConfirmButton: "Sign out",
+        accountMenuLanguageLabel: "Language",
 
         deleteTransactionConfirmTitle: "Delete transaction?",
         deleteTransactionConfirmMessage: "This action can't be undone.",
