@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from "react";
 import {
     Container, Tabs, Tab, Box, Typography, Avatar, ButtonBase, ToggleButtonGroup, ToggleButton,
-    BottomNavigation, BottomNavigationAction, Paper, Drawer, Divider, Button,
+    BottomNavigation, BottomNavigationAction, Paper, Drawer, Divider, Button, Switch, FormControlLabel,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
+import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import RuleOutlinedIcon from "@mui/icons-material/RuleOutlined";
 import EditIcon from "@mui/icons-material/Edit";
@@ -48,18 +49,24 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const signOut = useAuthStore((s) => s.signOut);
     const { transactions, resolveCategory, removeTransaction } = useFinanceStore();
     const {
-        categories, categoryBudgets, categorizationRules,
+        categories, categoryBudgets, categorizationRules, combinedTransactionsView,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategories,
-        addRule, removeRule, setCategoryBudgets,
+        addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView,
     } = useSettingsStore();
     const { t, locale, setLocale } = useTranslation();
 
-    const navItems = [
-        { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
-        { label: t.navExpenses, path: "/expenses", icon: <ShoppingBagOutlinedIcon /> },
-        { label: t.navIncome, path: "/income", icon: <TrendingUpOutlinedIcon /> },
-        { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
-    ];
+    const navItems = combinedTransactionsView
+        ? [
+            { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
+            { label: t.navTransactions, path: "/transactions", icon: <ReceiptLongOutlinedIcon /> },
+            { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
+        ]
+        : [
+            { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
+            { label: t.navExpenses, path: "/expenses", icon: <ShoppingBagOutlinedIcon /> },
+            { label: t.navIncome, path: "/income", icon: <TrendingUpOutlinedIcon /> },
+            { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
+        ];
 
     const pending = transactions.filter((tx) => tx.category === "");
     const currentTab = navItems.some((item) => item.path === location.pathname) ? location.pathname : "/";
@@ -155,6 +162,25 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                             <ToggleButton value="es">ES</ToggleButton>
                             <ToggleButton value="en">EN</ToggleButton>
                         </ToggleButtonGroup>
+                    </Box>
+
+                    <Divider />
+
+                    <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                            {t.accountMenuPreferencesLabel}
+                        </Typography>
+                        <FormControlLabel
+                            sx={{ ml: 0 }}
+                            control={
+                                <Switch
+                                    size="small"
+                                    checked={combinedTransactionsView}
+                                    onChange={(e) => setCombinedTransactionsView(uid, e.target.checked)}
+                                />
+                            }
+                            label={<Typography variant="body2">{t.combinedTransactionsViewLabel}</Typography>}
+                        />
                     </Box>
 
                     <Divider />

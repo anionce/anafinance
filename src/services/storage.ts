@@ -134,6 +134,7 @@ export async function loadSettings(uid: string): Promise<Settings> {
         categorizationRules: (data.categorizationRules as Settings["categorizationRules"]) ?? DEFAULT_SETTINGS.categorizationRules,
         featuredGoalId: (data.featuredGoalId as string) ?? DEFAULT_SETTINGS.featuredGoalId,
         onboardingComplete: (data.onboardingComplete as boolean) ?? DEFAULT_SETTINGS.onboardingComplete,
+        combinedTransactionsView: (data.combinedTransactionsView as boolean) ?? DEFAULT_SETTINGS.combinedTransactionsView,
     };
 }
 
@@ -190,6 +191,7 @@ export async function loadLegacySettings(): Promise<Settings & { colchon: number
         categorizationRules: (data.categorizationRules as Settings["categorizationRules"]) ?? DEFAULT_SETTINGS.categorizationRules,
         featuredGoalId: (data.featuredGoalId as string) ?? DEFAULT_SETTINGS.featuredGoalId,
         onboardingComplete: true,
+        combinedTransactionsView: (data.combinedTransactionsView as boolean) ?? DEFAULT_SETTINGS.combinedTransactionsView,
         colchon: (data.colchon as number) ?? 1719,
         colchonMeta: (data.colchonMeta as number) ?? 8000,
     };
