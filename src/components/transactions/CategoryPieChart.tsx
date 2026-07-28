@@ -25,12 +25,17 @@ const COLORS = [
     "#C9A876", "#C97B84", "#6FA8A0", "#A67B9E", "#8A94A6",
 ];
 
+/** Beyond this many slices, the legend gets long enough to overflow its
+ *  card — the smallest categories are folded into a single "Other" slice. */
+const MAX_SLICES = 6;
+const OTHER_CATEGORY = "__other__";
+
 export default function CategoryPieChart({ transactions, categories, selectedCategory, onSelectCategory }: Props) {
     const { t, locale } = useTranslation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const byCategory = calculateAmountByCategory(transactions);
-    const data: SliceDatum[] = Object.entries(byCategory)
+    const sorted: SliceDatum[] = Object.entries(byCategory)
         .map(([category, value]) => {
             const found = categories.find((c) => c.value === category);
             return {
@@ -40,6 +45,11 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
             };
         })
         .sort((a, b) => b.value - a.value);
+
+    const otherTotal = sorted.slice(MAX_SLICES).reduce((sum, d) => sum + d.value, 0);
+    const data: SliceDatum[] = otherTotal > 0
+        ? [...sorted.slice(0, MAX_SLICES), { name: t.otherCategoryLabel, value: otherTotal, category: OTHER_CATEGORY }]
+        : sorted;
 
     const total = data.reduce((sum, d) => sum + d.value, 0);
 
@@ -53,12 +63,12 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
 
     function handleSliceClick(entry: unknown) {
         const category = (entry as { category?: string } | undefined)?.category;
-        if (category && onSelectCategory) onSelectCategory(category);
+        if (category && category !== OTHER_CATEGORY && onSelectCategory) onSelectCategory(category);
     }
 
     function handleLegendClick(entry: unknown) {
         const category = (entry as { payload?: { category?: string } } | undefined)?.payload?.category;
-        if (category && onSelectCategory) onSelectCategory(category);
+        if (category && category !== OTHER_CATEGORY && onSelectCategory) onSelectCategory(category);
     }
 
     return (
@@ -111,10 +121,10 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
                         return (
                             <Box
                                 key={d.category}
-                                onClick={() => onSelectCategory?.(d.category)}
+                                onClick={() => d.category !== OTHER_CATEGORY && onSelectCategory?.(d.category)}
                                 sx={{
                                     display: "flex", alignItems: "center", gap: 0.5,
-                                    cursor: onSelectCategory ? "pointer" : "default",
+                                    cursor: onSelectCategory && d.category !== OTHER_CATEGORY ? "pointer" : "default",
                                     opacity: selectedCategory && d.category !== selectedCategory ? 0.4 : 1,
                                 }}
                             >
