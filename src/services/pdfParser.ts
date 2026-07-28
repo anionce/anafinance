@@ -8,8 +8,21 @@ GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const ROW_TOLERANCE = 2.5;
 /** A horizontal gap wider than this (PDF points) is treated as a new column, not a space within one. */
 const COLUMN_GAP_THRESHOLD = 8;
-/** How far left of a column's detected start an item can still sit and count as that column. */
-const COLUMN_START_SLACK = 4;
+/** A date is only trusted as marking a real transaction row if it sits left of this x — bank
+ *  statements often repeat a date inside a wrapped description (e.g. "...card ...1234 on 2026-06-26"),
+ *  which must not be mistaken for that row's own date column. */
+const DATE_COLUMN_MAX_X = 170;
+/** How close (PDF points) a line without its own date has to be to a dated row to be treated as
+ *  that row's wrapped continuation, rather than an unrelated line. */
+const MAX_WRAP_DISTANCE = 20;
+/** A line starting further left than the table's own first column (minus this much slack) is page
+ *  furniture (footers, letterhead...) that happens to sit close in Y to a row — never merge it in. */
+const TABLE_LEFT_MARGIN_SLACK = 10;
+/** Text this close to the page edge is letterhead/footer, never a real table column — dropped before
+ *  grouping into rows at all, since it can otherwise land on the exact same y as real table text
+ *  (page furniture is absolutely positioned and can coincide with wherever a row happens to fall). */
+const PAGE_MARGIN_X = 30;
+const DATE_PATTERN = /\d{1,4}[-/]\d{1,2}[-/]\d{1,4}/;
 
 interface PositionedItem {
     text: string;
@@ -24,13 +37,11 @@ interface PositionedItem {
  * and manual column-mapping flow used for Excel files.
  *
  * PDFs have no real concept of cells — this groups text by Y position into rows,
- * then bins each row's items onto a single shared set of column start positions
- * (derived once from whichever row has the most distinct gap-separated groups,
- * usually the header). Binning every row onto the same grid — instead of
- * re-detecting gaps independently per row — is what keeps "concepto is always
- * column 2" true for every row; independent per-row splitting would silently
- * shift a row's column count/order whenever its spacing differed even slightly,
- * breaking every row after the first. It's still a heuristic: an odd layout may
+ * merges rows that are really just a wrapped continuation of a dated row's
+ * description (common when a "Concepto" cell spans more lines than the
+ * single-line date/amount next to it), then bins every row's items onto one
+ * shared set of column boundaries so "concepto is always column 2" holds for
+ * every row, not just the first. It's still a heuristic: an odd layout may
  * need the manual column-mapping dialog to fix up.
  */
 export async function readPdfRows(file: File): Promise<unknown[][]> {
@@ -59,11 +70,20 @@ export async function readPdfRows(file: File): Promise<unknown[][]> {
 }
 
 function pageToRows(items: PositionedItem[]): string[][] {
-    const lines = groupIntoLines(items);
+    const lines = groupIntoLines(items.filter((item) => item.x >= PAGE_MARGIN_X));
     if (lines.length === 0) return [];
 
-    const columnStarts = detectColumnStarts(lines);
-    return lines.map((line) => binIntoColumns(line, columnStarts));
+    const isAnchor = lines.map(hasDateInFirstColumn);
+    const anchorLines = lines.filter((_, i) => isAnchor[i]);
+
+    // Column boundaries come from an actual transaction row, not the header —
+    // header labels (e.g. "Concepto") are often centered/padded within their
+    // column's width, sitting well to the right of where the left-aligned
+    // data text underneath it actually starts.
+    const columnStarts = detectColumnStarts(anchorLines.length > 0 ? anchorLines : lines);
+    const mergedLines = mergeWrappedLines(lines, isAnchor, columnStarts[0] ?? 0);
+
+    return mergedLines.map((line) => binIntoColumns(line, columnStarts));
 }
 
 function groupIntoLines(items: PositionedItem[]): PositionedItem[][] {
@@ -80,6 +100,10 @@ function groupIntoLines(items: PositionedItem[]): PositionedItem[][] {
     }
 
     return lines.map((line) => line.sort((a, b) => a.x - b.x));
+}
+
+function hasDateInFirstColumn(line: PositionedItem[]): boolean {
+    return line.some((item) => item.x < DATE_COLUMN_MAX_X && DATE_PATTERN.test(item.text.trim()));
 }
 
 /** The x-position where each gap-separated group starts, for one already-sorted line. */
@@ -107,18 +131,61 @@ function detectColumnStarts(lines: PositionedItem[][]): number[] {
     return best;
 }
 
+/**
+ * Absorbs lines with no date of their own into the nearest dated line above
+ * or below them, so a description that wraps onto extra lines ends up back
+ * in the same row as that transaction's date/amount instead of splitting
+ * into incomplete rows of its own.
+ */
+function mergeWrappedLines(lines: PositionedItem[][], isAnchor: boolean[], tableLeftEdge: number): PositionedItem[][] {
+    const anchorIdxs = isAnchor.map((v, i) => (v ? i : -1)).filter((i) => i !== -1);
+    if (anchorIdxs.length === 0) return lines;
+
+    const merged = lines.map((line) => [...line]);
+    const absorbed = new Set<number>();
+
+    for (let i = 0; i < lines.length; i++) {
+        if (isAnchor[i]) continue;
+        if (Math.min(...lines[i].map((item) => item.x)) < tableLeftEdge - TABLE_LEFT_MARGIN_SLACK) continue;
+
+        let nearest = -1;
+        let nearestDist = Infinity;
+        for (const a of anchorIdxs) {
+            const dist = Math.abs(lines[a][0].y - lines[i][0].y);
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearest = a;
+            }
+        }
+
+        if (nearest !== -1 && nearestDist <= MAX_WRAP_DISTANCE) {
+            merged[nearest].push(...lines[i]);
+            absorbed.add(i);
+        }
+    }
+
+    return lines
+        .map((_, i) => i)
+        .filter((i) => !absorbed.has(i))
+        .map((i) => merged[i].sort((a, b) => b.y - a.y || a.x - b.x));
+}
+
 function binIntoColumns(line: PositionedItem[], columnStarts: number[]): string[] {
     if (columnStarts.length === 0) {
         return [line.map((item) => item.text).join(" ").trim()];
     }
 
+    // Boundaries are the midpoints between adjacent column starts, not the
+    // starts themselves — numeric columns are usually right-aligned, so a
+    // wider number (more digits) starts further left than a narrower one in
+    // the same column, and a raw "must be >= this column's start" check
+    // would misfile it into the previous column.
+    const boundaries = columnStarts.slice(1).map((start, i) => (start + columnStarts[i]) / 2);
     const cells = columnStarts.map(() => "");
 
     for (const item of line) {
         let colIndex = 0;
-        for (let i = 0; i < columnStarts.length; i++) {
-            if (item.x >= columnStarts[i] - COLUMN_START_SLACK) colIndex = i;
-        }
+        while (colIndex < boundaries.length && item.x >= boundaries[colIndex]) colIndex++;
         cells[colIndex] = cells[colIndex] ? `${cells[colIndex]} ${item.text}` : item.text;
     }
 
