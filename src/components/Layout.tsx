@@ -36,7 +36,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const user = useAuthStore((s) => s.user);
     const signOut = useAuthStore((s) => s.signOut);
-    const { transactions, resolveCategory } = useFinanceStore();
+    const { transactions, resolveCategory, removeTransaction } = useFinanceStore();
     const { categories } = useSettingsStore();
     const { t, locale, setLocale } = useTranslation();
 
@@ -124,6 +124,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 pending={pending}
                 categories={categories}
                 onResolve={(id, category) => resolveCategory(uid, id, category)}
+                onDiscardAll={() => pending.forEach((tx) => removeTransaction(uid, tx.id))}
                 onFinish={() => {}}
             />
             <ConfirmDialog
