@@ -69,7 +69,7 @@ export async function readPdfRows(file: File): Promise<unknown[][]> {
     return rows;
 }
 
-function pageToRows(items: PositionedItem[]): string[][] {
+function pageToRows(items: PositionedItem[]): (string | null)[][] {
     const lines = groupIntoLines(items.filter((item) => item.x >= PAGE_MARGIN_X));
     if (lines.length === 0) return [];
 
@@ -170,7 +170,7 @@ function mergeWrappedLines(lines: PositionedItem[][], isAnchor: boolean[], table
         .map((i) => merged[i].sort((a, b) => b.y - a.y || a.x - b.x));
 }
 
-function binIntoColumns(line: PositionedItem[], columnStarts: number[]): string[] {
+function binIntoColumns(line: PositionedItem[], columnStarts: number[]): (string | null)[] {
     if (columnStarts.length === 0) {
         return [line.map((item) => item.text).join(" ").trim()];
     }
@@ -189,5 +189,8 @@ function binIntoColumns(line: PositionedItem[], columnStarts: number[]): string[
         cells[colIndex] = cells[colIndex] ? `${cells[colIndex]} ${item.text}` : item.text;
     }
 
-    return cells.map((c) => c.trim());
+    // Empty cells become null (not "") to match readSheetRows' XLSX.utils.sheet_to_json
+    // convention (defval: null) — downstream code filters out blank rows by checking
+    // for null, so a PDF-only "" would otherwise slip past that check undetected.
+    return cells.map((c) => c.trim()).map((c) => (c === "" ? null : c));
 }
