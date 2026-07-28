@@ -66,9 +66,30 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
         if (category && category !== OTHER_CATEGORY && onSelectCategory) onSelectCategory(category);
     }
 
-    function handleLegendClick(entry: unknown) {
-        const category = (entry as { payload?: { category?: string } } | undefined)?.payload?.category;
-        if (category && category !== OTHER_CATEGORY && onSelectCategory) onSelectCategory(category);
+    function renderLegendContent() {
+        return (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, pl: 2 }}>
+                {data.map((d, i) => {
+                    const pct = total > 0 ? (d.value / total) * 100 : 0;
+                    return (
+                        <Box
+                            key={d.category}
+                            onClick={() => d.category !== OTHER_CATEGORY && onSelectCategory?.(d.category)}
+                            sx={{
+                                display: "flex", alignItems: "center", gap: 0.75,
+                                cursor: onSelectCategory && d.category !== OTHER_CATEGORY ? "pointer" : "default",
+                                opacity: selectedCategory && d.category !== selectedCategory ? 0.4 : 1,
+                            }}
+                        >
+                            <Box sx={{ width: 10, height: 10, borderRadius: "2px", flexShrink: 0, bgcolor: COLORS[i % COLORS.length] }} />
+                            <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>
+                                {d.name} ({pct.toFixed(0)}%)
+                            </Typography>
+                        </Box>
+                    );
+                })}
+            </Box>
+        );
     }
 
     return (
@@ -97,18 +118,10 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
                         </Pie>
                         <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                         {!isMobile && (
-                            <Legend
-                                layout="vertical"
-                                verticalAlign="middle"
-                                align="right"
-                                onClick={handleLegendClick}
-                                wrapperStyle={{ cursor: onSelectCategory ? "pointer" : "default" }}
-                                formatter={(value, entry) => {
-                                    const entryValue = (entry?.payload as { value?: number } | undefined)?.value ?? 0;
-                                    const pct = total > 0 ? (entryValue / total) * 100 : 0;
-                                    return `${value} (${pct.toFixed(0)}%)`;
-                                }}
-                            />
+                            // Custom content (instead of letting Legend derive its own payload
+                            // from the chart) so the legend's order is provably tied to `data`'s
+                            // highest-to-lowest sort, not whatever order Recharts renders in.
+                            <Legend layout="vertical" verticalAlign="middle" align="right" content={renderLegendContent} />
                         )}
                     </PieChart>
                 </ResponsiveContainer>
