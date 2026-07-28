@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Card, Grid, Typography, Button, ToggleButtonGroup, ToggleButton, Chip } from "@mui/material";
+import { Card, Grid, Typography, Button, ToggleButtonGroup, ToggleButton, Chip, TextField, InputAdornment } from "@mui/material";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import SearchIcon from "@mui/icons-material/Search";
 import Layout from "../components/Layout";
 import TransactionsTable from "../components/transactions/TransactionsTable";
 import CalendarView from "../components/transactions/CalendarView";
@@ -16,6 +17,7 @@ import { useTranslation } from "../i18n/useTranslation";
 import { getCategoryLabel } from "../i18n/categoryTranslations";
 import { filterByDateFilter } from "../utils/dates";
 import { formatCurrency } from "../utils/currency";
+import { matchesTransactionSearch } from "../utils/search";
 import { accent } from "../theme/colors";
 
 export default function ExpensesPage() {
@@ -24,6 +26,7 @@ export default function ExpensesPage() {
     const [addOpen, setAddOpen] = useState(false);
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
     const { transactions, hasLoaded, resolveCategory, updateNotes, splitTransaction, removeTransaction, addTransaction } = useFinanceStore();
     const { dateFilter, setDateFilter } = useUIStore();
     const { categories } = useSettingsStore();
@@ -36,7 +39,10 @@ export default function ExpensesPage() {
     const expenses = transactions.filter((tx) => tx.amount < 0 && !noComputableValues.has(tx.category));
     const visible = filterByDateFilter(expenses, dateFilter);
     const total = visible.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-    const shown = selectedCategory ? visible.filter((tx) => tx.category === selectedCategory) : visible;
+    const categoryFiltered = selectedCategory ? expenses.filter((tx) => tx.category === selectedCategory) : expenses;
+    const searchFiltered = categoryFiltered.filter((tx) => matchesTransactionSearch(tx, searchQuery));
+    const shown = (selectedCategory ? visible.filter((tx) => tx.category === selectedCategory) : visible)
+        .filter((tx) => matchesTransactionSearch(tx, searchQuery));
     const selectedCategoryObj = selectedCategory ? categories.find((c) => c.value === selectedCategory) : undefined;
 
     function toggleCategory(category: string) {
@@ -85,6 +91,22 @@ export default function ExpensesPage() {
                             onDelete={() => setSelectedCategory(null)}
                         />
                     )}
+                    <TextField
+                        size="small"
+                        placeholder={t.searchPlaceholder}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        sx={{ minWidth: 220 }}
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ fontSize: 18, opacity: 0.5 }} />
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
+                    />
                 </div>
                 <Button variant="outlined" onClick={() => setAddOpen(true)}>{t.addTransactionButton}</Button>
             </div>
@@ -102,7 +124,7 @@ export default function ExpensesPage() {
                     />
                 </div>
             ) : (
-                <CalendarView transactions={selectedCategory ? expenses.filter((tx) => tx.category === selectedCategory) : expenses} categories={categories} />
+                <CalendarView transactions={searchFiltered} categories={categories} />
             )}
 
             <AddTransactionDialog
