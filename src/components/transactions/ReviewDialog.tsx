@@ -23,11 +23,12 @@ interface Props {
     pending: Transaction[];
     categories: Category[];
     onResolve: (id: string, category: string) => void;
+    onDiscardOne: (id: string) => void;
     onDiscardAll: () => void;
     onFinish: () => void;
 }
 
-export default function ReviewDialog({ pending, categories, onResolve, onDiscardAll, onFinish }: Props) {
+export default function ReviewDialog({ pending, categories, onResolve, onDiscardOne, onDiscardAll, onFinish }: Props) {
     const { t, locale } = useTranslation();
     const [selected, setSelected] = useState<string | null>(null);
     const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
@@ -57,6 +58,15 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
         if (!selected) return;
 
         onResolve(current.id, selected);
+        setSelected(null);
+
+        if (remaining === 1) {
+            onFinish();
+        }
+    }
+
+    function handleDiscardOne() {
+        onDiscardOne(current.id);
         setSelected(null);
 
         if (remaining === 1) {
@@ -111,6 +121,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
                 </DialogContent>
                 <DialogActions sx={{ flexWrap: "wrap" }}>
                     <Button color="error" onClick={() => setDiscardConfirmOpen(true)}>{t.reviewDiscardAllButton}</Button>
+                    <Button color="error" onClick={handleDiscardOne}>{t.reviewDiscardOneButton}</Button>
                     <Button onClick={handleDismiss}>{t.reviewLaterButton}</Button>
                     <Box sx={{ flexGrow: 1 }} />
                     <Button variant="contained" disabled={!selected} onClick={handleNext}>

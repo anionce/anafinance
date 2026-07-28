@@ -56,6 +56,7 @@ export interface TranslationSet {
     finish: string;
     next: string;
     reviewLaterButton: string;
+    reviewDiscardOneButton: string;
     reviewDiscardAllButton: string;
     reviewDiscardAllConfirmTitle: string;
     reviewDiscardAllConfirmMessage: (count: number) => string;
@@ -225,6 +226,7 @@ export const translations: Record<Locale, TranslationSet> = {
         finish: "Terminar",
         next: "Siguiente",
         reviewLaterButton: "Clasificar más tarde",
+        reviewDiscardOneButton: "Descartar este",
         reviewDiscardAllButton: "Descartar todos",
         reviewDiscardAllConfirmTitle: "¿Descartar movimientos pendientes?",
         reviewDiscardAllConfirmMessage: (count) => `Se eliminarán los ${count} movimientos pendientes de clasificar. Esta acción no se puede deshacer.`,
@@ -392,6 +394,7 @@ export const translations: Record<Locale, TranslationSet> = {
         finish: "Finish",
         next: "Next",
         reviewLaterButton: "Classify later",
+        reviewDiscardOneButton: "Discard this one",
         reviewDiscardAllButton: "Discard all",
         reviewDiscardAllConfirmTitle: "Discard pending transactions?",
         reviewDiscardAllConfirmMessage: (count) => `This will delete the ${count} transactions still pending classification. This can't be undone.`,

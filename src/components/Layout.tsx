@@ -124,6 +124,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 pending={pending}
                 categories={categories}
                 onResolve={(id, category) => resolveCategory(uid, id, category)}
+                onDiscardOne={(id) => removeTransaction(uid, id)}
                 onDiscardAll={() => pending.forEach((tx) => removeTransaction(uid, tx.id))}
                 onFinish={() => {}}
             />
