@@ -36,6 +36,8 @@ export interface TranslationSet {
     newCategoryPlaceholder: string;
     categoriesHint: string;
     close: string;
+    moveCategoryUpLabel: string;
+    moveCategoryDownLabel: string;
 
     savingsGoalsTitle: string;
     goalLabel: string;
@@ -205,7 +207,9 @@ export const translations: Record<Locale, TranslationSet> = {
 
         manageCategoriesDialogTitle: "Gestionar categorías",
         newCategoryPlaceholder: "Nueva categoría (ej: 🎨 Arte)",
-        categoriesHint: "Los cambios se guardan al momento y afectan a toda la app.",
+        categoriesHint: "Los cambios se guardan al momento y afectan a toda la app. Usa las flechas para ordenarlas: las primeras aparecerán antes al clasificar.",
+        moveCategoryUpLabel: "Subir",
+        moveCategoryDownLabel: "Bajar",
         close: "Cerrar",
 
         savingsGoalsTitle: "Objetivos de ahorro",
@@ -374,7 +378,9 @@ export const translations: Record<Locale, TranslationSet> = {
 
         manageCategoriesDialogTitle: "Manage categories",
         newCategoryPlaceholder: "New category (e.g. 🎨 Art)",
-        categoriesHint: "Changes save instantly and affect the whole app.",
+        categoriesHint: "Changes save instantly and affect the whole app. Use the arrows to reorder them: the ones on top will show up first when classifying.",
+        moveCategoryUpLabel: "Move up",
+        moveCategoryDownLabel: "Move down",
         close: "Close",
 
         savingsGoalsTitle: "Savings goals",

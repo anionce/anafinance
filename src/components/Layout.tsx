@@ -8,9 +8,15 @@ import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlin
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
+import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
+import RuleOutlinedIcon from "@mui/icons-material/RuleOutlined";
+import EditIcon from "@mui/icons-material/Edit";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReviewDialog from "./transactions/ReviewDialog";
 import ConfirmDialog from "./ConfirmDialog";
+import CategoryManagerDialog from "./budget/CategoryManagerDialog";
+import CategorizationRulesDialog from "./budget/CategorizationRulesDialog";
+import EditBudgetsDialog from "./budget/EditBudgetsDialog";
 import Logo from "./Logo";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
@@ -34,11 +40,18 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const navigate = useNavigate();
     const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
+    const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
+    const [budgetsDialogOpen, setBudgetsDialogOpen] = useState(false);
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const user = useAuthStore((s) => s.user);
     const signOut = useAuthStore((s) => s.signOut);
     const { transactions, resolveCategory, removeTransaction } = useFinanceStore();
-    const { categories } = useSettingsStore();
+    const {
+        categories, categoryBudgets, categorizationRules,
+        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategories,
+        addRule, removeRule, setCategoryBudgets,
+    } = useSettingsStore();
     const { t, locale, setLocale } = useTranslation();
 
     const navItems = [
@@ -144,6 +157,44 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                         </ToggleButtonGroup>
                     </Box>
 
+                    <Divider />
+
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                        <Button
+                            startIcon={<CategoryOutlinedIcon />}
+                            color="inherit"
+                            onClick={() => {
+                                setAccountMenuOpen(false);
+                                setCategoriesDialogOpen(true);
+                            }}
+                            sx={{ justifyContent: "flex-start" }}
+                        >
+                            {t.manageCategoriesTooltip}
+                        </Button>
+                        <Button
+                            startIcon={<RuleOutlinedIcon />}
+                            color="inherit"
+                            onClick={() => {
+                                setAccountMenuOpen(false);
+                                setRulesDialogOpen(true);
+                            }}
+                            sx={{ justifyContent: "flex-start" }}
+                        >
+                            {t.manageRulesTooltip}
+                        </Button>
+                        <Button
+                            startIcon={<EditIcon />}
+                            color="inherit"
+                            onClick={() => {
+                                setAccountMenuOpen(false);
+                                setBudgetsDialogOpen(true);
+                            }}
+                            sx={{ justifyContent: "flex-start" }}
+                        >
+                            {t.editBudgetTooltip}
+                        </Button>
+                    </Box>
+
                     <Box sx={{ flexGrow: 1 }} />
 
                     <Divider />
@@ -184,6 +235,32 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 confirmLabel={t.signOutConfirmButton}
                 danger
                 onConfirm={() => signOut()}
+            />
+            <CategoryManagerDialog
+                open={categoriesDialogOpen}
+                onClose={() => setCategoriesDialogOpen(false)}
+                categories={categories}
+                onUpdateLabel={(value, label) => updateCategoryLabel(uid, value, label)}
+                onAdd={(value, label) => addCategory(uid, value, label)}
+                onRemove={(value) => removeCategory(uid, value)}
+                onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
+                onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
+                onReorder={(reordered) => setCategories(uid, reordered)}
+            />
+            <CategorizationRulesDialog
+                open={rulesDialogOpen}
+                onClose={() => setRulesDialogOpen(false)}
+                categories={categories}
+                rules={categorizationRules}
+                onAdd={(keyword, category) => addRule(uid, keyword, category)}
+                onRemove={(id) => removeRule(uid, id)}
+            />
+            <EditBudgetsDialog
+                open={budgetsDialogOpen}
+                onClose={() => setBudgetsDialogOpen(false)}
+                categories={categories}
+                budgets={categoryBudgets}
+                onSave={(budgets) => setCategoryBudgets(uid, budgets)}
             />
             <Paper
                 elevation={0}

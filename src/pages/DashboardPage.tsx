@@ -27,7 +27,7 @@ export default function DashboardPage() {
     } = useFinanceStore();
     const {
         estimatedIncome, categoryBudgets, categories, categorizationRules, featuredGoalId, hasLoaded: settingsLoaded,
-        setEstimatedIncome, setCategoryBudgets,
+        setEstimatedIncome, setCategoryBudgets, setCategories,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly,
         addRule, removeRule, setFeaturedGoalId,
     } = useSettingsStore();
@@ -92,6 +92,7 @@ export default function DashboardPage() {
                 onRemoveCategory={(value) => removeCategory(uid, value)}
                 onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
                 onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
+                onReorderCategories={(reordered) => setCategories(uid, reordered)}
                 categorizationRules={categorizationRules}
                 onAddRule={(keyword, category) => addRule(uid, keyword, category)}
                 onRemoveRule={(id) => removeRule(uid, id)}
