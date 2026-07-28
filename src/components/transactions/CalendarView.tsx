@@ -46,6 +46,7 @@ function weekdayLabels(locale: string): string[] {
 
 function monthLabel(month: string, locale: string): string {
     const [year, m] = month.split("-").map(Number);
+    if (!year || !m) return month;
     return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" }).format(new Date(year, m - 1, 1));
 }
 

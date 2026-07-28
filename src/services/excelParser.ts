@@ -50,8 +50,8 @@ export function guessHeaderRowIndex(rows: unknown[][]): number {
 // entry lists the accepted header text (lowercased) per language so the file
 // is still auto-recognized instead of falling back to manual column mapping.
 const BBVA_HEADER_ALIASES = {
-    fecha: ["fecha", "data"],
-    fValor: ["f.valor", "data valor"],
+    fecha: ["fecha", "data", "operación", "operacion"],
+    fValor: ["f.valor", "data valor", "fecha valor"],
     concepto: ["concepto", "concepte"],
     movimiento: ["movimiento", "moviment"],
     importe: ["importe", "import"],

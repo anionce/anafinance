@@ -6,13 +6,13 @@ export function getCurrentMonth(): string {
 }
 
 export function getAvailableMonths(transactions: Transaction[]): string[] {
-    return Array.from(new Set(transactions.map((t) => t.date.slice(0, 7))))
+    return Array.from(new Set(transactions.map((t) => t.date.slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m))))
         .sort()
         .reverse();
 }
 
 export function getAvailableYears(transactions: Transaction[]): string[] {
-    return Array.from(new Set(transactions.map((t) => t.date.slice(0, 4))))
+    return Array.from(new Set(transactions.map((t) => t.date.slice(0, 4)).filter((y) => /^\d{4}$/.test(y))))
         .sort()
         .reverse();
 }
