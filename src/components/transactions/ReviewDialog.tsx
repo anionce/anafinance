@@ -5,12 +5,20 @@ import {
     DialogContent,
     DialogActions,
     Button,
+    IconButton,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
     Typography,
     ToggleButton,
     ToggleButtonGroup,
     Box,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweepOutlined";
 import type { Category } from "../../types/Category";
 import type { Transaction } from "../../types/Transaction";
 import { formatCurrency } from "../../utils/currency";
@@ -33,6 +41,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     const [selected, setSelected] = useState<string | null>(null);
     const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
     const [discarding, setDiscarding] = useState(false);
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const reviewDismissedIds = useUIStore((s) => s.reviewDismissedIds);
     const dismissReview = useUIStore((s) => s.dismissReview);
 
@@ -120,8 +129,19 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
                     </ToggleButtonGroup>
                 </DialogContent>
                 <DialogActions sx={{ flexWrap: "wrap" }}>
-                    <Button color="error" onClick={() => setDiscardConfirmOpen(true)}>{t.reviewDiscardAllButton}</Button>
-                    <Button color="error" onClick={handleDiscardOne}>{t.reviewDiscardOneButton}</Button>
+                    <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+                        <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                    <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={() => setMenuAnchor(null)}>
+                        <MenuItem onClick={() => { setMenuAnchor(null); handleDiscardOne(); }}>
+                            <ListItemIcon><DeleteOutlineIcon fontSize="small" color="error" /></ListItemIcon>
+                            <ListItemText sx={{ color: "error.main" }}>{t.reviewDiscardOneButton}</ListItemText>
+                        </MenuItem>
+                        <MenuItem onClick={() => { setMenuAnchor(null); setDiscardConfirmOpen(true); }}>
+                            <ListItemIcon><DeleteSweepIcon fontSize="small" color="error" /></ListItemIcon>
+                            <ListItemText sx={{ color: "error.main" }}>{t.reviewDiscardAllButton}</ListItemText>
+                        </MenuItem>
+                    </Menu>
                     <Button onClick={handleDismiss}>{t.reviewLaterButton}</Button>
                     <Box sx={{ flexGrow: 1 }} />
                     <Button variant="contained" disabled={!selected} onClick={handleNext}>
