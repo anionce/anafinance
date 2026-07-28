@@ -31,20 +31,27 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     const { t, locale } = useTranslation();
     const [selected, setSelected] = useState<string | null>(null);
     const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+    const [discarding, setDiscarding] = useState(false);
     const reviewDismissedIds = useUIStore((s) => s.reviewDismissedIds);
     const dismissReview = useUIStore((s) => s.dismissReview);
 
     const pendingIds = pending.map((tx) => tx.id).join(",");
 
-    if (pending.length === 0) return null;
+    if (pending.length === 0) {
+        if (discarding) setDiscarding(false);
+        return null;
+    }
 
     const current = pending[0];
     const remaining = pending.length;
     // Stays dismissed for this exact set of pending items, even across page
     // navigation — only a genuinely new/changed pending set reopens it.
     // Hidden while the discard-all confirmation is up so the list of items
-    // shrinking (as each gets deleted) isn't visible behind/through it.
-    const open = pendingIds !== reviewDismissedIds && !discardConfirmOpen;
+    // shrinking (as each gets deleted) isn't visible behind/through it, and
+    // hidden for the whole discard (not just a pendingIds snapshot) since
+    // deletions resolve one at a time and shrink pendingIds mid-flight,
+    // which would otherwise no longer match the dismissed snapshot.
+    const open = pendingIds !== reviewDismissedIds && !discardConfirmOpen && !discarding;
 
     function handleNext() {
         if (!selected) return;
@@ -63,6 +70,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
     }
 
     function handleDiscardAll() {
+        setDiscarding(true);
         dismissReview(pendingIds);
         onDiscardAll();
         onFinish();
