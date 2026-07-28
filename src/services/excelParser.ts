@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import type { Transaction } from '../types/Transaction';
 import { categorize } from "./categorizer";
 import { hashTransaction } from "./hash";
+import { readPdfRows } from "./pdfParser";
 
 export interface ColumnMapping {
     headerRowIndex: number;
@@ -158,8 +159,17 @@ export function transactionsFromMapping(rows: unknown[][], mapping: ColumnMappin
     return transactions;
 }
 
+function isPdfFile(file: File): boolean {
+    return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+}
+
+/** Reads either a spreadsheet or a PDF bank statement into the same row-grid shape. */
+export async function readBankFileRows(file: File): Promise<unknown[][]> {
+    return isPdfFile(file) ? readPdfRows(file) : readSheetRows(file);
+}
+
 export async function parseExcel(file: File): Promise<Transaction[]> {
-    const rows = await readSheetRows(file);
+    const rows = await readBankFileRows(file);
     const bbva = detectBbvaMapping(rows);
 
     if (!bbva) throw new UnrecognizedBankFormatError(rows);

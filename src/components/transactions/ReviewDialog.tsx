@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -16,6 +16,7 @@ import type { Transaction } from "../../types/Transaction";
 import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
+import { useUIStore } from "../../store/uiStore";
 
 interface Props {
     pending: Transaction[];
@@ -27,18 +28,18 @@ interface Props {
 export default function ReviewDialog({ pending, categories, onResolve, onFinish }: Props) {
     const { t, locale } = useTranslation();
     const [selected, setSelected] = useState<string | null>(null);
-    const [dismissed, setDismissed] = useState(false);
+    const reviewDismissedIds = useUIStore((s) => s.reviewDismissedIds);
+    const dismissReview = useUIStore((s) => s.dismissReview);
 
     const pendingIds = pending.map((tx) => tx.id).join(",");
-    useEffect(() => {
-        setDismissed(false);
-    }, [pendingIds]);
 
     if (pending.length === 0) return null;
 
     const current = pending[0];
     const remaining = pending.length;
-    const open = !dismissed;
+    // Stays dismissed for this exact set of pending items, even across page
+    // navigation — only a genuinely new/changed pending set reopens it.
+    const open = pendingIds !== reviewDismissedIds;
 
     function handleNext() {
         if (!selected) return;
@@ -52,7 +53,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onFinish 
     }
 
     function handleDismiss() {
-        setDismissed(true);
+        dismissReview(pendingIds);
         onFinish();
     }
 
