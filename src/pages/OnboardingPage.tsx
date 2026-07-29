@@ -195,7 +195,9 @@ function CategoriesStep({ uid, categories, setCategories }: {
                                 label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.noComputableLabel}</Typography>}
                             />
                             <Tooltip title={t.noComputableInfo} arrow placement="top">
-                                <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5, cursor: "help" }} />
+                                <IconButton size="small" sx={{ p: 0.5 }}>
+                                    <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5 }} />
+                                </IconButton>
                             </Tooltip>
                         </Box>
                         <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -212,7 +214,9 @@ function CategoriesStep({ uid, categories, setCategories }: {
                                 label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.incomeOnlyLabel}</Typography>}
                             />
                             <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
-                                <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5, cursor: "help" }} />
+                                <IconButton size="small" sx={{ p: 0.5 }}>
+                                    <InfoOutlinedIcon sx={{ fontSize: 14, opacity: 0.5 }} />
+                                </IconButton>
                             </Tooltip>
                         </Box>
                     </Box>

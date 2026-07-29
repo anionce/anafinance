@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Snackbar, Alert, Box, Tooltip } from "@mui/material";
+import { Snackbar, Alert, Box, Tooltip, IconButton } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ImportExcelButton from "./ImportExcelButton";
 import ImportMappingDialog from "./ImportMappingDialog";
@@ -67,7 +67,9 @@ export default function ImportExcelFlow({ uid }: Props) {
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <ImportExcelButton onImport={handleImport} loading={importing} />
                 <Tooltip title={t.importHelpInfo} arrow placement="top">
-                    <InfoOutlinedIcon sx={{ fontSize: 18, opacity: 0.5, cursor: "help" }} />
+                    <IconButton size="small" sx={{ p: 0.5 }}>
+                        <InfoOutlinedIcon sx={{ fontSize: 18, opacity: 0.5 }} />
+                    </IconButton>
                 </Tooltip>
             </Box>
             {pendingRows && (
