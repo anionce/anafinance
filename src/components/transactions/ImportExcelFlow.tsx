@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Snackbar, Alert, Box, Tooltip, IconButton } from "@mui/material";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { Snackbar, Alert, Tooltip } from "@mui/material";
 import ImportExcelButton from "./ImportExcelButton";
 import ImportMappingDialog from "./ImportMappingDialog";
 import { UnrecognizedBankFormatError } from "../../services/excelParser";
@@ -64,14 +63,11 @@ export default function ImportExcelFlow({ uid }: Props) {
 
     return (
         <>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <ImportExcelButton onImport={handleImport} loading={importing} />
-                <Tooltip title={t.importHelpInfo} arrow placement="top">
-                    <IconButton size="small" sx={{ p: 0.5 }}>
-                        <InfoOutlinedIcon sx={{ fontSize: 18, opacity: 0.5 }} />
-                    </IconButton>
-                </Tooltip>
-            </Box>
+            <Tooltip title={t.importHelpInfo} arrow placement="top">
+                <span>
+                    <ImportExcelButton onImport={handleImport} loading={importing} />
+                </span>
+            </Tooltip>
             {pendingRows && (
                 <ImportMappingDialog
                     open
