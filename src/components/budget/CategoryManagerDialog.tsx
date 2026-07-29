@@ -183,20 +183,18 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
                         <Checkbox size="small" checked={!!menuCategory.noComputable} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
                         <Typography variant="body2" sx={{ flex: 1 }}>{t.noComputableLabel}</Typography>
                         <Tooltip title={t.noComputableInfo} arrow placement="top">
-                            <InfoOutlinedIcon
-                                sx={{ fontSize: 16, opacity: 0.5, cursor: "help", ml: 1 }}
-                                onClick={(e) => e.stopPropagation()}
-                            />
+                            <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                                <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
+                            </IconButton>
                         </Tooltip>
                     </MenuItem>,
                     <MenuItem key="incomeOnly" onClick={() => onToggleIncomeOnly(menuCategory.value, !menuCategory.incomeOnly)}>
                         <Checkbox size="small" checked={!!menuCategory.incomeOnly} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
                         <Typography variant="body2" sx={{ flex: 1 }}>{t.incomeOnlyLabel}</Typography>
                         <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
-                            <InfoOutlinedIcon
-                                sx={{ fontSize: 16, opacity: 0.5, cursor: "help", ml: 1 }}
-                                onClick={(e) => e.stopPropagation()}
-                            />
+                            <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                                <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
+                            </IconButton>
                         </Tooltip>
                     </MenuItem>,
                 ]}
