@@ -33,6 +33,15 @@ export interface TranslationSet {
     cancel: string;
     save: string;
 
+    budgetHistoryTooltip: string;
+    budgetHistoryDialogTitle: string;
+    budgetHistoryDownloadButton: string;
+    budgetHistoryNoDataMessage: string;
+    budgetHistoryColBudget: string;
+    budgetHistoryColSpent: string;
+    budgetHistoryColRemaining: string;
+    budgetHistoryTotalLabel: string;
+
     manageCategoriesDialogTitle: string;
     newCategoryPlaceholder: string;
     categoriesHint: string;
@@ -210,6 +219,15 @@ export const translations: Record<Locale, TranslationSet> = {
         cancel: "Cancelar",
         save: "Guardar",
 
+        budgetHistoryTooltip: "Historial de presupuestos",
+        budgetHistoryDialogTitle: "Historial de presupuestos",
+        budgetHistoryDownloadButton: "Descargar CSV",
+        budgetHistoryNoDataMessage: "No hay presupuesto guardado para este mes.",
+        budgetHistoryColBudget: "Presupuesto",
+        budgetHistoryColSpent: "Gastado",
+        budgetHistoryColRemaining: "Restante",
+        budgetHistoryTotalLabel: "Total",
+
         manageCategoriesDialogTitle: "Gestionar categorías",
         newCategoryPlaceholder: "Nueva categoría (ej: 🎨 Arte)",
         categoriesHint: "Los cambios se guardan al momento y afectan a toda la app. Usa las flechas para ordenarlas: las primeras aparecerán antes al clasificar.",
@@ -384,6 +402,15 @@ export const translations: Record<Locale, TranslationSet> = {
         editBudgetDialogHint: "Leave a category empty or at 0 so it isn't counted in the budget.",
         cancel: "Cancel",
         save: "Save",
+
+        budgetHistoryTooltip: "Budget history",
+        budgetHistoryDialogTitle: "Budget history",
+        budgetHistoryDownloadButton: "Download CSV",
+        budgetHistoryNoDataMessage: "No budget saved for this month.",
+        budgetHistoryColBudget: "Budget",
+        budgetHistoryColSpent: "Spent",
+        budgetHistoryColRemaining: "Remaining",
+        budgetHistoryTotalLabel: "Total",
 
         manageCategoriesDialogTitle: "Manage categories",
         newCategoryPlaceholder: "New category (e.g. 🎨 Art)",

@@ -116,6 +116,16 @@ function normalizeCategoryBudgets(raw: unknown): Record<string, CategoryBudget> 
     return result;
 }
 
+function normalizeBudgetHistory(raw: unknown): Record<string, Record<string, CategoryBudget>> {
+    if (!raw || typeof raw !== "object") return {};
+
+    const result: Record<string, Record<string, CategoryBudget>> = {};
+    for (const [month, monthBudgets] of Object.entries(raw as Record<string, unknown>)) {
+        result[month] = normalizeCategoryBudgets(monthBudgets);
+    }
+    return result;
+}
+
 async function getSettingsDocData(uid: string): Promise<Record<string, unknown>> {
     const snapshot = await getDocs(collection(db, `users/${uid}/settings`));
     const found = snapshot.docs.find((d) => d.id === SETTINGS_DOC_ID);
@@ -135,6 +145,7 @@ export async function loadSettings(uid: string): Promise<Settings> {
         featuredGoalId: (data.featuredGoalId as string) ?? DEFAULT_SETTINGS.featuredGoalId,
         onboardingComplete: (data.onboardingComplete as boolean) ?? DEFAULT_SETTINGS.onboardingComplete,
         combinedTransactionsView: (data.combinedTransactionsView as boolean) ?? DEFAULT_SETTINGS.combinedTransactionsView,
+        budgetHistory: normalizeBudgetHistory(data.budgetHistory),
     };
 }
 
@@ -192,6 +203,7 @@ export async function loadLegacySettings(): Promise<Settings & { colchon: number
         featuredGoalId: (data.featuredGoalId as string) ?? DEFAULT_SETTINGS.featuredGoalId,
         onboardingComplete: true,
         combinedTransactionsView: (data.combinedTransactionsView as boolean) ?? DEFAULT_SETTINGS.combinedTransactionsView,
+        budgetHistory: normalizeBudgetHistory(data.budgetHistory),
         colchon: (data.colchon as number) ?? 1719,
         colchonMeta: (data.colchonMeta as number) ?? 8000,
     };
