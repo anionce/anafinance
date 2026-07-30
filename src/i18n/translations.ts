@@ -41,6 +41,8 @@ export interface TranslationSet {
     budgetHistoryColSpent: string;
     budgetHistoryColRemaining: string;
     budgetHistoryTotalLabel: string;
+    budgetHistoryEditButton: string;
+    editBudgetDialogTitleForMonth: (month: string) => string;
 
     manageCategoriesDialogTitle: string;
     newCategoryPlaceholder: string;
@@ -227,6 +229,8 @@ export const translations: Record<Locale, TranslationSet> = {
         budgetHistoryColSpent: "Gastado",
         budgetHistoryColRemaining: "Restante",
         budgetHistoryTotalLabel: "Total",
+        budgetHistoryEditButton: "Editar este mes",
+        editBudgetDialogTitleForMonth: (month) => `Editar presupuesto — ${month}`,
 
         manageCategoriesDialogTitle: "Gestionar categorías",
         newCategoryPlaceholder: "Nueva categoría (ej: 🎨 Arte)",
@@ -411,6 +415,8 @@ export const translations: Record<Locale, TranslationSet> = {
         budgetHistoryColSpent: "Spent",
         budgetHistoryColRemaining: "Remaining",
         budgetHistoryTotalLabel: "Total",
+        budgetHistoryEditButton: "Edit this month",
+        editBudgetDialogTitleForMonth: (month) => `Edit budget — ${month}`,
 
         manageCategoriesDialogTitle: "Manage categories",
         newCategoryPlaceholder: "New category (e.g. 🎨 Art)",

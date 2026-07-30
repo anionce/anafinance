@@ -23,9 +23,10 @@ interface Props {
     categories: Category[];
     budgets: Record<string, CategoryBudget>;
     onSave: (budgets: Record<string, CategoryBudget>) => void;
+    title?: string;
 }
 
-export default function EditBudgetsDialog({ open, onClose, categories, budgets, onSave }: Props) {
+export default function EditBudgetsDialog({ open, onClose, categories, budgets, onSave, title }: Props) {
     const { t, locale } = useTranslation();
     const [amountDraft, setAmountDraft] = useState<Record<string, string>>({});
     const [periodDraft, setPeriodDraft] = useState<Record<string, BudgetPeriod>>({});
@@ -60,7 +61,7 @@ export default function EditBudgetsDialog({ open, onClose, categories, budgets, 
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-            <DialogTitle>{t.editBudgetDialogTitle}</DialogTitle>
+            <DialogTitle>{title ?? t.editBudgetDialogTitle}</DialogTitle>
             <DialogContent>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     {t.editBudgetDialogHint}

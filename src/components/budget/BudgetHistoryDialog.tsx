@@ -13,6 +13,7 @@ import {
     LinearProgress,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import EditIcon from "@mui/icons-material/Edit";
 import type { Category } from "../../types/Category";
 import type { CategoryBudget } from "../../types/Budget";
 import type { Transaction } from "../../types/Transaction";
@@ -22,6 +23,7 @@ import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { accent } from "../../theme/colors";
+import EditBudgetsDialog from "./EditBudgetsDialog";
 
 interface Props {
     open: boolean;
@@ -30,6 +32,7 @@ interface Props {
     categoryBudgets: Record<string, CategoryBudget>;
     budgetHistory: Record<string, Record<string, CategoryBudget>>;
     transactions: Transaction[];
+    onSaveMonth: (month: string, budgets: Record<string, CategoryBudget>) => void;
 }
 
 function formatMonth(month: string, locale: string): string {
@@ -49,9 +52,10 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
     URL.revokeObjectURL(url);
 }
 
-export default function BudgetHistoryDialog({ open, onClose, categories, categoryBudgets, budgetHistory, transactions }: Props) {
+export default function BudgetHistoryDialog({ open, onClose, categories, categoryBudgets, budgetHistory, transactions, onSaveMonth }: Props) {
     const { t, locale } = useTranslation();
     const [month, setMonth] = useState(getCurrentMonth());
+    const [editOpen, setEditOpen] = useState(false);
 
     const months = Array.from(new Set([getCurrentMonth(), ...getAvailableMonths(transactions), ...Object.keys(budgetHistory)]))
         .sort()
@@ -138,13 +142,25 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
                     </Stack>
                 )}
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ flexWrap: "wrap" }}>
+                <Button startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
+                    {t.budgetHistoryEditButton}
+                </Button>
                 <Button startIcon={<DownloadIcon />} onClick={handleDownload} disabled={rows.length === 0}>
                     {t.budgetHistoryDownloadButton}
                 </Button>
                 <Box sx={{ flexGrow: 1 }} />
                 <Button onClick={onClose}>{t.close}</Button>
             </DialogActions>
+
+            <EditBudgetsDialog
+                open={editOpen}
+                onClose={() => setEditOpen(false)}
+                categories={categories}
+                budgets={effectiveBudgets}
+                onSave={(budgets) => onSaveMonth(month, budgets)}
+                title={t.editBudgetDialogTitleForMonth(formatMonth(month, locale))}
+            />
         </Dialog>
     );
 }
