@@ -19,7 +19,9 @@ interface SettingsState {
     load: (uid: string) => Promise<void>;
     reset: () => void;
     setEstimatedIncome: (uid: string, value: number) => Promise<void>;
-    setCategoryBudgets: (uid: string, budgets: Record<string, CategoryBudget>) => Promise<void>;
+    /** `month` ("YYYY-MM") defaults to the current month; pass a past month to correct its
+     *  history without touching the current budget or any other month's snapshot. */
+    setCategoryBudgets: (uid: string, budgets: Record<string, CategoryBudget>, month?: string) => Promise<void>;
     setCategories: (uid: string, categories: Category[]) => Promise<void>;
     addCategory: (uid: string, value: string, label: string) => Promise<void>;
     updateCategoryLabel: (uid: string, value: string, label: string) => Promise<void>;
@@ -55,15 +57,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         await saveSettings(uid, { estimatedIncome: value });
     },
 
-    async setCategoryBudgets(uid, budgets) {
-        // Snapshotted under the current month so past months keep showing
-        // whatever budget was actually active then, even after later edits.
-        const month = getCurrentMonth();
+    async setCategoryBudgets(uid, budgets, month = getCurrentMonth()) {
+        // Snapshotted under its own month so past months keep showing whatever
+        // budget was actually active then. Only touches the "current" budget
+        // (the one every other screen reads as "now") when editing the
+        // current month itself — correcting a past month must not change it.
         const budgetHistory = { ...get().budgetHistory, [month]: budgets };
-        set({ categoryBudgets: budgets, budgetHistory });
+        const isCurrentMonth = month === getCurrentMonth();
+        set(isCurrentMonth ? { categoryBudgets: budgets, budgetHistory } : { budgetHistory });
         await Promise.all([
-            saveSettings(uid, { categoryBudgets: budgets }),
             saveSettings(uid, { budgetHistory }),
+            ...(isCurrentMonth ? [saveSettings(uid, { categoryBudgets: budgets })] : []),
         ]);
     },
 

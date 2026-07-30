@@ -309,6 +309,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 categoryBudgets={categoryBudgets}
                 budgetHistory={budgetHistory}
                 transactions={transactions}
+                onSaveMonth={(month, budgets) => setCategoryBudgets(uid, budgets, month)}
             />
             <Paper
                 elevation={0}
