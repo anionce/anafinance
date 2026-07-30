@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { loadSettings, saveSettings } from "../services/storage";
 import { DEFAULT_SETTINGS } from "../types/Settings";
+import { getCurrentMonth } from "../utils/dates";
 import type { Category } from "../types/Category";
 import type { CategoryBudget } from "../types/Budget";
 import type { CategorizationRule } from "../types/CategorizationRule";
@@ -13,6 +14,7 @@ interface SettingsState {
     featuredGoalId: string;
     onboardingComplete: boolean;
     combinedTransactionsView: boolean;
+    budgetHistory: Record<string, Record<string, CategoryBudget>>;
     hasLoaded: boolean;
     load: (uid: string) => Promise<void>;
     reset: () => void;
@@ -54,8 +56,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     },
 
     async setCategoryBudgets(uid, budgets) {
-        set({ categoryBudgets: budgets });
-        await saveSettings(uid, { categoryBudgets: budgets });
+        // Snapshotted under the current month so past months keep showing
+        // whatever budget was actually active then, even after later edits.
+        const month = getCurrentMonth();
+        const budgetHistory = { ...get().budgetHistory, [month]: budgets };
+        set({ categoryBudgets: budgets, budgetHistory });
+        await Promise.all([
+            saveSettings(uid, { categoryBudgets: budgets }),
+            saveSettings(uid, { budgetHistory }),
+        ]);
     },
 
     async setCategories(uid, categories) {

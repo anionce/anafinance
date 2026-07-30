@@ -12,12 +12,14 @@ import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import RuleOutlinedIcon from "@mui/icons-material/RuleOutlined";
 import EditIcon from "@mui/icons-material/Edit";
+import HistoryIcon from "@mui/icons-material/History";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReviewDialog from "./transactions/ReviewDialog";
 import ConfirmDialog from "./ConfirmDialog";
 import CategoryManagerDialog from "./budget/CategoryManagerDialog";
 import CategorizationRulesDialog from "./budget/CategorizationRulesDialog";
 import EditBudgetsDialog from "./budget/EditBudgetsDialog";
+import BudgetHistoryDialog from "./budget/BudgetHistoryDialog";
 import Logo from "./Logo";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
@@ -44,12 +46,13 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
     const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
     const [budgetsDialogOpen, setBudgetsDialogOpen] = useState(false);
+    const [budgetHistoryDialogOpen, setBudgetHistoryDialogOpen] = useState(false);
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const user = useAuthStore((s) => s.user);
     const signOut = useAuthStore((s) => s.signOut);
     const { transactions, resolveCategory, removeTransaction } = useFinanceStore();
     const {
-        categories, categoryBudgets, categorizationRules, combinedTransactionsView,
+        categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategories,
         addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView,
     } = useSettingsStore();
@@ -219,6 +222,17 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                         >
                             {t.editBudgetTooltip}
                         </Button>
+                        <Button
+                            startIcon={<HistoryIcon />}
+                            color="inherit"
+                            onClick={() => {
+                                setAccountMenuOpen(false);
+                                setBudgetHistoryDialogOpen(true);
+                            }}
+                            sx={{ justifyContent: "flex-start" }}
+                        >
+                            {t.budgetHistoryTooltip}
+                        </Button>
                     </Box>
 
                     <Box sx={{ flexGrow: 1 }} />
@@ -287,6 +301,14 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 categories={categories}
                 budgets={categoryBudgets}
                 onSave={(budgets) => setCategoryBudgets(uid, budgets)}
+            />
+            <BudgetHistoryDialog
+                open={budgetHistoryDialogOpen}
+                onClose={() => setBudgetHistoryDialogOpen(false)}
+                categories={categories}
+                categoryBudgets={categoryBudgets}
+                budgetHistory={budgetHistory}
+                transactions={transactions}
             />
             <Paper
                 elevation={0}

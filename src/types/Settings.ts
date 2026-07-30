@@ -14,6 +14,9 @@ export interface Settings {
     onboardingComplete: boolean;
     /** When true, Expenses and Income share a single "Transactions" tab instead of separate ones. */
     combinedTransactionsView: boolean;
+    /** Snapshot of categoryBudgets saved each time it changes, keyed by the "YYYY-MM" month it
+     *  took effect. A month with no entry of its own carries forward the closest earlier one. */
+    budgetHistory: Record<string, Record<string, CategoryBudget>>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -24,4 +27,5 @@ export const DEFAULT_SETTINGS: Settings = {
     featuredGoalId: "",
     onboardingComplete: false,
     combinedTransactionsView: false,
+    budgetHistory: {},
 };

@@ -61,3 +61,29 @@ export function calculateRawPercentage(value: number, total: number): number {
     if (total <= 0) return 0;
     return (value / total) * 100;
 }
+
+/**
+ * The budget that was actually active for a given "YYYY-MM" month: its own
+ * snapshot if one was saved that month, otherwise the closest earlier
+ * snapshot (budgets carry forward until explicitly changed), otherwise the
+ * current budget as a last resort (for months before any snapshot exists).
+ */
+export function getBudgetForMonth(
+    budgetHistory: Record<string, Record<string, CategoryBudget>>,
+    currentBudgets: Record<string, CategoryBudget>,
+    month: string
+): Record<string, CategoryBudget> {
+    const priorMonths = Object.keys(budgetHistory).filter((m) => m <= month).sort();
+    if (priorMonths.length === 0) return currentBudgets;
+    return budgetHistory[priorMonths[priorMonths.length - 1]];
+}
+
+/** Per-category spend within a specific "YYYY-MM" month, regardless of each budget's own period. */
+export function calculateSpentByCategoryForMonth(transactions: Transaction[], month: string): Record<string, number> {
+    const spentByCategory: Record<string, number> = {};
+    for (const t of transactions) {
+        if (t.amount >= 0 || !t.date.startsWith(month)) continue;
+        spentByCategory[t.category] = (spentByCategory[t.category] ?? 0) + Math.abs(t.amount);
+    }
+    return spentByCategory;
+}
