@@ -60,6 +60,15 @@ export async function mergeTransactions(
     for (const t of existing) {
         const key = `${t.date}|${t.amount}`;
         existingCounts.set(key, (existingCounts.get(key) ?? 0) + 1);
+
+        // A split transaction's own amount is one of the portions, not the
+        // original row's — also occupy a slot at the pre-split amount so a
+        // re-imported file still matches the original row instead of
+        // re-adding it as a new pending transaction.
+        if (t.splitFromAmount !== undefined) {
+            const splitKey = `${t.date}|${t.splitFromAmount}`;
+            existingCounts.set(splitKey, (existingCounts.get(splitKey) ?? 0) + 1);
+        }
     }
 
     const newOnes: Transaction[] = [];

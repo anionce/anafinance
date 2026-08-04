@@ -113,6 +113,10 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
             amount: sign * Math.abs(p.amount),
             category: p.category,
             ...(original.notes !== undefined ? { notes: original.notes } : {}),
+            // Marked on just the first portion — re-importing the same bank
+            // file must still recognize the original row as already present,
+            // not add it back as a new pending transaction.
+            ...(i === 0 ? { splitFromAmount: original.amount } : {}),
         }));
 
         await deleteTransaction(uid, id);
