@@ -38,19 +38,22 @@ interface Props {
     scrollMode?: "page" | "contained";
 }
 
+type DrawerDialog = "categories" | "rules" | "budgets" | "budgetHistory" | null;
+
+function getUserInitial(user: { displayName: string | null; email: string | null }): string {
+    return (user.displayName ?? user.email ?? "?").charAt(0).toUpperCase();
+}
+
 export default function Layout({ children, scrollMode = "page" }: Props) {
     const location = useLocation();
     const navigate = useNavigate();
     const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-    const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
-    const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
-    const [budgetsDialogOpen, setBudgetsDialogOpen] = useState(false);
-    const [budgetHistoryDialogOpen, setBudgetHistoryDialogOpen] = useState(false);
+    const [openDialog, setOpenDialog] = useState<DrawerDialog>(null);
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const user = useAuthStore((s) => s.user);
     const signOut = useAuthStore((s) => s.signOut);
-    const { transactions, resolveCategory, removeTransaction } = useFinanceStore();
+    const { transactions, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
     const {
         categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategories,
@@ -75,6 +78,11 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const currentTab = navItems.some((item) => item.path === location.pathname) ? location.pathname : "/";
 
     const contained = scrollMode === "contained";
+
+    function openMenuItem(id: Exclude<DrawerDialog, null>) {
+        setAccountMenuOpen(false);
+        setOpenDialog(id);
+    }
 
     return (
         <Container
@@ -112,7 +120,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                                 alt={user.displayName ?? user.email ?? ""}
                                 sx={{ width: 32, height: 32 }}
                             >
-                                {!user.photoURL && (user.displayName ?? user.email ?? "?").charAt(0).toUpperCase()}
+                                {!user.photoURL && getUserInitial(user)}
                             </Avatar>
                         </ButtonBase>
                     )}
@@ -127,7 +135,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                                 alt={user.displayName ?? user.email ?? ""}
                                 sx={{ width: 48, height: 48 }}
                             >
-                                {!user.photoURL && (user.displayName ?? user.email ?? "?").charAt(0).toUpperCase()}
+                                {!user.photoURL && getUserInitial(user)}
                             </Avatar>
                             <Box sx={{ minWidth: 0 }}>
                                 {user.displayName && (
@@ -192,10 +200,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                         <Button
                             startIcon={<CategoryOutlinedIcon />}
                             color="inherit"
-                            onClick={() => {
-                                setAccountMenuOpen(false);
-                                setCategoriesDialogOpen(true);
-                            }}
+                            onClick={() => openMenuItem("categories")}
                             sx={{ justifyContent: "flex-start" }}
                         >
                             {t.manageCategoriesTooltip}
@@ -203,10 +208,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                         <Button
                             startIcon={<RuleOutlinedIcon />}
                             color="inherit"
-                            onClick={() => {
-                                setAccountMenuOpen(false);
-                                setRulesDialogOpen(true);
-                            }}
+                            onClick={() => openMenuItem("rules")}
                             sx={{ justifyContent: "flex-start" }}
                         >
                             {t.manageRulesTooltip}
@@ -214,10 +216,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                         <Button
                             startIcon={<EditIcon />}
                             color="inherit"
-                            onClick={() => {
-                                setAccountMenuOpen(false);
-                                setBudgetsDialogOpen(true);
-                            }}
+                            onClick={() => openMenuItem("budgets")}
                             sx={{ justifyContent: "flex-start" }}
                         >
                             {t.editBudgetTooltip}
@@ -225,10 +224,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                         <Button
                             startIcon={<HistoryIcon />}
                             color="inherit"
-                            onClick={() => {
-                                setAccountMenuOpen(false);
-                                setBudgetHistoryDialogOpen(true);
-                            }}
+                            onClick={() => openMenuItem("budgetHistory")}
                             sx={{ justifyContent: "flex-start" }}
                         >
                             {t.budgetHistoryTooltip}
@@ -264,7 +260,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 categories={categories}
                 onResolve={(id, category) => resolveCategory(uid, id, category)}
                 onDiscardOne={(id) => removeTransaction(uid, id)}
-                onDiscardAll={() => pending.forEach((tx) => removeTransaction(uid, tx.id))}
+                onDiscardAll={() => removeTransactions(uid, pending.map((tx) => tx.id))}
                 onFinish={() => {}}
             />
             <ConfirmDialog
@@ -277,8 +273,8 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 onConfirm={() => signOut()}
             />
             <CategoryManagerDialog
-                open={categoriesDialogOpen}
-                onClose={() => setCategoriesDialogOpen(false)}
+                open={openDialog === "categories"}
+                onClose={() => setOpenDialog(null)}
                 categories={categories}
                 onUpdateLabel={(value, label) => updateCategoryLabel(uid, value, label)}
                 onAdd={(value, label) => addCategory(uid, value, label)}
@@ -288,23 +284,23 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 onReorder={(reordered) => setCategories(uid, reordered)}
             />
             <CategorizationRulesDialog
-                open={rulesDialogOpen}
-                onClose={() => setRulesDialogOpen(false)}
+                open={openDialog === "rules"}
+                onClose={() => setOpenDialog(null)}
                 categories={categories}
                 rules={categorizationRules}
                 onAdd={(keyword, category) => addRule(uid, keyword, category)}
                 onRemove={(id) => removeRule(uid, id)}
             />
             <EditBudgetsDialog
-                open={budgetsDialogOpen}
-                onClose={() => setBudgetsDialogOpen(false)}
+                open={openDialog === "budgets"}
+                onClose={() => setOpenDialog(null)}
                 categories={categories}
                 budgets={categoryBudgets}
                 onSave={(budgets) => setCategoryBudgets(uid, budgets)}
             />
             <BudgetHistoryDialog
-                open={budgetHistoryDialogOpen}
-                onClose={() => setBudgetHistoryDialogOpen(false)}
+                open={openDialog === "budgetHistory"}
+                onClose={() => setOpenDialog(null)}
                 categories={categories}
                 categoryBudgets={categoryBudgets}
                 budgetHistory={budgetHistory}

@@ -68,10 +68,8 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
         contentRef.current?.scrollTo({ top: 0 });
     }
 
-    function handleNext() {
-        if (!selected) return;
-
-        onResolve(current.id, selected);
+    function advance(action: () => void) {
+        action();
         setSelected(null);
         scrollContentToTop();
 
@@ -80,14 +78,13 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
         }
     }
 
-    function handleDiscardOne() {
-        onDiscardOne(current.id);
-        setSelected(null);
-        scrollContentToTop();
+    function handleNext() {
+        if (!selected) return;
+        advance(() => onResolve(current.id, selected));
+    }
 
-        if (remaining === 1) {
-            onFinish();
-        }
+    function handleDiscardOne() {
+        advance(() => onDiscardOne(current.id));
     }
 
     function handleDismiss() {

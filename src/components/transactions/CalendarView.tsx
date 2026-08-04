@@ -17,6 +17,7 @@ import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { formatCurrency } from "../../utils/currency";
+import { getCurrentMonth, formatMonthLabel } from "../../utils/dates";
 import { accent } from "../../theme/colors";
 
 interface Props {
@@ -30,10 +31,6 @@ function todayISO(): string {
     return new Date().toISOString().slice(0, 10);
 }
 
-function currentMonth(): string {
-    return new Date().toISOString().slice(0, 7);
-}
-
 function weekdayLabels(locale: string): string[] {
     const formatter = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { weekday: "short" });
     // 2024-01-01 is a Monday — a stable reference week to read labels off.
@@ -44,17 +41,11 @@ function weekdayLabels(locale: string): string[] {
     });
 }
 
-function monthLabel(month: string, locale: string): string {
-    const [year, m] = month.split("-").map(Number);
-    if (!year || !m) return month;
-    return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" }).format(new Date(year, m - 1, 1));
-}
-
 export default function CalendarView({ transactions, categories }: Props) {
     const { t, locale } = useTranslation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-    const [viewMonth, setViewMonth] = useState(currentMonth());
+    const [viewMonth, setViewMonth] = useState(getCurrentMonth());
     const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
     const [year, month] = viewMonth.split("-").map(Number);
@@ -93,7 +84,7 @@ export default function CalendarView({ transactions, categories }: Props) {
                     <ChevronLeftIcon />
                 </IconButton>
                 <Typography variant="h6" sx={{ minWidth: 200, textAlign: "center", textTransform: "capitalize" }}>
-                    {monthLabel(viewMonth, locale)}
+                    {formatMonthLabel(viewMonth, locale)}
                 </Typography>
                 <IconButton size="small" onClick={() => shiftMonth(1)}>
                     <ChevronRightIcon />

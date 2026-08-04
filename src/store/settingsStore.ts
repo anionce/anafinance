@@ -64,11 +64,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         // current month itself — correcting a past month must not change it.
         const budgetHistory = { ...get().budgetHistory, [month]: budgets };
         const isCurrentMonth = month === getCurrentMonth();
-        set(isCurrentMonth ? { categoryBudgets: budgets, budgetHistory } : { budgetHistory });
-        await Promise.all([
-            saveSettings(uid, { budgetHistory }),
-            ...(isCurrentMonth ? [saveSettings(uid, { categoryBudgets: budgets })] : []),
-        ]);
+        const patch = isCurrentMonth ? { categoryBudgets: budgets, budgetHistory } : { budgetHistory };
+        set(patch);
+        await saveSettings(uid, patch);
     },
 
     async setCategories(uid, categories) {
@@ -93,10 +91,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const categoryBudgets = { ...get().categoryBudgets };
         if (noComputable) delete categoryBudgets[value];
         set({ categories, categoryBudgets });
-        await Promise.all([
-            saveSettings(uid, { categories }),
-            saveSettings(uid, { categoryBudgets }),
-        ]);
+        await saveSettings(uid, { categories, categoryBudgets });
     },
 
     async setCategoryIncomeOnly(uid, value, incomeOnly) {
@@ -104,10 +99,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const categoryBudgets = { ...get().categoryBudgets };
         if (incomeOnly) delete categoryBudgets[value];
         set({ categories, categoryBudgets });
-        await Promise.all([
-            saveSettings(uid, { categories }),
-            saveSettings(uid, { categoryBudgets }),
-        ]);
+        await saveSettings(uid, { categories, categoryBudgets });
     },
 
     async removeCategory(uid, value) {
@@ -115,10 +107,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const categoryBudgets = { ...get().categoryBudgets };
         delete categoryBudgets[value];
         set({ categories, categoryBudgets });
-        await Promise.all([
-            saveSettings(uid, { categories }),
-            saveSettings(uid, { categoryBudgets }),
-        ]);
+        await saveSettings(uid, { categories, categoryBudgets });
     },
 
     async addRule(uid, keyword, category) {

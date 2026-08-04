@@ -12,6 +12,7 @@ import {
     updateTransactionNotes,
     saveTransaction,
     deleteTransaction,
+    deleteTransactions,
     loadGoals,
     saveGoal,
     deleteGoal,
@@ -31,6 +32,7 @@ interface FinanceState {
     updateNotes: (uid: string, id: string, notes: string) => Promise<void>;
     splitTransaction: (uid: string, id: string, portions: { category: string; amount: number }[]) => Promise<void>;
     removeTransaction: (uid: string, id: string) => Promise<void>;
+    removeTransactions: (uid: string, ids: string[]) => Promise<void>;
 
     goals: Goal[];
     addGoal: (uid: string, goal: Omit<Goal, "id">, makeFeatured?: boolean) => Promise<void>;
@@ -133,6 +135,12 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     async removeTransaction(uid, id) {
         await deleteTransaction(uid, id);
         set((state) => ({ transactions: state.transactions.filter((t) => t.id !== id) }));
+    },
+
+    async removeTransactions(uid, ids) {
+        await deleteTransactions(uid, ids);
+        const idSet = new Set(ids);
+        set((state) => ({ transactions: state.transactions.filter((t) => !idSet.has(t.id)) }));
     },
 
     async addGoal(uid, goal, makeFeatured) {

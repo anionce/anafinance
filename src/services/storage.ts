@@ -98,6 +98,14 @@ export async function deleteTransaction(uid: string, id: string): Promise<void> 
     await deleteDoc(doc(db, transactionsPath(uid), id));
 }
 
+export async function deleteTransactions(uid: string, ids: string[]): Promise<void> {
+    const batch = writeBatch(db);
+    for (const id of ids) {
+        batch.delete(doc(db, transactionsPath(uid), id));
+    }
+    await batch.commit();
+}
+
 export async function updateTransactionCategory(uid: string, id: string, category: string): Promise<void> {
     await setDoc(doc(db, transactionsPath(uid), id), { category }, { merge: true });
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, Grid, Typography, Button, ToggleButtonGroup, ToggleButton, Chip, TextField, InputAdornment } from "@mui/material";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -37,25 +37,48 @@ export default function TransactionsView({ kind }: Props) {
     const { dateFilter, setDateFilter } = useUIStore();
     const { categories } = useSettingsStore();
 
-    if (!hasLoaded) {
-        return <Layout scrollMode="contained"><p>{t.loading}</p></Layout>;
-    }
-
-    const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
-    const relevant = transactions.filter((tx) => {
+    const noComputableValues = useMemo(
+        () => new Set(categories.filter((c) => c.noComputable).map((c) => c.value)),
+        [categories]
+    );
+    const relevant = useMemo(() => transactions.filter((tx) => {
         if (noComputableValues.has(tx.category)) return false;
         if (kind === "expense") return tx.amount < 0;
         if (kind === "income") return tx.amount > 0;
         return true;
-    });
-    const visible = filterByDateFilter(relevant, dateFilter);
-    const totalSpent = visible.filter((tx) => tx.amount < 0).reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-    const totalIncome = visible.filter((tx) => tx.amount > 0).reduce((sum, tx) => sum + tx.amount, 0);
-    const categoryFiltered = selectedCategory ? relevant.filter((tx) => tx.category === selectedCategory) : relevant;
-    const searchFiltered = categoryFiltered.filter((tx) => matchesTransactionSearch(tx, searchQuery));
-    const shown = (selectedCategory ? visible.filter((tx) => tx.category === selectedCategory) : visible)
-        .filter((tx) => matchesTransactionSearch(tx, searchQuery));
+    }), [transactions, noComputableValues, kind]);
+    const visible = useMemo(() => filterByDateFilter(relevant, dateFilter), [relevant, dateFilter]);
+    const totalSpent = useMemo(() => visible.filter((tx) => tx.amount < 0).reduce((sum, tx) => sum + Math.abs(tx.amount), 0), [visible]);
+    const totalIncome = useMemo(() => visible.filter((tx) => tx.amount > 0).reduce((sum, tx) => sum + tx.amount, 0), [visible]);
+    const categoryFiltered = useMemo(
+        () => (selectedCategory ? relevant.filter((tx) => tx.category === selectedCategory) : relevant),
+        [relevant, selectedCategory]
+    );
+    // Shared by both views: the list further narrows this to the active date
+    // range, the calendar shows it as-is (it browses its own month range).
+    const searchFiltered = useMemo(
+        () => categoryFiltered.filter((tx) => matchesTransactionSearch(tx, searchQuery)),
+        [categoryFiltered, searchQuery]
+    );
+    const shown = useMemo(() => filterByDateFilter(searchFiltered, dateFilter), [searchFiltered, dateFilter]);
     const selectedCategoryObj = selectedCategory ? categories.find((c) => c.value === selectedCategory) : undefined;
+
+    const statCardSize = kind === "all" ? { xs: 6, md: 3 } : { xs: 12, md: 5 };
+    const statCards = kind === "all"
+        ? [
+            { key: "spent", label: t.totalSpentTitle, value: totalSpent, color: accent.budget },
+            { key: "income", label: t.totalIncomeTitle, value: totalIncome, color: accent.income },
+        ]
+        : [{
+            key: kind,
+            label: kind === "expense" ? t.totalSpentTitle : t.totalIncomeTitle,
+            value: kind === "expense" ? totalSpent : totalIncome,
+            color: kind === "expense" ? accent.budget : accent.income,
+        }];
+
+    if (!hasLoaded) {
+        return <Layout scrollMode="contained"><p>{t.loading}</p></Layout>;
+    }
 
     function toggleCategory(category: string) {
         setSelectedCategory((prev) => (prev === category ? null : category));
@@ -64,55 +87,26 @@ export default function TransactionsView({ kind }: Props) {
     return (
         <Layout scrollMode="contained">
             <Grid container spacing={2} sx={{ mb: 2, flexShrink: 0 }}>
-                {kind === "all" ? (
-                    <>
-                        <Grid size={{ xs: 6, md: 3 }}>
-                            <Card sx={{ p: 3, height: "100%", borderLeft: "4px solid", borderLeftColor: accent.budget }}>
-                                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>{t.totalSpentTitle}</Typography>
-                                <Typography variant="h5" sx={{ color: accent.budget }}>{formatCurrency(totalSpent)}</Typography>
-                            </Card>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 3 }}>
-                            <Card sx={{ p: 3, height: "100%", borderLeft: "4px solid", borderLeftColor: accent.income }}>
-                                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>{t.totalIncomeTitle}</Typography>
-                                <Typography variant="h5" sx={{ color: accent.income }}>{formatCurrency(totalIncome)}</Typography>
-                            </Card>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                            <Card sx={{ p: 2, height: "100%" }}>
-                                <CategoryPieChart
-                                    transactions={visible}
-                                    categories={categories}
-                                    selectedCategory={selectedCategory}
-                                    onSelectCategory={toggleCategory}
-                                />
-                            </Card>
-                        </Grid>
-                    </>
-                ) : (
-                    <>
-                        <Grid size={{ xs: 12, md: 5 }}>
-                            <Card sx={{ p: 3, height: "100%", borderLeft: "4px solid", borderLeftColor: kind === "expense" ? accent.budget : accent.income }}>
-                                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-                                    {kind === "expense" ? t.totalSpentTitle : t.totalIncomeTitle}
-                                </Typography>
-                                <Typography variant="h3" sx={{ color: kind === "expense" ? accent.budget : accent.income }}>
-                                    {formatCurrency(kind === "expense" ? totalSpent : totalIncome)}
-                                </Typography>
-                            </Card>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 7 }}>
-                            <Card sx={{ p: 2, height: "100%" }}>
-                                <CategoryPieChart
-                                    transactions={visible}
-                                    categories={categories}
-                                    selectedCategory={selectedCategory}
-                                    onSelectCategory={toggleCategory}
-                                />
-                            </Card>
-                        </Grid>
-                    </>
-                )}
+                {statCards.map((card) => (
+                    <Grid key={card.key} size={statCardSize}>
+                        <Card sx={{ p: 3, height: "100%", borderLeft: "4px solid", borderLeftColor: card.color }}>
+                            <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>{card.label}</Typography>
+                            <Typography variant={kind === "all" ? "h5" : "h3"} sx={{ color: card.color }}>
+                                {formatCurrency(card.value)}
+                            </Typography>
+                        </Card>
+                    </Grid>
+                ))}
+                <Grid size={kind === "all" ? { xs: 12, md: 6 } : { xs: 12, md: 7 }}>
+                    <Card sx={{ p: 2, height: "100%" }}>
+                        <CategoryPieChart
+                            transactions={visible}
+                            categories={categories}
+                            selectedCategory={selectedCategory}
+                            onSelectCategory={toggleCategory}
+                        />
+                    </Card>
+                </Grid>
             </Grid>
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16, flexShrink: 0, flexWrap: "wrap" }}>
