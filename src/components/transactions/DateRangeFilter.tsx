@@ -2,20 +2,13 @@ import { useState } from "react";
 import { Box, ToggleButtonGroup, ToggleButton, Select, MenuItem, TextField, Button } from "@mui/material";
 import type { Transaction } from "../../types/Transaction";
 import type { DateFilter } from "../../utils/dates";
-import { getAvailableMonths, getAvailableYears, getCurrentMonth, getCurrentYear } from "../../utils/dates";
+import { getAvailableMonths, getAvailableYears, getCurrentMonth, getCurrentYear, formatMonthLabel } from "../../utils/dates";
 import { useTranslation } from "../../i18n/useTranslation";
 
 interface Props {
     transactions: Transaction[];
     value: DateFilter;
     onChange: (filter: Partial<DateFilter>) => void;
-}
-
-function formatMonth(month: string, locale: string): string {
-    const [year, monthIndex] = month.split("-").map(Number);
-    if (!year || !monthIndex) return month;
-    const date = new Date(year, monthIndex - 1, 1);
-    return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" }).format(date);
 }
 
 export default function DateRangeFilter({ transactions, value, onChange }: Props) {
@@ -42,7 +35,7 @@ export default function DateRangeFilter({ transactions, value, onChange }: Props
             {value.mode === "monthly" && (
                 <Select size="small" value={value.month} onChange={(e) => onChange({ month: e.target.value })}>
                     {months.map((m) => (
-                        <MenuItem key={m} value={m}>{formatMonth(m, locale)}</MenuItem>
+                        <MenuItem key={m} value={m}>{formatMonthLabel(m, locale)}</MenuItem>
                     ))}
                 </Select>
             )}
