@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -47,11 +47,16 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [menuFor, setMenuFor] = useState<{ index: number; el: HTMLElement } | null>(null);
 
-    useEffect(() => {
+    // Resets the drafts each time the dialog opens (not on every render while
+    // open) — adjusting state during render instead of an effect, per
+    // https://react.dev/learn/you-might-not-need-an-effect#adjusting-state-based-on-a-prop
+    const [wasOpen, setWasOpen] = useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
         if (open) {
             setDrafts(Object.fromEntries(categories.map((c) => [c.value, getCategoryLabel(c, locale)])));
         }
-    }, [open, categories, locale]);
+    }
 
     function handleLabelBlur(value: string) {
         const label = resolveCategoryLabelEdit(value, drafts[value], categories, locale);

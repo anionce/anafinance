@@ -11,6 +11,9 @@ import OnboardingPage from "./pages/OnboardingPage";
 import { useAuthStore } from "./store/authStore";
 import { useFinanceStore } from "./store/financeStore";
 import { useSettingsStore } from "./store/settingsStore";
+import { useToastStore } from "./store/toastStore";
+import { useTranslation } from "./i18n/useTranslation";
+import GlobalToast from "./components/GlobalToast";
 
 function FullScreenLoader() {
     return (
@@ -57,11 +60,13 @@ function AuthenticatedApp({ uid }: { uid: string }) {
 }
 
 export default function App() {
+    const { t } = useTranslation();
     const user = useAuthStore((s) => s.user);
     const authLoading = useAuthStore((s) => s.authLoading);
     const init = useAuthStore((s) => s.init);
     const resetFinance = useFinanceStore((s) => s.reset);
     const resetSettings = useSettingsStore((s) => s.reset);
+    const showError = useToastStore((s) => s.showError);
 
     useEffect(() => {
         init();
@@ -74,17 +79,33 @@ export default function App() {
         }
     }, [user, resetFinance, resetSettings]);
 
-    if (authLoading) {
-        return <FullScreenLoader />;
-    }
-
-    if (!user) {
-        return <LoginPage />;
-    }
+    // Backstop for the many store actions (category edits, budget saves, goal
+    // updates...) that don't handle their own failures: without this, a
+    // rejected Firestore write fails completely silently for the user, with
+    // only a console warning nobody sees. Flows that already show their own
+    // specific error (sign-in, file import) still do — this only catches
+    // what nothing else does.
+    useEffect(() => {
+        function handleRejection(event: PromiseRejectionEvent) {
+            console.error(event.reason);
+            showError(t.genericErrorMessage);
+        }
+        window.addEventListener("unhandledrejection", handleRejection);
+        return () => window.removeEventListener("unhandledrejection", handleRejection);
+    }, [t, showError]);
 
     return (
-        <BrowserRouter>
-            <AuthenticatedApp uid={user.uid} />
-        </BrowserRouter>
+        <>
+            {authLoading ? (
+                <FullScreenLoader />
+            ) : !user ? (
+                <LoginPage />
+            ) : (
+                <BrowserRouter>
+                    <AuthenticatedApp uid={user.uid} />
+                </BrowserRouter>
+            )}
+            <GlobalToast />
+        </>
     );
 }

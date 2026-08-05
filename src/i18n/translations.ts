@@ -7,6 +7,7 @@ export interface TranslationSet {
     navTransactions: string;
     navGoals: string;
     loading: string;
+    genericErrorMessage: string;
 
     importExcelButton: string;
     importSuccessMessage: (count: number) => string;
@@ -195,6 +196,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navTransactions: "Movimientos",
         navGoals: "Objetivos",
         loading: "Cargando...",
+        genericErrorMessage: "Algo salió mal. Inténtalo de nuevo.",
 
         importExcelButton: "Importar Excel o PDF",
         importSuccessMessage: (count) => `${count} movimiento${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"} importado${count === 1 ? "" : "s"}`,
@@ -381,6 +383,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navTransactions: "Transactions",
         navGoals: "Goals",
         loading: "Loading...",
+        genericErrorMessage: "Something went wrong. Please try again.",
 
         importExcelButton: "Import Excel or PDF",
         importSuccessMessage: (count) => `${count} new transaction${count === 1 ? "" : "s"} imported`,

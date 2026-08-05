@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -58,9 +58,13 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
     const [month, setMonth] = useState(getCurrentMonth());
     const [editOpen, setEditOpen] = useState(false);
 
-    useEffect(() => {
+    // Resets the selected month each time the dialog opens — see the same
+    // comment in CategoryManagerDialog.tsx.
+    const [wasOpen, setWasOpen] = useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
         if (open) setMonth(getCurrentMonth());
-    }, [open]);
+    }
 
     // Skipped while closed — Layout mounts this dialog on every page, so this
     // would otherwise re-scan the full transaction list on every render.
