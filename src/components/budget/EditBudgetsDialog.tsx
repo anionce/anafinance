@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -32,13 +32,17 @@ export default function EditBudgetsDialog({ open, onClose, categories, budgets, 
     const [periodDraft, setPeriodDraft] = useState<Record<string, BudgetPeriod>>({});
     const [intervalDraft, setIntervalDraft] = useState<Record<string, string>>({});
 
-    useEffect(() => {
+    // Resets the drafts each time the dialog opens, not on every render while
+    // open — see the same comment in CategoryManagerDialog.tsx.
+    const [wasOpen, setWasOpen] = useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
         if (open) {
             setAmountDraft(Object.fromEntries(categories.map((c) => [c.value, String(budgets[c.value]?.amount ?? "")])));
             setPeriodDraft(Object.fromEntries(categories.map((c) => [c.value, budgets[c.value]?.period ?? "monthly"])));
             setIntervalDraft(Object.fromEntries(categories.map((c) => [c.value, String(budgets[c.value]?.intervalMonths ?? 3)])));
         }
-    }, [open, categories, budgets]);
+    }
 
     function handleSave() {
         const parsed: Record<string, CategoryBudget> = {};

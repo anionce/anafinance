@@ -134,12 +134,13 @@ function CategoriesStep({ uid, categories, onAdd, onUpdateLabel, onRemove, onTog
     onToggleIncomeOnly: (uid: string, value: string, incomeOnly: boolean) => Promise<void>;
 }) {
     const { t, locale } = useTranslation();
-    const [drafts, setDrafts] = useState<Record<string, string>>({});
+    // This step unmounts/remounts each time onboarding navigates away from and
+    // back to it (see `{step === 0 && <CategoriesStep .../>}` above), so a
+    // lazy initializer re-runs on every real re-entry — no effect needed.
+    const [drafts, setDrafts] = useState<Record<string, string>>(() =>
+        Object.fromEntries(categories.map((c) => [c.value, getCategoryLabel(c, locale)]))
+    );
     const [newLabel, setNewLabel] = useState("");
-
-    useEffect(() => {
-        setDrafts(Object.fromEntries(categories.map((c) => [c.value, getCategoryLabel(c, locale)])));
-    }, [categories, locale]);
 
     function handleLabelBlur(value: string) {
         const label = resolveCategoryLabelEdit(value, drafts[value], categories, locale);

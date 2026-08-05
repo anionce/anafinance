@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -38,7 +38,11 @@ export default function SplitTransactionDialog({ open, transaction, categories, 
     const { t, locale } = useTranslation();
     const [portions, setPortions] = useState<Portion[]>([]);
 
-    useEffect(() => {
+    // Resets the 50/50 split each time the dialog opens for a transaction —
+    // see the same comment in CategoryManagerDialog.tsx.
+    const [wasOpen, setWasOpen] = useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
         if (open && transaction) {
             const total = Math.abs(transaction.amount);
             const half = Math.round((total / 2) * 100) / 100;
@@ -47,7 +51,7 @@ export default function SplitTransactionDialog({ open, transaction, categories, 
                 { category: categories[0]?.value ?? "", amount: String(Math.round((total - half) * 100) / 100) },
             ]);
         }
-    }, [open, transaction, categories]);
+    }
 
     if (!transaction) return null;
 
