@@ -11,7 +11,6 @@ import OnboardingPage from "./pages/OnboardingPage";
 import { useAuthStore } from "./store/authStore";
 import { useFinanceStore } from "./store/financeStore";
 import { useSettingsStore } from "./store/settingsStore";
-import { runLegacyMigrationIfNeeded } from "./services/migration";
 
 function FullScreenLoader() {
     return (
@@ -21,7 +20,7 @@ function FullScreenLoader() {
     );
 }
 
-function AuthenticatedApp({ uid, email }: { uid: string; email: string | null }) {
+function AuthenticatedApp({ uid }: { uid: string }) {
     const financeLoaded = useFinanceStore((s) => s.hasLoaded);
     const loadFinance = useFinanceStore((s) => s.load);
     const settingsLoaded = useSettingsStore((s) => s.hasLoaded);
@@ -29,12 +28,9 @@ function AuthenticatedApp({ uid, email }: { uid: string; email: string | null })
     const loadSettings = useSettingsStore((s) => s.load);
 
     useEffect(() => {
-        (async () => {
-            await runLegacyMigrationIfNeeded(uid, email);
-            loadFinance(uid);
-            loadSettings(uid);
-        })();
-    }, [uid, email, loadFinance, loadSettings]);
+        loadFinance(uid);
+        loadSettings(uid);
+    }, [uid, loadFinance, loadSettings]);
 
     if (!financeLoaded || !settingsLoaded) {
         return <FullScreenLoader />;
@@ -88,7 +84,7 @@ export default function App() {
 
     return (
         <BrowserRouter>
-            <AuthenticatedApp uid={user.uid} email={user.email} />
+            <AuthenticatedApp uid={user.uid} />
         </BrowserRouter>
     );
 }

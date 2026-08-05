@@ -26,6 +26,7 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
+import { deriveNewCategory, resolveCategoryLabelEdit } from "../../utils/categoryDrafts";
 
 interface Props {
     open: boolean;
@@ -37,16 +38,6 @@ interface Props {
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
     onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
     onReorder: (categories: Category[]) => void;
-}
-
-function slugify(label: string): string {
-    return label
-        .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
-        .replace(/[^\p{L}\p{N}\s]/gu, "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "_");
 }
 
 export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly, onReorder }: Props) {
@@ -63,20 +54,14 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
     }, [open, categories, locale]);
 
     function handleLabelBlur(value: string) {
-        const label = drafts[value]?.trim();
-        const original = categories.find((c) => c.value === value);
-        const originalDisplay = original ? getCategoryLabel(original, locale) : undefined;
-        if (label && label !== originalDisplay) {
-            onUpdateLabel(value, label);
-        }
+        const label = resolveCategoryLabelEdit(value, drafts[value], categories, locale);
+        if (label) onUpdateLabel(value, label);
     }
 
     function handleAdd() {
-        const label = newLabel.trim();
-        if (!label) return;
-        const value = slugify(label);
-        if (!value || categories.some((c) => c.value === value)) return;
-        onAdd(value, label);
+        const next = deriveNewCategory(newLabel, categories);
+        if (!next) return;
+        onAdd(next.value, next.label);
         setNewLabel("");
     }
 

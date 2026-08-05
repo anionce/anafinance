@@ -19,6 +19,7 @@ import { formatCurrency } from "../../utils/currency";
 import { calculatePercentage, calculateRawPercentage } from "../../services/budget";
 import { useTranslation } from "../../i18n/useTranslation";
 import { accent } from "../../theme/colors";
+import { useInlineEdit, parseNonEmptyNumber, parseNonEmptyText } from "../../hooks/useInlineEdit";
 
 interface Props {
     goals: Goal[];
@@ -90,68 +91,47 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
     onRemove: (id: string) => void;
 }) {
     const { t } = useTranslation();
-    const [editingAmount, setEditingAmount] = useState(false);
-    const [amountInput, setAmountInput] = useState(String(goal.currentAmount));
-    const [editingName, setEditingName] = useState(false);
-    const [nameInput, setNameInput] = useState(goal.name);
-    const [editingTarget, setEditingTarget] = useState(false);
-    const [targetInput, setTargetInput] = useState(String(goal.targetAmount));
+    const amountEdit = useInlineEdit(goal.currentAmount, String, parseNonEmptyNumber, (v) => onUpdateAmount(goal.id, v));
+    const nameEdit = useInlineEdit(goal.name, (v) => v, parseNonEmptyText, (v) => onUpdateName(goal.id, v));
+    const targetEdit = useInlineEdit(goal.targetAmount, String, parseNonEmptyNumber, (v) => onUpdateTarget(goal.id, v));
 
     const pct = calculatePercentage(goal.currentAmount, goal.targetAmount);
     const pctRaw = calculateRawPercentage(goal.currentAmount, goal.targetAmount);
 
-    function saveAmount() {
-        const parsed = Number(amountInput);
-        if (!isNaN(parsed)) onUpdateAmount(goal.id, parsed);
-        setEditingAmount(false);
-    }
-
-    function saveName() {
-        const trimmed = nameInput.trim();
-        if (trimmed) onUpdateName(goal.id, trimmed);
-        setEditingName(false);
-    }
-
-    function saveTarget() {
-        const parsed = Number(targetInput);
-        if (!isNaN(parsed)) onUpdateTarget(goal.id, parsed);
-        setEditingTarget(false);
-    }
-
     return (
         <Box sx={{ mb: 3 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-                {editingName ? (
+                {nameEdit.editing ? (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                         <TextField
                             size="small"
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value)}
-                            onBlur={saveName}
-                            onKeyDown={(e) => e.key === "Enter" && saveName()}
+                            value={nameEdit.input}
+                            onChange={(e) => nameEdit.setInput(e.target.value)}
+                            onBlur={nameEdit.save}
+                            onKeyDown={(e) => e.key === "Enter" && nameEdit.save()}
                             autoFocus
                         />
-                        <IconButton size="small" onClick={saveName}>
+                        <IconButton size="small" onClick={nameEdit.save}>
                             <CheckIcon sx={{ fontSize: 18 }} />
                         </IconButton>
                     </Box>
                 ) : (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                         <Typography variant="h6" sx={{ lineHeight: 1 }}>{goal.name}</Typography>
-                        <IconButton size="small" onClick={() => { setNameInput(goal.name); setEditingName(true); }}>
+                        <IconButton size="small" onClick={nameEdit.start}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
                     </Box>
                 )}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    {editingAmount ? (
+                    {amountEdit.editing ? (
                         <TextField
                             size="small"
                             type="number"
-                            value={amountInput}
-                            onChange={(e) => setAmountInput(e.target.value)}
-                            onBlur={saveAmount}
-                            onKeyDown={(e) => e.key === "Enter" && saveAmount()}
+                            value={amountEdit.input}
+                            onChange={(e) => amountEdit.setInput(e.target.value)}
+                            onBlur={amountEdit.save}
+                            onKeyDown={(e) => e.key === "Enter" && amountEdit.save()}
                             autoFocus
                             sx={{ maxWidth: 110 }}
                         />
@@ -159,20 +139,20 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                         <Typography
                             variant="h6"
                             sx={{ fontWeight: 700, cursor: "pointer", borderBottom: "1px dashed", borderColor: "text.disabled" }}
-                            onClick={() => { setAmountInput(String(goal.currentAmount)); setEditingAmount(true); }}
+                            onClick={amountEdit.start}
                         >
                             {formatCurrency(goal.currentAmount)}
                         </Typography>
                     )}
                     <Typography variant="h6" color="text.secondary">/</Typography>
-                    {editingTarget ? (
+                    {targetEdit.editing ? (
                         <TextField
                             size="small"
                             type="number"
-                            value={targetInput}
-                            onChange={(e) => setTargetInput(e.target.value)}
-                            onBlur={saveTarget}
-                            onKeyDown={(e) => e.key === "Enter" && saveTarget()}
+                            value={targetEdit.input}
+                            onChange={(e) => targetEdit.setInput(e.target.value)}
+                            onBlur={targetEdit.save}
+                            onKeyDown={(e) => e.key === "Enter" && targetEdit.save()}
                             autoFocus
                             sx={{ maxWidth: 110 }}
                         />
@@ -181,7 +161,7 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                             variant="h6"
                             color="text.secondary"
                             sx={{ cursor: "pointer", borderBottom: "1px dashed", borderColor: "text.disabled" }}
-                            onClick={() => { setTargetInput(String(goal.targetAmount)); setEditingTarget(true); }}
+                            onClick={targetEdit.start}
                         >
                             {formatCurrency(goal.targetAmount)}
                         </Typography>
