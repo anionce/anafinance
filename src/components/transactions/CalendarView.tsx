@@ -121,7 +121,7 @@ export default function CalendarView({ transactions, categories }: Props) {
                                     "&:hover": dateStr && dayTransactions.length > 0 ? { bgcolor: "background.default" } : undefined,
                                 }}
                             >
-                {dateStr && (
+                                {dateStr && (
                                     <>
                                         <Typography
                                             variant="caption"

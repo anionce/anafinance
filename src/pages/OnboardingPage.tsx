@@ -29,23 +29,17 @@ import { useTranslation } from "../i18n/useTranslation";
 import { getCategoryLabel } from "../i18n/categoryTranslations";
 import type { BudgetPeriod, CategoryBudget } from "../types/Budget";
 import type { Category } from "../types/Category";
-
-function slugify(label: string): string {
-    return label
-        .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
-        .replace(/[^\p{L}\p{N}\s]/gu, "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "_");
-}
+import { deriveNewCategory, resolveCategoryLabelEdit } from "../utils/categoryDrafts";
 
 export default function OnboardingPage() {
     const { t } = useTranslation();
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const [step, setStep] = useState(0);
 
-    const { categories, setCategories, setCategoryBudgets, completeOnboarding } = useSettingsStore();
+    const {
+        categories, setCategoryBudgets, completeOnboarding,
+        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly,
+    } = useSettingsStore();
     const { goals, addGoal, updateGoalAmount, updateGoalName, updateGoalTarget, removeGoal } = useFinanceStore();
 
     const steps = [t.onboardingStepCategories, t.onboardingStepBudgets, t.onboardingStepGoals, t.onboardingStepImport];
@@ -67,7 +61,17 @@ export default function OnboardingPage() {
                 </Stepper>
 
                 <Card sx={{ p: 3 }}>
-                    {step === 0 && <CategoriesStep uid={uid} categories={categories} setCategories={setCategories} />}
+                    {step === 0 && (
+                        <CategoriesStep
+                            uid={uid}
+                            categories={categories}
+                            onAdd={addCategory}
+                            onUpdateLabel={updateCategoryLabel}
+                            onRemove={removeCategory}
+                            onToggleNoComputable={setCategoryNoComputable}
+                            onToggleIncomeOnly={setCategoryIncomeOnly}
+                        />
+                    )}
                     {step === 1 && (
                         <BudgetsStep
                             uid={uid}
@@ -120,10 +124,14 @@ export default function OnboardingPage() {
     );
 }
 
-function CategoriesStep({ uid, categories, setCategories }: {
+function CategoriesStep({ uid, categories, onAdd, onUpdateLabel, onRemove, onToggleNoComputable, onToggleIncomeOnly }: {
     uid: string;
     categories: Category[];
-    setCategories: (uid: string, categories: Category[]) => Promise<void>;
+    onAdd: (uid: string, value: string, label: string) => Promise<void>;
+    onUpdateLabel: (uid: string, value: string, label: string) => Promise<void>;
+    onRemove: (uid: string, value: string) => Promise<void>;
+    onToggleNoComputable: (uid: string, value: string, noComputable: boolean) => Promise<void>;
+    onToggleIncomeOnly: (uid: string, value: string, incomeOnly: boolean) => Promise<void>;
 }) {
     const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -134,33 +142,15 @@ function CategoriesStep({ uid, categories, setCategories }: {
     }, [categories, locale]);
 
     function handleLabelBlur(value: string) {
-        const label = drafts[value]?.trim();
-        const original = categories.find((c) => c.value === value);
-        const originalDisplay = original ? getCategoryLabel(original, locale) : undefined;
-        if (label && label !== originalDisplay) {
-            setCategories(uid, categories.map((c) => (c.value === value ? { ...c, label, customLabel: true } : c)));
-        }
+        const label = resolveCategoryLabelEdit(value, drafts[value], categories, locale);
+        if (label) onUpdateLabel(uid, value, label);
     }
 
     function handleAdd() {
-        const label = newLabel.trim();
-        if (!label) return;
-        const value = slugify(label);
-        if (!value || categories.some((c) => c.value === value)) return;
-        setCategories(uid, [...categories, { value, label }]);
+        const next = deriveNewCategory(newLabel, categories);
+        if (!next) return;
+        onAdd(uid, next.value, next.label);
         setNewLabel("");
-    }
-
-    function handleRemove(value: string) {
-        setCategories(uid, categories.filter((c) => c.value !== value));
-    }
-
-    function handleToggleNoComputable(value: string, noComputable: boolean) {
-        setCategories(uid, categories.map((c) => (c.value === value ? { ...c, noComputable } : c)));
-    }
-
-    function handleToggleIncomeOnly(value: string, incomeOnly: boolean) {
-        setCategories(uid, categories.map((c) => (c.value === value ? { ...c, incomeOnly } : c)));
     }
 
     return (
@@ -176,7 +166,7 @@ function CategoriesStep({ uid, categories, setCategories }: {
                             onBlur={() => handleLabelBlur(cat.value)}
                             fullWidth
                         />
-                        <IconButton size="small" onClick={() => handleRemove(cat.value)}>
+                        <IconButton size="small" onClick={() => onRemove(uid, cat.value)}>
                             <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
                         </IconButton>
                     </Box>
@@ -189,7 +179,7 @@ function CategoriesStep({ uid, categories, setCategories }: {
                                         size="small"
                                         sx={{ p: 0.5 }}
                                         checked={!!cat.noComputable}
-                                        onChange={(e) => handleToggleNoComputable(cat.value, e.target.checked)}
+                                        onChange={(e) => onToggleNoComputable(uid, cat.value, e.target.checked)}
                                     />
                                 }
                                 label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.noComputableLabel}</Typography>}
@@ -208,7 +198,7 @@ function CategoriesStep({ uid, categories, setCategories }: {
                                         size="small"
                                         sx={{ p: 0.5 }}
                                         checked={!!cat.incomeOnly}
-                                        onChange={(e) => handleToggleIncomeOnly(cat.value, e.target.checked)}
+                                        onChange={(e) => onToggleIncomeOnly(uid, cat.value, e.target.checked)}
                                     />
                                 }
                                 label={<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>{t.incomeOnlyLabel}</Typography>}

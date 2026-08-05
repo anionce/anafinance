@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, Box, Typography, TextField, IconButton, LinearProgress } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
@@ -7,6 +6,7 @@ import type { Goal } from "../../types/Goal";
 import { formatCurrency } from "../../utils/currency";
 import { calculatePercentage, calculateRawPercentage } from "../../services/budget";
 import { accent } from "../../theme/colors";
+import { useInlineEdit, parseNonEmptyNumber, parseNonEmptyText } from "../../hooks/useInlineEdit";
 
 interface Props {
     goal: Goal;
@@ -16,33 +16,12 @@ interface Props {
 }
 
 export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange, onNameChange }: Props) {
-    const [editingAmount, setEditingAmount] = useState(false);
-    const [amountInput, setAmountInput] = useState(String(goal.currentAmount));
-    const [editingTarget, setEditingTarget] = useState(false);
-    const [targetInput, setTargetInput] = useState(String(goal.targetAmount));
-    const [editingName, setEditingName] = useState(false);
-    const [nameInput, setNameInput] = useState(goal.name);
+    const amountEdit = useInlineEdit(goal.currentAmount, String, parseNonEmptyNumber, onAmountChange);
+    const targetEdit = useInlineEdit(goal.targetAmount, String, parseNonEmptyNumber, onTargetChange);
+    const nameEdit = useInlineEdit(goal.name, (v) => v, parseNonEmptyText, onNameChange);
 
     const pct = calculatePercentage(goal.currentAmount, goal.targetAmount);
     const pctRaw = calculateRawPercentage(goal.currentAmount, goal.targetAmount);
-
-    function saveAmount() {
-        const parsed = Number(amountInput);
-        if (!isNaN(parsed)) onAmountChange(parsed);
-        setEditingAmount(false);
-    }
-
-    function saveTarget() {
-        const parsed = Number(targetInput);
-        if (!isNaN(parsed)) onTargetChange(parsed);
-        setEditingTarget(false);
-    }
-
-    function saveName() {
-        const trimmed = nameInput.trim();
-        if (trimmed) onNameChange(trimmed);
-        setEditingName(false);
-    }
 
     return (
         <Card sx={{ p: 3, height: "100%" }}>
@@ -57,27 +36,24 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                 >
                     <SavingsOutlinedIcon sx={{ fontSize: 20 }} />
                 </Box>
-                {editingName ? (
+                {nameEdit.editing ? (
                     <>
                         <TextField
                             size="small"
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value)}
-                            onBlur={saveName}
-                            onKeyDown={(e) => e.key === "Enter" && saveName()}
+                            value={nameEdit.input}
+                            onChange={(e) => nameEdit.setInput(e.target.value)}
+                            onBlur={nameEdit.save}
+                            onKeyDown={(e) => e.key === "Enter" && nameEdit.save()}
                             autoFocus
                         />
-                        <IconButton size="small" onClick={saveName}>
+                        <IconButton size="small" onClick={nameEdit.save}>
                             <CheckIcon sx={{ fontSize: 18 }} />
                         </IconButton>
                     </>
                 ) : (
                     <>
                         <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>{goal.name}</Typography>
-                        <IconButton
-                            size="small"
-                            onClick={() => { setNameInput(goal.name); setEditingName(true); }}
-                        >
+                        <IconButton size="small" onClick={nameEdit.start}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
                     </>
@@ -93,19 +69,19 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                 }}
             />
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                {editingAmount ? (
+                {amountEdit.editing ? (
                     <>
                         <TextField
                             size="small"
                             type="number"
-                            value={amountInput}
-                            onChange={(e) => setAmountInput(e.target.value)}
-                            onBlur={saveAmount}
-                            onKeyDown={(e) => e.key === "Enter" && saveAmount()}
+                            value={amountEdit.input}
+                            onChange={(e) => amountEdit.setInput(e.target.value)}
+                            onBlur={amountEdit.save}
+                            onKeyDown={(e) => e.key === "Enter" && amountEdit.save()}
                             autoFocus
                             sx={{ maxWidth: 140 }}
                         />
-                        <IconButton onClick={saveAmount} size="small">
+                        <IconButton onClick={amountEdit.save} size="small">
                             <CheckIcon />
                         </IconButton>
                     </>
@@ -114,28 +90,25 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                         <Typography variant="h4" sx={{ lineHeight: 1 }}>
                             {formatCurrency(goal.currentAmount)}
                         </Typography>
-                        <IconButton
-                            size="small"
-                            onClick={() => { setAmountInput(String(goal.currentAmount)); setEditingAmount(true); }}
-                        >
+                        <IconButton size="small" onClick={amountEdit.start}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
                     </>
                 )}
-                {editingTarget ? (
+                {targetEdit.editing ? (
                     <>
                         <Typography component="span" variant="body2" sx={{ color: "text.secondary" }}>/</Typography>
                         <TextField
                             size="small"
                             type="number"
-                            value={targetInput}
-                            onChange={(e) => setTargetInput(e.target.value)}
-                            onBlur={saveTarget}
-                            onKeyDown={(e) => e.key === "Enter" && saveTarget()}
+                            value={targetEdit.input}
+                            onChange={(e) => targetEdit.setInput(e.target.value)}
+                            onBlur={targetEdit.save}
+                            onKeyDown={(e) => e.key === "Enter" && targetEdit.save()}
                             autoFocus
                             sx={{ maxWidth: 110 }}
                         />
-                        <IconButton onClick={saveTarget} size="small">
+                        <IconButton onClick={targetEdit.save} size="small">
                             <CheckIcon sx={{ fontSize: 18 }} />
                         </IconButton>
                     </>
@@ -144,7 +117,7 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                         component="span"
                         variant="body2"
                         sx={{ color: "text.secondary", cursor: "pointer", borderBottom: "1px dashed", borderColor: "text.disabled" }}
-                        onClick={() => { setTargetInput(String(goal.targetAmount)); setEditingTarget(true); }}
+                        onClick={targetEdit.start}
                     >
                         / {formatCurrency(goal.targetAmount)}
                     </Typography>
