@@ -6,6 +6,7 @@ export interface TranslationSet {
     navIncome: string;
     navTransactions: string;
     navGoals: string;
+    navNoComputable: string;
     loading: string;
     genericErrorMessage: string;
 
@@ -53,6 +54,7 @@ export interface TranslationSet {
     moveCategoryDownLabel: string;
     accountMenuPreferencesLabel: string;
     combinedTransactionsViewLabel: string;
+    showNoComputableTabLabel: string;
 
     savingsGoalsTitle: string;
     goalLabel: string;
@@ -195,6 +197,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navIncome: "Ingresos",
         navTransactions: "Movimientos",
         navGoals: "Objetivos",
+        navNoComputable: "No computables",
         loading: "Cargando...",
         genericErrorMessage: "Algo salió mal. Inténtalo de nuevo.",
 
@@ -241,6 +244,7 @@ export const translations: Record<Locale, TranslationSet> = {
         moveCategoryDownLabel: "Bajar",
         accountMenuPreferencesLabel: "Preferencias",
         combinedTransactionsViewLabel: "Ver ingresos y gastos en la misma pestaña",
+        showNoComputableTabLabel: "Mostrar pestaña de \"No computables\"",
         close: "Cerrar",
 
         savingsGoalsTitle: "Objetivos de ahorro",
@@ -382,6 +386,7 @@ export const translations: Record<Locale, TranslationSet> = {
         navIncome: "Income",
         navTransactions: "Transactions",
         navGoals: "Goals",
+        navNoComputable: "Not counted",
         loading: "Loading...",
         genericErrorMessage: "Something went wrong. Please try again.",
 
@@ -428,6 +433,7 @@ export const translations: Record<Locale, TranslationSet> = {
         moveCategoryDownLabel: "Move down",
         accountMenuPreferencesLabel: "Preferences",
         combinedTransactionsViewLabel: "Show income and expenses in the same tab",
+        showNoComputableTabLabel: "Show a \"Not counted\" tab",
         close: "Close",
 
         savingsGoalsTitle: "Savings goals",

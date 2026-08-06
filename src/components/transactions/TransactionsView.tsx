@@ -20,7 +20,7 @@ import { formatCurrency } from "../../utils/currency";
 import { matchesTransactionSearch } from "../../utils/search";
 import { accent } from "../../theme/colors";
 
-type Kind = "expense" | "income" | "all";
+type Kind = "expense" | "income" | "all" | "noComputable";
 
 interface Props {
     kind: Kind;
@@ -42,7 +42,9 @@ export default function TransactionsView({ kind }: Props) {
         [categories]
     );
     const relevant = useMemo(() => transactions.filter((tx) => {
-        if (noComputableValues.has(tx.category)) return false;
+        const isNoComputable = noComputableValues.has(tx.category);
+        if (kind === "noComputable") return isNoComputable;
+        if (isNoComputable) return false;
         if (kind === "expense") return tx.amount < 0;
         if (kind === "income") return tx.amount > 0;
         return true;
@@ -63,8 +65,12 @@ export default function TransactionsView({ kind }: Props) {
     const shown = useMemo(() => filterByDateFilter(searchFiltered, dateFilter), [searchFiltered, dateFilter]);
     const selectedCategoryObj = selectedCategory ? categories.find((c) => c.value === selectedCategory) : undefined;
 
-    const statCardSize = kind === "all" ? { xs: 6, md: 3 } : { xs: 12, md: 5 };
-    const statCards = kind === "all"
+    // "all" and "noComputable" can both contain expense- and income-signed
+    // transactions, so they get a spent card and an income card side by side;
+    // "expense"/"income" only ever show their own single total.
+    const showTwoCards = kind === "all" || kind === "noComputable";
+    const statCardSize = showTwoCards ? { xs: 6, md: 3 } : { xs: 12, md: 5 };
+    const statCards = showTwoCards
         ? [
             { key: "spent", label: t.totalSpentTitle, value: totalSpent, color: accent.budget },
             { key: "income", label: t.totalIncomeTitle, value: totalIncome, color: accent.income },
@@ -91,13 +97,13 @@ export default function TransactionsView({ kind }: Props) {
                     <Grid key={card.key} size={statCardSize}>
                         <Card sx={{ p: 3, height: "100%", borderLeft: "4px solid", borderLeftColor: card.color }}>
                             <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>{card.label}</Typography>
-                            <Typography variant={kind === "all" ? "h5" : "h3"} sx={{ color: card.color }}>
+                            <Typography variant={showTwoCards ? "h5" : "h3"} sx={{ color: card.color }}>
                                 {formatCurrency(card.value)}
                             </Typography>
                         </Card>
                     </Grid>
                 ))}
-                <Grid size={kind === "all" ? { xs: 12, md: 6 } : { xs: 12, md: 7 }}>
+                <Grid size={showTwoCards ? { xs: 12, md: 6 } : { xs: 12, md: 7 }}>
                     <Card sx={{ p: 2, height: "100%" }}>
                         <CategoryPieChart
                             transactions={visible}
@@ -169,7 +175,7 @@ export default function TransactionsView({ kind }: Props) {
             <AddTransactionDialog
                 open={addOpen}
                 categories={categories}
-                fixedType={kind === "all" ? undefined : kind}
+                fixedType={kind === "expense" || kind === "income" ? kind : undefined}
                 onClose={() => setAddOpen(false)}
                 onConfirm={(transaction) => addTransaction(uid, transaction)}
             />

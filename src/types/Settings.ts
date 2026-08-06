@@ -17,6 +17,9 @@ export interface Settings {
     /** Snapshot of categoryBudgets saved each time it changes, keyed by the "YYYY-MM" month it
      *  took effect. A month with no entry of its own carries forward the closest earlier one. */
     budgetHistory: Record<string, Record<string, CategoryBudget>>;
+    /** When true, shows a dedicated nav tab listing transactions in "no computable"
+     *  categories, so a miscategorized one can be found and corrected. */
+    showNoComputableTab: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,4 +31,5 @@ export const DEFAULT_SETTINGS: Settings = {
     onboardingComplete: false,
     combinedTransactionsView: false,
     budgetHistory: {},
+    showNoComputableTab: false,
 };

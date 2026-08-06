@@ -9,6 +9,7 @@ import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import RuleOutlinedIcon from "@mui/icons-material/RuleOutlined";
 import EditIcon from "@mui/icons-material/Edit";
@@ -55,24 +56,25 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const signOut = useAuthStore((s) => s.signOut);
     const { transactions, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
     const {
-        categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory,
+        categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategories,
-        addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView,
+        addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView, setShowNoComputableTab,
     } = useSettingsStore();
     const { t, locale, setLocale } = useTranslation();
 
-    const navItems = combinedTransactionsView
-        ? [
-            { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
-            { label: t.navTransactions, path: "/transactions", icon: <ReceiptLongOutlinedIcon /> },
-            { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
-        ]
-        : [
-            { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
-            { label: t.navExpenses, path: "/expenses", icon: <ShoppingBagOutlinedIcon /> },
-            { label: t.navIncome, path: "/income", icon: <TrendingUpOutlinedIcon /> },
-            { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
-        ];
+    const navItems = [
+        { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
+        ...(combinedTransactionsView
+            ? [{ label: t.navTransactions, path: "/transactions", icon: <ReceiptLongOutlinedIcon /> }]
+            : [
+                { label: t.navExpenses, path: "/expenses", icon: <ShoppingBagOutlinedIcon /> },
+                { label: t.navIncome, path: "/income", icon: <TrendingUpOutlinedIcon /> },
+            ]),
+        { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
+        ...(showNoComputableTab
+            ? [{ label: t.navNoComputable, path: "/no-computable", icon: <VisibilityOffOutlinedIcon /> }]
+            : []),
+    ];
 
     const pending = transactions.filter((tx) => tx.category === "");
     const currentTab = navItems.some((item) => item.path === location.pathname) ? location.pathname : "/";
@@ -191,6 +193,17 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                                 />
                             }
                             label={<Typography variant="body2">{t.combinedTransactionsViewLabel}</Typography>}
+                        />
+                        <FormControlLabel
+                            sx={{ ml: 0 }}
+                            control={
+                                <Switch
+                                    size="small"
+                                    checked={showNoComputableTab}
+                                    onChange={(e) => setShowNoComputableTab(uid, e.target.checked)}
+                                />
+                            }
+                            label={<Typography variant="body2">{t.showNoComputableTabLabel}</Typography>}
                         />
                     </Box>
 

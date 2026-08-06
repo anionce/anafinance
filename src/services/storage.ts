@@ -163,6 +163,7 @@ export async function loadSettings(uid: string): Promise<Settings> {
         onboardingComplete: (data.onboardingComplete as boolean) ?? DEFAULT_SETTINGS.onboardingComplete,
         combinedTransactionsView: (data.combinedTransactionsView as boolean) ?? DEFAULT_SETTINGS.combinedTransactionsView,
         budgetHistory: normalizeBudgetHistory(data.budgetHistory),
+        showNoComputableTab: (data.showNoComputableTab as boolean) ?? DEFAULT_SETTINGS.showNoComputableTab,
     };
 }
 
