@@ -6,6 +6,7 @@ import ExpensesPage from "./pages/ExpensesPage";
 import IncomesPage from "./pages/IncomesPage";
 import TransactionsPage from "./pages/TransactionsPage";
 import GoalsPage from "./pages/GoalsPage";
+import NoComputablePage from "./pages/NoComputablePage";
 import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import { useAuthStore } from "./store/authStore";
@@ -54,6 +55,7 @@ function AuthenticatedApp({ uid }: { uid: string }) {
             <Route path="/income" element={<IncomesPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/goals" element={<GoalsPage />} />
+            <Route path="/no-computable" element={<NoComputablePage />} />
             <Route path="/onboarding" element={<Navigate to="/" replace />} />
         </Routes>
     );

@@ -15,6 +15,7 @@ interface SettingsState {
     onboardingComplete: boolean;
     combinedTransactionsView: boolean;
     budgetHistory: Record<string, Record<string, CategoryBudget>>;
+    showNoComputableTab: boolean;
     hasLoaded: boolean;
     load: (uid: string) => Promise<void>;
     reset: () => void;
@@ -33,6 +34,7 @@ interface SettingsState {
     setFeaturedGoalId: (uid: string, id: string) => Promise<void>;
     completeOnboarding: (uid: string) => Promise<void>;
     setCombinedTransactionsView: (uid: string, value: boolean) => Promise<void>;
+    setShowNoComputableTab: (uid: string, value: boolean) => Promise<void>;
 }
 
 const INITIAL_STATE = {
@@ -136,5 +138,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     async setCombinedTransactionsView(uid, value) {
         set({ combinedTransactionsView: value });
         await saveSettings(uid, { combinedTransactionsView: value });
+    },
+
+    async setShowNoComputableTab(uid, value) {
+        set({ showNoComputableTab: value });
+        await saveSettings(uid, { showNoComputableTab: value });
     },
 }));
