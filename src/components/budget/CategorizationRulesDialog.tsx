@@ -17,28 +17,34 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import type { Category } from "../../types/Category";
 import type { CategorizationRule } from "../../types/CategorizationRule";
+import type { Goal } from "../../types/Goal";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
+
+const NO_GOAL = "";
 
 interface Props {
     open: boolean;
     onClose: () => void;
     categories: Category[];
+    goals: Goal[];
     rules: CategorizationRule[];
-    onAdd: (keyword: string, category: string) => void;
+    onAdd: (keyword: string, category: string, goalId?: string) => void;
     onRemove: (id: string) => void;
 }
 
-export default function CategorizationRulesDialog({ open, onClose, categories, rules, onAdd, onRemove }: Props) {
+export default function CategorizationRulesDialog({ open, onClose, categories, goals, rules, onAdd, onRemove }: Props) {
     const { t, locale } = useTranslation();
     const [keyword, setKeyword] = useState("");
     const [category, setCategory] = useState(categories[0]?.value ?? "");
+    const [goalId, setGoalId] = useState(NO_GOAL);
 
     function handleAdd() {
         const trimmed = keyword.trim();
         if (!trimmed || !category) return;
-        onAdd(trimmed, category);
+        onAdd(trimmed, category, goalId || undefined);
         setKeyword("");
+        setGoalId(NO_GOAL);
     }
 
     return (
@@ -52,10 +58,12 @@ export default function CategorizationRulesDialog({ open, onClose, categories, r
                     )}
                     {rules.map((rule) => {
                         const cat = categories.find((c) => c.value === rule.category);
+                        const goal = rule.goalId ? goals.find((g) => g.id === rule.goalId) : undefined;
                         return (
                             <Box key={rule.id} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                 <Typography variant="body2" sx={{ flex: 1 }}>
                                     <strong>"{rule.keyword}"</strong> {t.ruleGoesTo} {cat ? getCategoryLabel(cat, locale) : rule.category}
+                                    {goal && <> {t.ruleAlsoCredits} {goal.name}</>}
                                 </Typography>
                                 <IconButton size="small" onClick={() => onRemove(rule.id)}>
                                     <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
@@ -64,28 +72,44 @@ export default function CategorizationRulesDialog({ open, onClose, categories, r
                         );
                     })}
 
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
-                        <TextField
-                            size="small"
-                            placeholder={t.ruleKeywordPlaceholder}
-                            value={keyword}
-                            onChange={(e) => setKeyword(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                            fullWidth
-                        />
-                        <Select
-                            size="small"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            sx={{ minWidth: 140 }}
-                        >
-                            {categories.map((c) => (
-                                <MenuItem key={c.value} value={c.value}>{getCategoryLabel(c, locale)}</MenuItem>
-                            ))}
-                        </Select>
-                        <IconButton size="small" onClick={handleAdd} disabled={!keyword.trim()}>
-                            <AddIcon fontSize="small" />
-                        </IconButton>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <TextField
+                                size="small"
+                                placeholder={t.ruleKeywordPlaceholder}
+                                value={keyword}
+                                onChange={(e) => setKeyword(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+                                fullWidth
+                            />
+                            <Select
+                                size="small"
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                                sx={{ minWidth: 140 }}
+                            >
+                                {categories.map((c) => (
+                                    <MenuItem key={c.value} value={c.value}>{getCategoryLabel(c, locale)}</MenuItem>
+                                ))}
+                            </Select>
+                            <IconButton size="small" onClick={handleAdd} disabled={!keyword.trim()}>
+                                <AddIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
+                        {goals.length > 0 && (
+                            <Select
+                                size="small"
+                                value={goalId}
+                                onChange={(e) => setGoalId(e.target.value)}
+                                displayEmpty
+                                fullWidth
+                            >
+                                <MenuItem value={NO_GOAL}>{t.ruleNoGoalOption}</MenuItem>
+                                {goals.map((g) => (
+                                    <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+                                ))}
+                            </Select>
+                        )}
                     </Box>
                 </Stack>
             </DialogContent>

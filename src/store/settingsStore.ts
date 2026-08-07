@@ -29,7 +29,7 @@ interface SettingsState {
     setCategoryNoComputable: (uid: string, value: string, noComputable: boolean) => Promise<void>;
     setCategoryIncomeOnly: (uid: string, value: string, incomeOnly: boolean) => Promise<void>;
     removeCategory: (uid: string, value: string) => Promise<void>;
-    addRule: (uid: string, keyword: string, category: string) => Promise<void>;
+    addRule: (uid: string, keyword: string, category: string, goalId?: string) => Promise<void>;
     removeRule: (uid: string, id: string) => Promise<void>;
     setFeaturedGoalId: (uid: string, id: string) => Promise<void>;
     completeOnboarding: (uid: string) => Promise<void>;
@@ -112,8 +112,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         await saveSettings(uid, { categories, categoryBudgets });
     },
 
-    async addRule(uid, keyword, category) {
-        const rule: CategorizationRule = { id: crypto.randomUUID(), keyword, category };
+    async addRule(uid, keyword, category, goalId) {
+        const rule: CategorizationRule = { id: crypto.randomUUID(), keyword, category, ...(goalId ? { goalId } : {}) };
         const categorizationRules = [...get().categorizationRules, rule];
         set({ categorizationRules });
         await saveSettings(uid, { categorizationRules });

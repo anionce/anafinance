@@ -54,7 +54,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const user = useAuthStore((s) => s.user);
     const signOut = useAuthStore((s) => s.signOut);
-    const { transactions, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
+    const { transactions, goals, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
     const {
         categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategories,
@@ -300,8 +300,9 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 open={openDialog === "rules"}
                 onClose={() => setOpenDialog(null)}
                 categories={categories}
+                goals={goals}
                 rules={categorizationRules}
-                onAdd={(keyword, category) => addRule(uid, keyword, category)}
+                onAdd={(keyword, category, goalId) => addRule(uid, keyword, category, goalId)}
                 onRemove={(id) => removeRule(uid, id)}
             />
             <EditBudgetsDialog
