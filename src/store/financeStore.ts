@@ -2,9 +2,10 @@ import { create } from "zustand";
 import type { Transaction } from "../types/Transaction";
 import type { Goal } from "../types/Goal";
 import { FEATURED_GOAL_ID } from "../types/Goal";
+import type { CategorizationRule } from "../types/CategorizationRule";
 import { parseExcel, transactionsFromMapping } from "../services/excelParser";
 import type { ColumnMapping } from "../services/excelParser";
-import { applyCategorizationRules } from "../services/categorizer";
+import { applyCategorizationRules, sumGoalContributions } from "../services/categorizer";
 import {
     loadTransactions,
     mergeTransactions,
@@ -52,131 +53,151 @@ const INITIAL_STATE = {
     goals: [] as Goal[],
 };
 
-export const useFinanceStore = create<FinanceState>((set, get) => ({
-    ...INITIAL_STATE,
+export const useFinanceStore = create<FinanceState>((set, get) => {
+    // Credits any goal linked (via a categorization rule) to one of the newly
+    // imported transactions. Only ever called with `added` (not `merged`) so
+    // re-importing an already-processed file never credits a goal twice.
+    async function creditGoalContributions(uid: string, added: Transaction[], rules: CategorizationRule[]) {
+        const contributions = sumGoalContributions(added, rules);
+        for (const [goalId, amount] of contributions) {
+            const goal = get().goals.find((g) => g.id === goalId);
+            if (!goal) continue;
+            const updated = { ...goal, currentAmount: goal.currentAmount + amount };
+            await saveGoal(uid, updated);
+            set((state) => ({ goals: state.goals.map((g) => (g.id === goalId ? updated : g)) }));
+        }
+    }
 
-    async load(uid) {
-        const [transactions, goals] = await Promise.all([
-            loadTransactions(uid),
-            loadGoals(uid),
-        ]);
-        set({ transactions: sortByDateDesc(transactions), goals, hasLoaded: true });
-    },
+    return {
+        ...INITIAL_STATE,
 
-    reset() {
-        set({ ...INITIAL_STATE });
-    },
+        async load(uid) {
+            const [transactions, goals] = await Promise.all([
+                loadTransactions(uid),
+                loadGoals(uid),
+            ]);
+            set({ transactions: sortByDateDesc(transactions), goals, hasLoaded: true });
+        },
 
-    async importFile(uid, file) {
-        const parsed = await parseExcel(file);
-        const incoming = applyCategorizationRules(parsed, useSettingsStore.getState().categorizationRules);
-        const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
-        set({ transactions: sortByDateDesc(merged) });
-        return addedCount;
-    },
+        reset() {
+            set({ ...INITIAL_STATE });
+        },
 
-    async importFileWithMapping(uid, rows, mapping) {
-        const parsed = transactionsFromMapping(rows, mapping);
-        const incoming = applyCategorizationRules(parsed, useSettingsStore.getState().categorizationRules);
-        const { merged, addedCount } = await mergeTransactions(uid, get().transactions, incoming);
-        set({ transactions: sortByDateDesc(merged) });
-        return addedCount;
-    },
+        async importFile(uid, file) {
+            const parsed = await parseExcel(file);
+            const rules = useSettingsStore.getState().categorizationRules;
+            const incoming = applyCategorizationRules(parsed, rules);
+            const { merged, added } = await mergeTransactions(uid, get().transactions, incoming);
+            set({ transactions: sortByDateDesc(merged) });
+            await creditGoalContributions(uid, added, rules);
+            return added.length;
+        },
 
-    async addTransaction(uid, transaction) {
-        const newTransaction: Transaction = { ...transaction, id: `manual_${generateId()}` };
-        await saveTransaction(uid, newTransaction);
-        set((state) => ({ transactions: sortByDateDesc([...state.transactions, newTransaction]) }));
-    },
+        async importFileWithMapping(uid, rows, mapping) {
+            const parsed = transactionsFromMapping(rows, mapping);
+            const rules = useSettingsStore.getState().categorizationRules;
+            const incoming = applyCategorizationRules(parsed, rules);
+            const { merged, added } = await mergeTransactions(uid, get().transactions, incoming);
+            set({ transactions: sortByDateDesc(merged) });
+            await creditGoalContributions(uid, added, rules);
+            return added.length;
+        },
 
-    async resolveCategory(uid, id, category) {
-        await updateTransactionCategory(uid, id, category);
-        set((state) => ({
-            transactions: state.transactions.map((t) => (t.id === id ? { ...t, category } : t)),
-        }));
-    },
+        async addTransaction(uid, transaction) {
+            const newTransaction: Transaction = { ...transaction, id: `manual_${generateId()}` };
+            await saveTransaction(uid, newTransaction);
+            set((state) => ({ transactions: sortByDateDesc([...state.transactions, newTransaction]) }));
+        },
 
-    async updateNotes(uid, id, notes) {
-        await updateTransactionNotes(uid, id, notes);
-        set((state) => ({
-            transactions: state.transactions.map((t) => (t.id === id ? { ...t, notes } : t)),
-        }));
-    },
+        async resolveCategory(uid, id, category) {
+            await updateTransactionCategory(uid, id, category);
+            set((state) => ({
+                transactions: state.transactions.map((t) => (t.id === id ? { ...t, category } : t)),
+            }));
+        },
 
-    async splitTransaction(uid, id, portions) {
-        const original = get().transactions.find((t) => t.id === id);
-        if (!original || portions.length < 2) return;
+        async updateNotes(uid, id, notes) {
+            await updateTransactionNotes(uid, id, notes);
+            set((state) => ({
+                transactions: state.transactions.map((t) => (t.id === id ? { ...t, notes } : t)),
+            }));
+        },
 
-        const sign = original.amount < 0 ? -1 : 1;
-        const splitTransactions: Transaction[] = portions.map((p, i) => ({
-            id: `${original.id}_split${i}_${Date.now()}`,
-            date: original.date,
-            description: `${original.description} (${i + 1}/${portions.length})`,
-            amount: sign * Math.abs(p.amount),
-            category: p.category,
-            ...(original.notes !== undefined ? { notes: original.notes } : {}),
-            // Marked on just the first portion — re-importing the same bank
-            // file must still recognize the original row as already present,
-            // not add it back as a new pending transaction.
-            ...(i === 0 ? { splitFromAmount: original.amount } : {}),
-        }));
+        async splitTransaction(uid, id, portions) {
+            const original = get().transactions.find((t) => t.id === id);
+            if (!original || portions.length < 2) return;
 
-        await deleteTransaction(uid, id);
-        await Promise.all(splitTransactions.map((t) => saveTransaction(uid, t)));
+            const sign = original.amount < 0 ? -1 : 1;
+            const splitTransactions: Transaction[] = portions.map((p, i) => ({
+                id: `${original.id}_split${i}_${Date.now()}`,
+                date: original.date,
+                description: `${original.description} (${i + 1}/${portions.length})`,
+                amount: sign * Math.abs(p.amount),
+                category: p.category,
+                ...(original.notes !== undefined ? { notes: original.notes } : {}),
+                // Marked on just the first portion — re-importing the same bank
+                // file must still recognize the original row as already present,
+                // not add it back as a new pending transaction.
+                ...(i === 0 ? { splitFromAmount: original.amount } : {}),
+            }));
 
-        set((state) => ({
-            transactions: sortByDateDesc([
-                ...state.transactions.filter((t) => t.id !== id),
-                ...splitTransactions,
-            ]),
-        }));
-    },
+            await deleteTransaction(uid, id);
+            await Promise.all(splitTransactions.map((t) => saveTransaction(uid, t)));
 
-    async removeTransaction(uid, id) {
-        await deleteTransaction(uid, id);
-        set((state) => ({ transactions: state.transactions.filter((t) => t.id !== id) }));
-    },
+            set((state) => ({
+                transactions: sortByDateDesc([
+                    ...state.transactions.filter((t) => t.id !== id),
+                    ...splitTransactions,
+                ]),
+            }));
+        },
 
-    async removeTransactions(uid, ids) {
-        await deleteTransactions(uid, ids);
-        const idSet = new Set(ids);
-        set((state) => ({ transactions: state.transactions.filter((t) => !idSet.has(t.id)) }));
-    },
+        async removeTransaction(uid, id) {
+            await deleteTransaction(uid, id);
+            set((state) => ({ transactions: state.transactions.filter((t) => t.id !== id) }));
+        },
 
-    async addGoal(uid, goal, makeFeatured) {
-        const hasFeatured = get().goals.some((g) => g.id === FEATURED_GOAL_ID);
-        const id = makeFeatured && !hasFeatured ? FEATURED_GOAL_ID : generateId();
-        const newGoal: Goal = { ...goal, id };
-        await saveGoal(uid, newGoal);
-        set((state) => ({ goals: [...state.goals, newGoal] }));
-    },
+        async removeTransactions(uid, ids) {
+            await deleteTransactions(uid, ids);
+            const idSet = new Set(ids);
+            set((state) => ({ transactions: state.transactions.filter((t) => !idSet.has(t.id)) }));
+        },
 
-    async updateGoalAmount(uid, id, currentAmount) {
-        const goal = get().goals.find((g) => g.id === id);
-        if (!goal) return;
-        const updated = { ...goal, currentAmount };
-        await saveGoal(uid, updated);
-        set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
-    },
+        async addGoal(uid, goal, makeFeatured) {
+            const hasFeatured = get().goals.some((g) => g.id === FEATURED_GOAL_ID);
+            const id = makeFeatured && !hasFeatured ? FEATURED_GOAL_ID : generateId();
+            const newGoal: Goal = { ...goal, id };
+            await saveGoal(uid, newGoal);
+            set((state) => ({ goals: [...state.goals, newGoal] }));
+        },
 
-    async updateGoalName(uid, id, name) {
-        const goal = get().goals.find((g) => g.id === id);
-        if (!goal) return;
-        const updated = { ...goal, name };
-        await saveGoal(uid, updated);
-        set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
-    },
+        async updateGoalAmount(uid, id, currentAmount) {
+            const goal = get().goals.find((g) => g.id === id);
+            if (!goal) return;
+            const updated = { ...goal, currentAmount };
+            await saveGoal(uid, updated);
+            set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
+        },
 
-    async updateGoalTarget(uid, id, targetAmount) {
-        const goal = get().goals.find((g) => g.id === id);
-        if (!goal) return;
-        const updated = { ...goal, targetAmount };
-        await saveGoal(uid, updated);
-        set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
-    },
+        async updateGoalName(uid, id, name) {
+            const goal = get().goals.find((g) => g.id === id);
+            if (!goal) return;
+            const updated = { ...goal, name };
+            await saveGoal(uid, updated);
+            set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
+        },
 
-    async removeGoal(uid, id) {
-        await deleteGoal(uid, id);
-        set((state) => ({ goals: state.goals.filter((g) => g.id !== id) }));
-    },
-}));
+        async updateGoalTarget(uid, id, targetAmount) {
+            const goal = get().goals.find((g) => g.id === id);
+            if (!goal) return;
+            const updated = { ...goal, targetAmount };
+            await saveGoal(uid, updated);
+            set((state) => ({ goals: state.goals.map((g) => (g.id === id ? updated : g)) }));
+        },
+
+        async removeGoal(uid, id) {
+            await deleteGoal(uid, id);
+            set((state) => ({ goals: state.goals.filter((g) => g.id !== id) }));
+        },
+    };
+});

@@ -60,16 +60,39 @@ export function categorize(text: string, amount: number): CategoryValue | null {
   return null;
 }
 
+function findMatchingRule(description: string, rules: CategorizationRule[]): CategorizationRule | undefined {
+  const normalized = description.toLowerCase();
+  return rules.find((r) => {
+    const keyword = r.keyword?.trim().toLowerCase();
+    return keyword && normalized.includes(keyword);
+  });
+}
+
 /** User-defined keyword rules take priority over the built-in categorizer above. */
 export function applyCategorizationRules(transactions: Transaction[], rules: CategorizationRule[]): Transaction[] {
   if (rules.length === 0) return transactions;
 
   return transactions.map((tx) => {
-    const normalized = tx.description.toLowerCase();
-    const match = rules.find((r) => {
-      const keyword = r.keyword?.trim().toLowerCase();
-      return keyword && normalized.includes(keyword);
-    });
+    const match = findMatchingRule(tx.description, rules);
     return match ? { ...tx, category: match.category } : tx;
   });
+}
+
+/**
+ * How much each goal should be credited from these transactions, based on
+ * rules that have a goal attached. Always the transaction's absolute amount —
+ * a contribution moves money toward the goal regardless of whether the
+ * matched transaction was a debit or credit on the account it came from.
+ */
+export function sumGoalContributions(transactions: Transaction[], rules: CategorizationRule[]): Map<string, number> {
+  const contributions = new Map<string, number>();
+  if (rules.length === 0) return contributions;
+
+  for (const tx of transactions) {
+    const match = findMatchingRule(tx.description, rules);
+    if (match?.goalId) {
+      contributions.set(match.goalId, (contributions.get(match.goalId) ?? 0) + Math.abs(tx.amount));
+    }
+  }
+  return contributions;
 }

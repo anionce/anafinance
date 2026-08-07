@@ -94,7 +94,8 @@ export default function DashboardPage() {
                 onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
                 onReorderCategories={(reordered) => setCategories(uid, reordered)}
                 categorizationRules={categorizationRules}
-                onAddRule={(keyword, category) => addRule(uid, keyword, category)}
+                goals={goals}
+                onAddRule={(keyword, category, goalId) => addRule(uid, keyword, category, goalId)}
                 onRemoveRule={(id) => removeRule(uid, id)}
             />
 

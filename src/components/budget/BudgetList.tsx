@@ -7,6 +7,7 @@ import type { Category } from "../../types/Category";
 import type { Transaction } from "../../types/Transaction";
 import type { CategoryBudget } from "../../types/Budget";
 import type { CategorizationRule } from "../../types/CategorizationRule";
+import type { Goal } from "../../types/Goal";
 import { calculateSpentByCategory, calculatePercentage, calculateRawPercentage, calculateRemaining } from "../../services/budget";
 import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
@@ -28,7 +29,8 @@ interface Props {
     onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
     onReorderCategories: (categories: Category[]) => void;
     categorizationRules: CategorizationRule[];
-    onAddRule: (keyword: string, category: string) => void;
+    goals: Goal[];
+    onAddRule: (keyword: string, category: string, goalId?: string) => void;
     onRemoveRule: (id: string) => void;
 }
 
@@ -55,6 +57,7 @@ export default function BudgetList({
     onToggleIncomeOnly,
     onReorderCategories,
     categorizationRules,
+    goals,
     onAddRule,
     onRemoveRule,
 }: Props) {
@@ -144,6 +147,7 @@ export default function BudgetList({
                 open={rulesDialogOpen}
                 onClose={() => setRulesDialogOpen(false)}
                 categories={categories}
+                goals={goals}
                 rules={categorizationRules}
                 onAdd={onAddRule}
                 onRemove={onRemoveRule}

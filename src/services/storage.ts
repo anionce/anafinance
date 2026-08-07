@@ -40,7 +40,10 @@ export async function saveTransaction(uid: string, t: Transaction): Promise<void
 
 /**
  * Merges existing transactions with incoming ones and saves the new ones to
- * Firestore. Returns { merged, addedCount }.
+ * Firestore. Returns { merged, added }, where `added` is only the incoming
+ * transactions that were genuinely new — callers that react to "new"
+ * transactions (e.g. crediting a linked goal) must use `added`, not `merged`,
+ * or a re-import of the same file would double-count already-processed ones.
  *
  * Matches on date+amount content (a multiset comparison) rather than on the
  * transaction `id` string. The id is a hash computed from a transaction's
@@ -55,7 +58,7 @@ export async function mergeTransactions(
     uid: string,
     existing: Transaction[],
     incoming: Transaction[]
-): Promise<{ merged: Transaction[]; addedCount: number }> {
+): Promise<{ merged: Transaction[]; added: Transaction[] }> {
     const existingCounts = new Map<string, number>();
     for (const t of existing) {
         const key = `${t.date}|${t.amount}`;
@@ -90,7 +93,7 @@ export async function mergeTransactions(
 
     return {
         merged: [...existing, ...newOnes],
-        addedCount: newOnes.length,
+        added: newOnes,
     };
 }
 

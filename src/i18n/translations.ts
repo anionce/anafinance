@@ -123,6 +123,8 @@ export interface TranslationSet {
     ruleKeywordPlaceholder: string;
     noRulesYet: string;
     ruleGoesTo: string;
+    ruleNoGoalOption: string;
+    ruleAlsoCredits: string;
 
     splitTooltip: string;
     splitDialogTitle: string;
@@ -314,6 +316,8 @@ export const translations: Record<Locale, TranslationSet> = {
         ruleKeywordPlaceholder: "Palabra clave (ej: netflix)",
         noRulesYet: "Todavía no tienes reglas de categorización.",
         ruleGoesTo: "va a",
+        ruleNoGoalOption: "Sin objetivo",
+        ruleAlsoCredits: "y suma a",
 
         splitTooltip: "Dividir movimiento",
         splitDialogTitle: "Dividir movimiento",
@@ -503,6 +507,8 @@ export const translations: Record<Locale, TranslationSet> = {
         ruleKeywordPlaceholder: "Keyword (e.g. netflix)",
         noRulesYet: "You don't have any categorization rules yet.",
         ruleGoesTo: "goes to",
+        ruleNoGoalOption: "No goal",
+        ruleAlsoCredits: "and credits",
 
         splitTooltip: "Split transaction",
         splitDialogTitle: "Split transaction",
