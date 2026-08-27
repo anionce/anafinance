@@ -151,7 +151,10 @@ export default function Dashboard({
                         sx={{
                             mb: 2, height: 8,
                             bgcolor: accent.budgetSoft,
-                            "& .MuiLinearProgress-bar": { bgcolor: overBudget ? "error.main" : accent.budget },
+                            // Matches the same status color as the "Vas genial"/"Vas
+                            // ajustada"/etc. card — green while comfortably under
+                            // budget, shifting through the same states it does.
+                            "& .MuiLinearProgress-bar": { bgcolor: statusColor },
                         }}
                     />
                     <Typography variant="h4" sx={{ lineHeight: 1 }}>

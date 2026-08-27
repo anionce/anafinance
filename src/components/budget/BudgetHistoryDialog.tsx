@@ -142,7 +142,7 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
                                         sx={{
                                             height: 6,
                                             bgcolor: accent.budgetSoft,
-                                            "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.budget },
+                                            "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.statusGreat },
                                         }}
                                     />
                                 </Box>
