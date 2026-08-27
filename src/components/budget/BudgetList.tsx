@@ -116,7 +116,7 @@ export default function BudgetList({
                                     sx={{
                                         height: 8,
                                         bgcolor: accent.budgetSoft,
-                                        "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.budget },
+                                        "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.statusGreat },
                                     }}
                                 />
                                 <Typography variant="body2" color={over ? "error" : "text.secondary"} sx={{ mt: 1 }}>
