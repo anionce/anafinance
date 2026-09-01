@@ -7,6 +7,7 @@ import ImportExcelFlow from "../components/transactions/ImportExcelFlow";
 import AddTransactionDialog from "../components/transactions/AddTransactionDialog";
 import BudgetList from "../components/budget/BudgetList";
 import EditBudgetsDialog from "../components/budget/EditBudgetsDialog";
+import BudgetHistoryDialog from "../components/budget/BudgetHistoryDialog";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useAuthStore } from "../store/authStore";
@@ -20,13 +21,14 @@ export default function DashboardPage() {
     const { t, locale } = useTranslation();
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const [budgetsDialogOpen, setBudgetsDialogOpen] = useState(false);
+    const [budgetHistoryOpen, setBudgetHistoryOpen] = useState(false);
     const [addTransactionOpen, setAddTransactionOpen] = useState(false);
     const {
         transactions, hasLoaded, addTransaction,
         goals, updateGoalAmount, updateGoalTarget, updateGoalName,
     } = useFinanceStore();
     const {
-        estimatedIncome, categoryBudgets, categories, categorizationRules, featuredGoalId, hasLoaded: settingsLoaded,
+        estimatedIncome, categoryBudgets, categories, categorizationRules, featuredGoalId, budgetHistory, hasLoaded: settingsLoaded,
         setEstimatedIncome, setCategoryBudgets, setCategories,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly,
         addRule, removeRule, setFeaturedGoalId,
@@ -80,6 +82,7 @@ export default function DashboardPage() {
                 onFeaturedGoalTargetChange={(v) => featuredGoal && updateGoalTarget(uid, featuredGoal.id, v)}
                 onFeaturedGoalNameChange={(n) => featuredGoal && updateGoalName(uid, featuredGoal.id, n)}
                 onEditBudget={() => setBudgetsDialogOpen(true)}
+                onOpenBudgetHistory={() => setBudgetHistoryOpen(true)}
             />
 
             <BudgetList
@@ -109,6 +112,16 @@ export default function DashboardPage() {
                 categories={categories}
                 budgets={categoryBudgets}
                 onSave={(budgets) => setCategoryBudgets(uid, budgets)}
+            />
+
+            <BudgetHistoryDialog
+                open={budgetHistoryOpen}
+                onClose={() => setBudgetHistoryOpen(false)}
+                categories={categories}
+                categoryBudgets={categoryBudgets}
+                budgetHistory={budgetHistory}
+                transactions={transactions}
+                onSaveMonth={(month, budgets) => setCategoryBudgets(uid, budgets, month)}
             />
         </Layout>
     );

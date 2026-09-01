@@ -5,6 +5,13 @@ export function getCurrentMonth(): string {
     return new Date().toISOString().slice(0, 7);
 }
 
+/** Adds `delta` calendar months to a "YYYY-MM" string, returning the result in the same format. */
+export function shiftMonth(month: string, delta: number): string {
+    const [year, monthIndex] = month.split("-").map(Number);
+    const date = new Date(year, monthIndex - 1 + delta, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function getAvailableMonths(transactions: Transaction[]): string[] {
     return Array.from(new Set(transactions.map((t) => t.date.slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m))))
         .sort()

@@ -2,18 +2,12 @@ import type { Transaction } from "../types/Transaction";
 import type { Category } from "../types/Category";
 import type { Locale } from "../store/localeStore";
 import { calculateTotalSpent } from "./budget";
-import { getCurrentMonth, filterByMonth } from "../utils/dates";
+import { getCurrentMonth, filterByMonth, shiftMonth } from "../utils/dates";
 import { translations } from "../i18n/translations";
 import { getCategoryLabel } from "../i18n/categoryTranslations";
 
 const MIN_DAYS_TO_MENTION = 7;
 const SIGNIFICANT_CHANGE_PCT = 10;
-
-function shiftMonth(month: string, delta: number): string {
-    const [year, monthIndex] = month.split("-").map(Number);
-    const date = new Date(year, monthIndex - 1 + delta, 1);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
 
 function daysBetween(a: Date, b: Date): number {
     return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));

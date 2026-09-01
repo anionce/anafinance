@@ -35,10 +35,13 @@ export interface TranslationSet {
     cancel: string;
     save: string;
 
+    prevMonthTooltip: string;
+    nextMonthTooltip: string;
     budgetHistoryTooltip: string;
     budgetHistoryDialogTitle: string;
     budgetHistoryDownloadButton: string;
     budgetHistoryNoDataMessage: string;
+    budgetHistoryNoBudgetLabel: string;
     budgetHistoryColBudget: string;
     budgetHistoryColSpent: string;
     budgetHistoryColRemaining: string;
@@ -228,10 +231,13 @@ export const translations: Record<Locale, TranslationSet> = {
         cancel: "Cancelar",
         save: "Guardar",
 
+        prevMonthTooltip: "Mes anterior",
+        nextMonthTooltip: "Mes siguiente",
         budgetHistoryTooltip: "Historial de presupuestos",
         budgetHistoryDialogTitle: "Historial de presupuestos",
         budgetHistoryDownloadButton: "Descargar CSV",
         budgetHistoryNoDataMessage: "No hay presupuesto guardado para este mes.",
+        budgetHistoryNoBudgetLabel: "Sin presupuesto",
         budgetHistoryColBudget: "Presupuesto",
         budgetHistoryColSpent: "Gastado",
         budgetHistoryColRemaining: "Restante",
@@ -419,10 +425,13 @@ export const translations: Record<Locale, TranslationSet> = {
         cancel: "Cancel",
         save: "Save",
 
+        prevMonthTooltip: "Previous month",
+        nextMonthTooltip: "Next month",
         budgetHistoryTooltip: "Budget history",
         budgetHistoryDialogTitle: "Budget history",
         budgetHistoryDownloadButton: "Download CSV",
         budgetHistoryNoDataMessage: "No budget saved for this month.",
+        budgetHistoryNoBudgetLabel: "No budget",
         budgetHistoryColBudget: "Budget",
         budgetHistoryColSpent: "Spent",
         budgetHistoryColRemaining: "Remaining",
