@@ -176,7 +176,14 @@ export async function saveSettings(uid: string, settings: Partial<Settings>): Pr
     if (estimatedIncome !== undefined) {
         data.ingresosEstimados = estimatedIncome;
     }
-    await setDoc(doc(db, settingsDocPath(uid)), data, { merge: true });
+    // mergeFields (not merge: true) — Firestore's merge:true recursively
+    // merges map-typed fields like categoryBudgets/budgetHistory key by key,
+    // so a category removed locally (simply absent from the new value) never
+    // actually gets deleted server-side; it silently survives and comes back
+    // on the next load. mergeFields instead replaces each named top-level
+    // field wholesale, which is what every caller already assumes when it
+    // builds `data` as the complete, final value of that field.
+    await setDoc(doc(db, settingsDocPath(uid)), data, { mergeFields: Object.keys(data) });
 }
 
 export async function loadGoals(uid: string): Promise<Goal[]> {
