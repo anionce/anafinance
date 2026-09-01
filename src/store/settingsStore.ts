@@ -92,24 +92,31 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const categories = get().categories.map((c) => (c.value === value ? { ...c, noComputable } : c));
         const categoryBudgets = { ...get().categoryBudgets };
         if (noComputable) delete categoryBudgets[value];
-        set({ categories, categoryBudgets });
-        await saveSettings(uid, { categories, categoryBudgets });
+        // Also snapshots the current month, same as setCategoryBudgets does —
+        // otherwise the budget history dialog's "what was the budget this
+        // month" lookup falls back to an older snapshot that still has the
+        // category, making it look like it "came back" for no reason.
+        const budgetHistory = { ...get().budgetHistory, [getCurrentMonth()]: categoryBudgets };
+        set({ categories, categoryBudgets, budgetHistory });
+        await saveSettings(uid, { categories, categoryBudgets, budgetHistory });
     },
 
     async setCategoryIncomeOnly(uid, value, incomeOnly) {
         const categories = get().categories.map((c) => (c.value === value ? { ...c, incomeOnly } : c));
         const categoryBudgets = { ...get().categoryBudgets };
         if (incomeOnly) delete categoryBudgets[value];
-        set({ categories, categoryBudgets });
-        await saveSettings(uid, { categories, categoryBudgets });
+        const budgetHistory = { ...get().budgetHistory, [getCurrentMonth()]: categoryBudgets };
+        set({ categories, categoryBudgets, budgetHistory });
+        await saveSettings(uid, { categories, categoryBudgets, budgetHistory });
     },
 
     async removeCategory(uid, value) {
         const categories = get().categories.filter((c) => c.value !== value);
         const categoryBudgets = { ...get().categoryBudgets };
         delete categoryBudgets[value];
-        set({ categories, categoryBudgets });
-        await saveSettings(uid, { categories, categoryBudgets });
+        const budgetHistory = { ...get().budgetHistory, [getCurrentMonth()]: categoryBudgets };
+        set({ categories, categoryBudgets, budgetHistory });
+        await saveSettings(uid, { categories, categoryBudgets, budgetHistory });
     },
 
     async addRule(uid, keyword, category, goalId) {

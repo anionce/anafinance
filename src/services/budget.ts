@@ -1,6 +1,6 @@
 import type { Transaction } from "../types/Transaction";
 import type { CategoryBudget } from "../types/Budget";
-import { filterByBudgetPeriod, monthlyEquivalentAmount } from "../utils/dates";
+import { filterByBudgetPeriod, monthlyEquivalentAmount, getCurrentMonth } from "../utils/dates";
 
 /** Per-category spend for the category's own current period. */
 export function calculateSpentByCategory(
@@ -67,12 +67,19 @@ export function calculateRawPercentage(value: number, total: number): number {
  * snapshot if one was saved that month, otherwise the closest earlier
  * snapshot (budgets carry forward until explicitly changed), otherwise the
  * current budget as a last resort (for months before any snapshot exists).
+ *
+ * The current month always reads `currentBudgets` directly rather than
+ * consulting history — it's the single live source of truth for "now", and
+ * some actions that change it (e.g. removing a category) don't also snapshot
+ * history for the current month. Falling back to a stale older snapshot in
+ * that case would make an already-removed category look like it "came back".
  */
 export function getBudgetForMonth(
     budgetHistory: Record<string, Record<string, CategoryBudget>>,
     currentBudgets: Record<string, CategoryBudget>,
     month: string
 ): Record<string, CategoryBudget> {
+    if (month === getCurrentMonth()) return currentBudgets;
     const priorMonths = Object.keys(budgetHistory).filter((m) => m <= month).sort();
     if (priorMonths.length === 0) return currentBudgets;
     return budgetHistory[priorMonths[priorMonths.length - 1]];
