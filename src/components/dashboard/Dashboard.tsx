@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
+import HistoryIcon from '@mui/icons-material/History';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { formatCurrency } from "../../utils/currency";
@@ -35,6 +36,7 @@ interface Props {
     onFeaturedGoalTargetChange: (value: number) => void;
     onFeaturedGoalNameChange: (name: string) => void;
     onEditBudget: () => void;
+    onOpenBudgetHistory: () => void;
 }
 
 function IconBadge({ color, bg, children }: { color: string; bg: string; children: React.ReactNode }) {
@@ -66,6 +68,7 @@ export default function Dashboard({
     onFeaturedGoalTargetChange,
     onFeaturedGoalNameChange,
     onEditBudget,
+    onOpenBudgetHistory,
 }: Props) {
     const { t } = useTranslation();
     const [editingIncome, setEditingIncome] = useState(false);
@@ -141,6 +144,9 @@ export default function Dashboard({
                             <ShoppingBagOutlinedIcon sx={{ fontSize: 20 }} />
                         </IconBadge>
                         <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>{t.budgetCardTitle}</Typography>
+                        <IconButton size="small" onClick={onOpenBudgetHistory} title={t.budgetHistoryTooltip}>
+                            <HistoryIcon sx={{ fontSize: 18, opacity: 0.75 }} />
+                        </IconButton>
                         <IconButton size="small" onClick={onEditBudget} title={t.editBudgetTooltip}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>

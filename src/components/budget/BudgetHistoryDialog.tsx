@@ -5,6 +5,7 @@ import {
     DialogContent,
     DialogActions,
     Button,
+    IconButton,
     Select,
     MenuItem,
     Stack,
@@ -14,11 +15,13 @@ import {
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import type { Category } from "../../types/Category";
 import type { CategoryBudget } from "../../types/Budget";
 import type { Transaction } from "../../types/Transaction";
 import { getBudgetForMonth, calculateSpentByCategoryForMonth, calculatePercentage } from "../../services/budget";
-import { getAvailableMonths, getCurrentMonth, monthlyEquivalentAmount, formatMonthLabel } from "../../utils/dates";
+import { getAvailableMonths, getCurrentMonth, monthlyEquivalentAmount, formatMonthLabel, shiftMonth } from "../../utils/dates";
 import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
@@ -37,10 +40,15 @@ interface Props {
 
 interface BudgetRow {
     category: Category;
+    /** 0 when this category has no budget for the month — spending still shows, just with no target to compare against. */
     budgetAmount: number;
     spent: number;
     remaining: number;
 }
+
+/** How many months past the current one are always offered in the picker, so a
+ *  future month's budget can be set in advance even before it has any data. */
+const FUTURE_MONTHS_AHEAD = 12;
 
 function downloadCsv(filename: string, rows: (string | number)[][]) {
     const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -73,7 +81,12 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
             return { months: [] as string[], effectiveBudgets: {} as Record<string, CategoryBudget>, rows: [] as BudgetRow[], totalBudget: 0, totalSpent: 0 };
         }
 
-        const months = Array.from(new Set([getCurrentMonth(), ...getAvailableMonths(transactions), ...Object.keys(budgetHistory)]))
+        const currentMonth = getCurrentMonth();
+        const futureMonths = Array.from({ length: FUTURE_MONTHS_AHEAD }, (_, i) => shiftMonth(currentMonth, i + 1));
+        // Always includes `month` itself — the prev/next arrows can land on a
+        // month outside this "usual" range, and the Select needs a matching
+        // MenuItem for whatever is currently selected.
+        const months = Array.from(new Set([month, ...futureMonths, currentMonth, ...getAvailableMonths(transactions), ...Object.keys(budgetHistory)]))
             .sort()
             .reverse();
 
@@ -84,10 +97,12 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
             month
         );
 
+        // A full breakdown of where money went that month — not just the
+        // categories that happen to have a budget set.
         const rows: BudgetRow[] = categories
-            .filter((c) => !c.noComputable && !c.incomeOnly && effectiveBudgets[c.value])
+            .filter((c) => !c.noComputable && !c.incomeOnly && (effectiveBudgets[c.value] || spentByCategory[c.value]))
             .map((c) => {
-                const budgetAmount = monthlyEquivalentAmount(effectiveBudgets[c.value]);
+                const budgetAmount = effectiveBudgets[c.value] ? monthlyEquivalentAmount(effectiveBudgets[c.value]) : 0;
                 const spent = spentByCategory[c.value] ?? 0;
                 return { category: c, budgetAmount, spent, remaining: budgetAmount - spent };
             })
@@ -115,36 +130,49 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogTitle>{t.budgetHistoryDialogTitle}</DialogTitle>
             <DialogContent>
-                <Select size="small" value={month} onChange={(e) => setMonth(e.target.value)} sx={{ mb: 2 }} fullWidth>
-                    {months.map((m) => (
-                        <MenuItem key={m} value={m}>{formatMonthLabel(m, locale)}</MenuItem>
-                    ))}
-                </Select>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 2 }}>
+                    <IconButton size="small" onClick={() => setMonth(shiftMonth(month, -1))} title={t.prevMonthTooltip}>
+                        <ChevronLeftIcon fontSize="small" />
+                    </IconButton>
+                    <Select size="small" value={month} onChange={(e) => setMonth(e.target.value)} fullWidth>
+                        {months.map((m) => (
+                            <MenuItem key={m} value={m}>{formatMonthLabel(m, locale)}</MenuItem>
+                        ))}
+                    </Select>
+                    <IconButton size="small" onClick={() => setMonth(shiftMonth(month, 1))} title={t.nextMonthTooltip}>
+                        <ChevronRightIcon fontSize="small" />
+                    </IconButton>
+                </Box>
 
                 {rows.length === 0 ? (
                     <Typography color="text.secondary">{t.budgetHistoryNoDataMessage}</Typography>
                 ) : (
                     <Stack spacing={1.5}>
                         {rows.map((r) => {
-                            const pct = calculatePercentage(r.spent, r.budgetAmount);
-                            const over = r.spent > r.budgetAmount;
+                            const hasBudget = r.budgetAmount > 0;
+                            const pct = hasBudget ? calculatePercentage(r.spent, r.budgetAmount) : 0;
+                            const over = hasBudget && r.spent > r.budgetAmount;
                             return (
                                 <Box key={r.category.value}>
                                     <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                                         <Typography variant="body2">{getCategoryLabel(r.category, locale)}</Typography>
                                         <Typography variant="body2" color={over ? "error" : "text.secondary"}>
-                                            {formatCurrency(r.spent)} / {formatCurrency(r.budgetAmount)}
+                                            {hasBudget
+                                                ? `${formatCurrency(r.spent)} / ${formatCurrency(r.budgetAmount)}`
+                                                : `${formatCurrency(r.spent)} · ${t.budgetHistoryNoBudgetLabel}`}
                                         </Typography>
                                     </Box>
-                                    <LinearProgress
-                                        variant="determinate"
-                                        value={pct}
-                                        sx={{
-                                            height: 6,
-                                            bgcolor: accent.budgetSoft,
-                                            "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.statusGreat },
-                                        }}
-                                    />
+                                    {hasBudget && (
+                                        <LinearProgress
+                                            variant="determinate"
+                                            value={pct}
+                                            sx={{
+                                                height: 6,
+                                                bgcolor: accent.budgetSoft,
+                                                "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.statusGreat },
+                                            }}
+                                        />
+                                    )}
                                 </Box>
                             );
                         })}

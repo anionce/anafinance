@@ -17,7 +17,7 @@ import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { formatCurrency } from "../../utils/currency";
-import { getCurrentMonth, formatMonthLabel } from "../../utils/dates";
+import { getCurrentMonth, formatMonthLabel, shiftMonth } from "../../utils/dates";
 import { accent } from "../../theme/colors";
 
 interface Props {
@@ -69,24 +69,19 @@ export default function CalendarView({ transactions, categories }: Props) {
     ];
     while (cells.length % 7 !== 0) cells.push(null);
 
-    function shiftMonth(delta: number) {
-        const d = new Date(year, month - 1 + delta, 1);
-        setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    }
-
     const today = todayISO();
     const selectedDayTransactions = selectedDay ? byDay.get(selectedDay) ?? [] : [];
 
     return (
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 2 }}>
-                <IconButton size="small" onClick={() => shiftMonth(-1)}>
+                <IconButton size="small" onClick={() => setViewMonth(shiftMonth(viewMonth, -1))}>
                     <ChevronLeftIcon />
                 </IconButton>
                 <Typography variant="h6" sx={{ minWidth: 200, textAlign: "center", textTransform: "capitalize" }}>
                     {formatMonthLabel(viewMonth, locale)}
                 </Typography>
-                <IconButton size="small" onClick={() => shiftMonth(1)}>
+                <IconButton size="small" onClick={() => setViewMonth(shiftMonth(viewMonth, 1))}>
                     <ChevronRightIcon />
                 </IconButton>
             </Box>
