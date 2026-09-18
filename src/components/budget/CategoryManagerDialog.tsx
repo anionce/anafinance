@@ -37,10 +37,11 @@ interface Props {
     onAdd: (value: string, label: string) => void;
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
     onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
+    onToggleExcludeFromBalance: (value: string, excludeFromBalance: boolean) => void;
     onReorder: (categories: Category[]) => void;
 }
 
-export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly, onReorder }: Props) {
+export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly, onToggleExcludeFromBalance, onReorder }: Props) {
     const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
@@ -182,6 +183,15 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
                         <Checkbox size="small" checked={!!menuCategory.incomeOnly} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
                         <Typography variant="body2" sx={{ flex: 1 }}>{t.incomeOnlyLabel}</Typography>
                         <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
+                            <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                                <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
+                            </IconButton>
+                        </Tooltip>
+                    </MenuItem>,
+                    <MenuItem key="excludeFromBalance" onClick={() => onToggleExcludeFromBalance(menuCategory.value, !menuCategory.excludeFromBalance)}>
+                        <Checkbox size="small" checked={!!menuCategory.excludeFromBalance} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
+                        <Typography variant="body2" sx={{ flex: 1 }}>{t.excludeFromBalanceLabel}</Typography>
+                        <Tooltip title={t.excludeFromBalanceInfo} arrow placement="top">
                             <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
                                 <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
                             </IconButton>

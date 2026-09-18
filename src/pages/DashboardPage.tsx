@@ -30,7 +30,7 @@ export default function DashboardPage() {
     const {
         estimatedIncome, categoryBudgets, categories, categorizationRules, featuredGoalId, budgetHistory, hasLoaded: settingsLoaded,
         setEstimatedIncome, setCategoryBudgets, setCategories,
-        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly,
+        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance,
         addRule, removeRule, setFeaturedGoalId,
     } = useSettingsStore();
 
@@ -52,6 +52,12 @@ export default function DashboardPage() {
     const totalIncomeThisMonth = calculateTotalIncome(currentMonthTransactions);
     const insights = generateInsights(transactions, categories, locale);
 
+    // A category can be left out of the balance specifically while still
+    // counting toward the totals above (budget, "Ingresos del mes"...).
+    const excludedFromBalanceValues = new Set(categories.filter((c) => c.excludeFromBalance).map((c) => c.value));
+    const balanceTransactions = currentMonthTransactions.filter((tx) => !excludedFromBalanceValues.has(tx.category));
+    const monthlyBalance = calculateTotalIncome(balanceTransactions) - calculateTotalSpent(balanceTransactions);
+
     return (
         <Layout>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
@@ -72,6 +78,7 @@ export default function DashboardPage() {
                 spent={totalSpentThisMonth}
                 budget={totalBudget}
                 income={totalIncomeThisMonth}
+                balance={monthlyBalance}
                 hasIncomeData={hasIncomeData}
                 estimatedIncome={estimatedIncome}
                 onEstimatedIncomeChange={(v) => setEstimatedIncome(uid, v)}
@@ -95,6 +102,7 @@ export default function DashboardPage() {
                 onRemoveCategory={(value) => removeCategory(uid, value)}
                 onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
                 onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
+                onToggleExcludeFromBalance={(value, excludeFromBalance) => setCategoryExcludeFromBalance(uid, value, excludeFromBalance)}
                 onReorderCategories={(reordered) => setCategories(uid, reordered)}
                 categorizationRules={categorizationRules}
                 goals={goals}

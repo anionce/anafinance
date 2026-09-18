@@ -23,6 +23,8 @@ export interface TranslationSet {
     remainingToSpend: (amount: string) => string;
     budgetCardTitle: string;
     incomeCardTitle: string;
+    balanceCardTitle: string;
+    balanceCardSubtitle: string;
 
     budgetByCategoryTitle: string;
     manageCategoriesTooltip: string;
@@ -119,6 +121,8 @@ export interface TranslationSet {
     noComputableInfo: string;
     incomeOnlyLabel: string;
     incomeOnlyInfo: string;
+    excludeFromBalanceLabel: string;
+    excludeFromBalanceInfo: string;
 
     manageRulesTooltip: string;
     rulesDialogTitle: string;
@@ -219,6 +223,8 @@ export const translations: Record<Locale, TranslationSet> = {
         remainingToSpend: (amount) => `Te quedan ${amount} por gastar este mes`,
         budgetCardTitle: "Presupuesto mensual",
         incomeCardTitle: "Ingresos del mes",
+        balanceCardTitle: "Balance del mes",
+        balanceCardSubtitle: "Ingresos − gastos",
 
         budgetByCategoryTitle: "Presupuesto por categoría",
         manageCategoriesTooltip: "Gestionar categorías",
@@ -315,6 +321,8 @@ export const translations: Record<Locale, TranslationSet> = {
         noComputableInfo: "Los movimientos de esta categoría no cuentan ni como gasto ni como ingreso en ningún sitio de la app (totales, presupuesto, gráficos...). Útil para bizums entre cuentas propias, devoluciones, etc.",
         incomeOnlyLabel: "Solo ingreso",
         incomeOnlyInfo: "Esta categoría es solo para ingresos, así que no tiene sentido ponerle un presupuesto de gasto — no aparecerá en la lista para asignar presupuesto.",
+        excludeFromBalanceLabel: "Excluir del balance",
+        excludeFromBalanceInfo: "Los movimientos de esta categoría seguirán contando en Gastos/Ingresos y en el presupuesto, pero no sumarán ni restarán en el balance mensual del Dashboard.",
 
         manageRulesTooltip: "Reglas de categorización",
         rulesDialogTitle: "Reglas de categorización",
@@ -413,6 +421,8 @@ export const translations: Record<Locale, TranslationSet> = {
         remainingToSpend: (amount) => `You have ${amount} left to spend this month`,
         budgetCardTitle: "Monthly budget",
         incomeCardTitle: "Income this month",
+        balanceCardTitle: "Monthly balance",
+        balanceCardSubtitle: "Income − expenses",
 
         budgetByCategoryTitle: "Budget by category",
         manageCategoriesTooltip: "Manage categories",
@@ -509,6 +519,8 @@ export const translations: Record<Locale, TranslationSet> = {
         noComputableInfo: "Transactions in this category don't count as expense or income anywhere in the app (totals, budget, charts...). Useful for transfers between your own accounts, refunds, etc.",
         incomeOnlyLabel: "Income only",
         incomeOnlyInfo: "This category is only ever income, so a spending budget wouldn't make sense for it — it won't show up in the list for assigning a budget.",
+        excludeFromBalanceLabel: "Exclude from balance",
+        excludeFromBalanceInfo: "Transactions in this category still count toward Expenses/Income and the budget, but won't add to or subtract from the Dashboard's monthly balance.",
 
         manageRulesTooltip: "Categorization rules",
         rulesDialogTitle: "Categorization rules",

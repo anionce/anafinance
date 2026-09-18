@@ -28,6 +28,7 @@ interface SettingsState {
     updateCategoryLabel: (uid: string, value: string, label: string) => Promise<void>;
     setCategoryNoComputable: (uid: string, value: string, noComputable: boolean) => Promise<void>;
     setCategoryIncomeOnly: (uid: string, value: string, incomeOnly: boolean) => Promise<void>;
+    setCategoryExcludeFromBalance: (uid: string, value: string, excludeFromBalance: boolean) => Promise<void>;
     removeCategory: (uid: string, value: string) => Promise<void>;
     addRule: (uid: string, keyword: string, category: string, goalId?: string) => Promise<void>;
     removeRule: (uid: string, id: string) => Promise<void>;
@@ -108,6 +109,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const budgetHistory = { ...get().budgetHistory, [getCurrentMonth()]: categoryBudgets };
         set({ categories, categoryBudgets, budgetHistory });
         await saveSettings(uid, { categories, categoryBudgets, budgetHistory });
+    },
+
+    async setCategoryExcludeFromBalance(uid, value, excludeFromBalance) {
+        const categories = get().categories.map((c) => (c.value === value ? { ...c, excludeFromBalance } : c));
+        set({ categories });
+        await saveSettings(uid, { categories });
     },
 
     async removeCategory(uid, value) {
