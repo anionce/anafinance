@@ -15,6 +15,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import HistoryIcon from '@mui/icons-material/History';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import { formatCurrency } from "../../utils/currency";
 import { calculateRawPercentage } from "../../services/budget";
 import { useTranslation } from "../../i18n/useTranslation";
@@ -26,6 +27,9 @@ interface Props {
     spent: number;
     budget: number;
     income: number;
+    /** Income minus expenses this month, computed separately from `spent`/`income` since
+     *  a category can be excluded from the balance while still counting toward those. */
+    balance: number;
     hasIncomeData: boolean;
     estimatedIncome: number;
     onEstimatedIncomeChange: (value: number) => void;
@@ -58,6 +62,7 @@ export default function Dashboard({
     spent,
     budget,
     income,
+    balance,
     hasIncomeData,
     estimatedIncome,
     onEstimatedIncomeChange,
@@ -76,6 +81,8 @@ export default function Dashboard({
 
     const remaining = budget - spent;
     const overBudget = remaining < 0;
+    const balanceColor = balance >= 0 ? accent.statusGreat : accent.statusOver;
+    const balanceColorSoft = balance >= 0 ? accent.statusGreatSoft : accent.statusOverSoft;
     const budgetPct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
     const budgetPctRaw = calculateRawPercentage(spent, budget);
     const incomePct = Math.min((income / estimatedIncome) * 100, 100);
@@ -135,6 +142,26 @@ export default function Dashboard({
                     </Typography>
                 </Card>
             </Grid>
+
+            {/* Balance - income minus expenses this month; needs income context to mean anything */}
+            {hasIncomeData && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Card sx={{ p: 3, height: "100%" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                            <IconBadge color={balanceColor} bg={balanceColorSoft}>
+                                <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 20 }} />
+                            </IconBadge>
+                            <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>{t.balanceCardTitle}</Typography>
+                        </Box>
+                        <Typography variant="h4" sx={{ lineHeight: 1, color: balanceColor }}>
+                            {balance < 0 ? "−" : "+"}{formatCurrency(Math.abs(balance))}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                            {t.balanceCardSubtitle}
+                        </Typography>
+                    </Card>
+                </Grid>
+            )}
 
             {/* Budget */}
             <Grid size={{ xs: 12, md: 6 }}>

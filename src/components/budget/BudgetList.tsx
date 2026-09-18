@@ -27,6 +27,7 @@ interface Props {
     onRemoveCategory: (value: string) => void;
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
     onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
+    onToggleExcludeFromBalance: (value: string, excludeFromBalance: boolean) => void;
     onReorderCategories: (categories: Category[]) => void;
     categorizationRules: CategorizationRule[];
     goals: Goal[];
@@ -55,6 +56,7 @@ export default function BudgetList({
     onRemoveCategory,
     onToggleNoComputable,
     onToggleIncomeOnly,
+    onToggleExcludeFromBalance,
     onReorderCategories,
     categorizationRules,
     goals,
@@ -140,6 +142,7 @@ export default function BudgetList({
                 onRemove={onRemoveCategory}
                 onToggleNoComputable={onToggleNoComputable}
                 onToggleIncomeOnly={onToggleIncomeOnly}
+                onToggleExcludeFromBalance={onToggleExcludeFromBalance}
                 onReorder={onReorderCategories}
             />
 

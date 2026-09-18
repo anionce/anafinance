@@ -57,7 +57,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const { transactions, goals, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
     const {
         categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab,
-        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategories,
+        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance, setCategories,
         addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView, setShowNoComputableTab,
     } = useSettingsStore();
     const { t, locale, setLocale } = useTranslation();
@@ -294,6 +294,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 onRemove={(value) => removeCategory(uid, value)}
                 onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
                 onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
+                onToggleExcludeFromBalance={(value, excludeFromBalance) => setCategoryExcludeFromBalance(uid, value, excludeFromBalance)}
                 onReorder={(reordered) => setCategories(uid, reordered)}
             />
             <CategorizationRulesDialog

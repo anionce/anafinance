@@ -5,6 +5,9 @@ export interface Category {
     noComputable?: boolean;
     /** True if this category only ever represents income — excluded from the Budget list. */
     incomeOnly?: boolean;
+    /** True to leave this category out of the Dashboard's monthly balance card,
+     *  while still counting it everywhere else (totals, budget, charts...). */
+    excludeFromBalance?: boolean;
     /** True once the user has renamed this category — makes `label` win over the built-in translation. */
     customLabel?: boolean;
 }
