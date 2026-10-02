@@ -8,6 +8,7 @@ import type { CategorizationRule } from "../types/CategorizationRule";
 
 interface SettingsState {
     estimatedIncome: number;
+    savingsTarget: number;
     categoryBudgets: Record<string, CategoryBudget>;
     categories: Category[];
     categorizationRules: CategorizationRule[];
@@ -20,6 +21,7 @@ interface SettingsState {
     load: (uid: string) => Promise<void>;
     reset: () => void;
     setEstimatedIncome: (uid: string, value: number) => Promise<void>;
+    setSavingsTarget: (uid: string, value: number) => Promise<void>;
     /** `month` ("YYYY-MM") defaults to the current month; pass a past month to correct its
      *  history without touching the current budget or any other month's snapshot. */
     setCategoryBudgets: (uid: string, budgets: Record<string, CategoryBudget>, month?: string) => Promise<void>;
@@ -58,6 +60,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     async setEstimatedIncome(uid, value) {
         set({ estimatedIncome: value });
         await saveSettings(uid, { estimatedIncome: value });
+    },
+
+    async setSavingsTarget(uid, value) {
+        set({ savingsTarget: value });
+        await saveSettings(uid, { savingsTarget: value });
     },
 
     async setCategoryBudgets(uid, budgets, month = getCurrentMonth()) {

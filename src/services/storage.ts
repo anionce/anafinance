@@ -159,6 +159,7 @@ export async function loadSettings(uid: string): Promise<Settings> {
     const data = await getSettingsDocData(uid);
     return {
         estimatedIncome: (data.ingresosEstimados as number) ?? DEFAULT_SETTINGS.estimatedIncome,
+        savingsTarget: (data.savingsTarget as number) ?? DEFAULT_SETTINGS.savingsTarget,
         categoryBudgets: normalizeCategoryBudgets(data.categoryBudgets),
         categories: (data.categories as Settings["categories"]) ?? DEFAULT_SETTINGS.categories,
         categorizationRules: (data.categorizationRules as Settings["categorizationRules"]) ?? DEFAULT_SETTINGS.categorizationRules,

@@ -17,7 +17,7 @@ import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import { formatCurrency } from "../../utils/currency";
-import { calculateRawPercentage } from "../../services/budget";
+import { calculateRawPercentage, calculateMaxSpending } from "../../services/budget";
 import { useTranslation } from "../../i18n/useTranslation";
 import { accent } from "../../theme/colors";
 import FeaturedGoalCard from "../goals/FeaturedGoalCard";
@@ -32,6 +32,7 @@ interface Props {
     balance: number;
     hasIncomeData: boolean;
     estimatedIncome: number;
+    savingsTarget: number;
     onEstimatedIncomeChange: (value: number) => void;
     goals: Goal[];
     featuredGoal?: Goal;
@@ -65,6 +66,7 @@ export default function Dashboard({
     balance,
     hasIncomeData,
     estimatedIncome,
+    savingsTarget,
     onEstimatedIncomeChange,
     goals,
     featuredGoal,
@@ -81,6 +83,8 @@ export default function Dashboard({
 
     const remaining = budget - spent;
     const overBudget = remaining < 0;
+    const maxSpending = calculateMaxSpending(estimatedIncome, savingsTarget);
+    const budgetExceedsMax = budget > maxSpending;
     const balanceColor = balance >= 0 ? accent.statusGreat : accent.statusOver;
     const balanceColorSoft = balance >= 0 ? accent.statusGreatSoft : accent.statusOverSoft;
     const budgetPct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
@@ -191,8 +195,13 @@ export default function Dashboard({
                         }}
                     />
                     <Typography variant="h4" sx={{ lineHeight: 1 }}>
-                        {formatCurrency(spent)} <Typography component="span" variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>/ {formatCurrency(budget)}</Typography>
+                        {formatCurrency(spent)} <Typography component="span" variant="body2" sx={{ color: budgetExceedsMax ? "error.main" : "text.secondary", fontWeight: budgetExceedsMax ? 700 : undefined, fontFamily: "inherit" }}>/ {formatCurrency(budget)}</Typography>
                     </Typography>
+                    {budgetExceedsMax && (
+                        <Typography variant="body2" sx={{ color: "error.main", mt: 0.5 }}>
+                            {t.budgetExceedsMaxSpend(formatCurrency(maxSpending))}
+                        </Typography>
+                    )}
                     <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                         {budgetPctRaw.toFixed(0)}%
                     </Typography>

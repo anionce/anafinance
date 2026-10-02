@@ -6,6 +6,8 @@ import type { CategorizationRule } from "./CategorizationRule";
 
 export interface Settings {
     estimatedIncome: number;
+    /** Minimum amount to set aside each month — the budget can't exceed estimatedIncome minus this. */
+    savingsTarget: number;
     categoryBudgets: Record<string, CategoryBudget>;
     categories: Category[];
     categorizationRules: CategorizationRule[];
@@ -24,6 +26,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
     estimatedIncome: 2300,
+    savingsTarget: 0,
     categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
     categories: DEFAULT_CATEGORIES,
     categorizationRules: [],

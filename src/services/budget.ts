@@ -39,6 +39,11 @@ export function calculateTotalBudget(budgets: Record<string, CategoryBudget>): n
     return Object.values(budgets).reduce((sum, b) => sum + monthlyEquivalentAmount(b), 0);
 }
 
+/** The most that can be budgeted/spent in a month while still setting aside the savings target. */
+export function calculateMaxSpending(estimatedIncome: number, savingsTarget: number): number {
+    return Math.max(estimatedIncome - savingsTarget, 0);
+}
+
 export function calculateRemaining(spent: number, budget: number): number {
     return budget - spent;
 }

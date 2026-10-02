@@ -34,6 +34,12 @@ export interface TranslationSet {
 
     editBudgetDialogTitle: string;
     editBudgetDialogHint: string;
+    estimatedIncomeLabel: string;
+    savingsTargetLabel: string;
+    savingsMaxSpend: (max: string) => string;
+    savingsAssignedWithin: (assigned: string, left: string) => string;
+    savingsAssignedOver: (assigned: string, over: string) => string;
+    budgetExceedsMaxSpend: (max: string) => string;
     cancel: string;
     save: string;
 
@@ -234,6 +240,12 @@ export const translations: Record<Locale, TranslationSet> = {
 
         editBudgetDialogTitle: "Editar presupuesto por categoría",
         editBudgetDialogHint: "Deja una categoría vacía o en 0 para que no cuente en el presupuesto.",
+        estimatedIncomeLabel: "Ingresos al mes",
+        savingsTargetLabel: "Quiero ahorrar al menos",
+        savingsMaxSpend: (max) => `Puedes gastar como máximo ${max} al mes.`,
+        savingsAssignedWithin: (assigned, left) => `Llevas ${assigned} asignados, te quedan ${left}.`,
+        savingsAssignedOver: (assigned, over) => `Llevas ${assigned} asignados: te pasas ${over} del máximo.`,
+        budgetExceedsMaxSpend: (max) => `Tu presupuesto supera lo que puedes gastar (${max})`,
         cancel: "Cancelar",
         save: "Guardar",
 
@@ -432,6 +444,12 @@ export const translations: Record<Locale, TranslationSet> = {
 
         editBudgetDialogTitle: "Edit budget by category",
         editBudgetDialogHint: "Leave a category empty or at 0 so it isn't counted in the budget.",
+        estimatedIncomeLabel: "Monthly income",
+        savingsTargetLabel: "I want to save at least",
+        savingsMaxSpend: (max) => `You can spend at most ${max} a month.`,
+        savingsAssignedWithin: (assigned, left) => `${assigned} assigned, ${left} left.`,
+        savingsAssignedOver: (assigned, over) => `${assigned} assigned: ${over} over the maximum.`,
+        budgetExceedsMaxSpend: (max) => `Your budget exceeds what you can spend (${max})`,
         cancel: "Cancel",
         save: "Save",
 
