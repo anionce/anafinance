@@ -56,7 +56,7 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const signOut = useAuthStore((s) => s.signOut);
     const { transactions, goals, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
     const {
-        categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab,
+        categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab, estimatedIncome, savingsTarget, setSavingsTarget,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance, setCategories,
         addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView, setShowNoComputableTab,
     } = useSettingsStore();
@@ -312,6 +312,9 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 categories={categories}
                 budgets={categoryBudgets}
                 onSave={(budgets) => setCategoryBudgets(uid, budgets)}
+                estimatedIncome={estimatedIncome}
+                savingsTarget={savingsTarget}
+                onSaveSavingsTarget={(savings) => setSavingsTarget(uid, savings)}
             />
             <BudgetHistoryDialog
                 open={openDialog === "budgetHistory"}
@@ -321,6 +324,9 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 budgetHistory={budgetHistory}
                 transactions={transactions}
                 onSaveMonth={(month, budgets) => setCategoryBudgets(uid, budgets, month)}
+                estimatedIncome={estimatedIncome}
+                savingsTarget={savingsTarget}
+                onSaveSavingsTarget={(savings) => setSavingsTarget(uid, savings)}
             />
             <Paper
                 elevation={0}

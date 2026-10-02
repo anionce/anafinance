@@ -28,8 +28,8 @@ export default function DashboardPage() {
         goals, updateGoalAmount, updateGoalTarget, updateGoalName,
     } = useFinanceStore();
     const {
-        estimatedIncome, categoryBudgets, categories, categorizationRules, featuredGoalId, budgetHistory, hasLoaded: settingsLoaded,
-        setEstimatedIncome, setCategoryBudgets, setCategories,
+        estimatedIncome, savingsTarget, categoryBudgets, categories, categorizationRules, featuredGoalId, budgetHistory, hasLoaded: settingsLoaded,
+        setEstimatedIncome, setSavingsTarget, setCategoryBudgets, setCategories,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance,
         addRule, removeRule, setFeaturedGoalId,
     } = useSettingsStore();
@@ -81,6 +81,7 @@ export default function DashboardPage() {
                 balance={monthlyBalance}
                 hasIncomeData={hasIncomeData}
                 estimatedIncome={estimatedIncome}
+                savingsTarget={savingsTarget}
                 onEstimatedIncomeChange={(v) => setEstimatedIncome(uid, v)}
                 goals={goals}
                 featuredGoal={featuredGoal}
@@ -120,6 +121,9 @@ export default function DashboardPage() {
                 categories={categories}
                 budgets={categoryBudgets}
                 onSave={(budgets) => setCategoryBudgets(uid, budgets)}
+                estimatedIncome={estimatedIncome}
+                savingsTarget={savingsTarget}
+                onSaveSavingsTarget={(savings) => setSavingsTarget(uid, savings)}
             />
 
             <BudgetHistoryDialog
@@ -130,6 +134,9 @@ export default function DashboardPage() {
                 budgetHistory={budgetHistory}
                 transactions={transactions}
                 onSaveMonth={(month, budgets) => setCategoryBudgets(uid, budgets, month)}
+                estimatedIncome={estimatedIncome}
+                savingsTarget={savingsTarget}
+                onSaveSavingsTarget={(savings) => setSavingsTarget(uid, savings)}
             />
         </Layout>
     );

@@ -36,6 +36,9 @@ interface Props {
     budgetHistory: Record<string, Record<string, CategoryBudget>>;
     transactions: Transaction[];
     onSaveMonth: (month: string, budgets: Record<string, CategoryBudget>) => void;
+    estimatedIncome: number;
+    savingsTarget: number;
+    onSaveSavingsTarget: (savingsTarget: number) => void;
 }
 
 interface BudgetRow {
@@ -61,7 +64,7 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
     URL.revokeObjectURL(url);
 }
 
-export default function BudgetHistoryDialog({ open, onClose, categories, categoryBudgets, budgetHistory, transactions, onSaveMonth }: Props) {
+export default function BudgetHistoryDialog({ open, onClose, categories, categoryBudgets, budgetHistory, transactions, onSaveMonth, estimatedIncome, savingsTarget, onSaveSavingsTarget }: Props) {
     const { t, locale } = useTranslation();
     const [month, setMonth] = useState(getCurrentMonth());
     const [editOpen, setEditOpen] = useState(false);
@@ -202,6 +205,9 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
                 categories={categories}
                 budgets={effectiveBudgets}
                 onSave={(budgets) => onSaveMonth(month, budgets)}
+                estimatedIncome={estimatedIncome}
+                savingsTarget={savingsTarget}
+                onSaveSavingsTarget={onSaveSavingsTarget}
                 title={t.editBudgetDialogTitleForMonth(formatMonthLabel(month, locale))}
             />
         </Dialog>
