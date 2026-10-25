@@ -23,6 +23,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import GoalsList from "../components/goals/GoalsList";
 import ImportExcelFlow from "../components/transactions/ImportExcelFlow";
 import { useAuthStore } from "../store/authStore";
+import { useSortedCategories } from "../hooks/useSortedCategories";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useTranslation } from "../i18n/useTranslation";
@@ -37,9 +38,10 @@ export default function OnboardingPage() {
     const [step, setStep] = useState(0);
 
     const {
-        categories, setCategoryBudgets, completeOnboarding,
+        setCategoryBudgets, completeOnboarding,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly,
     } = useSettingsStore();
+    const categories = useSortedCategories();
     const { goals, addGoal, updateGoalAmount, updateGoalName, updateGoalTarget, removeGoal } = useFinanceStore();
 
     const steps = [t.onboardingStepCategories, t.onboardingStepBudgets, t.onboardingStepGoals, t.onboardingStepImport];

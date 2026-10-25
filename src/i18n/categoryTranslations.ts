@@ -24,6 +24,12 @@ const CATEGORY_LABEL_TRANSLATIONS: Record<string, Record<Locale, string>> = {
     vinted_wallapop: { es: "💵 Vinted/Wallapop", en: "💵 Vinted/Wallapop" },
 };
 
+/** Alphabetical by display name, ignoring the leading emoji and accents, in the given locale. */
+export function sortCategoriesAlphabetically(categories: Category[], locale: Locale): Category[] {
+    const sortKey = (c: Category) => getCategoryLabel(c, locale).replace(/^[^\p{L}\p{N}]+/u, "");
+    return [...categories].sort((a, b) => sortKey(a).localeCompare(sortKey(b), locale, { sensitivity: "base" }));
+}
+
 export function getCategoryLabel(category: Category, locale: Locale): string {
     if (category.customLabel) return category.label;
     return CATEGORY_LABEL_TRANSLATIONS[category.value]?.[locale] ?? category.label;

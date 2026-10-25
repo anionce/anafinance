@@ -11,6 +11,7 @@ import BudgetHistoryDialog from "../components/budget/BudgetHistoryDialog";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useAuthStore } from "../store/authStore";
+import { useSortedCategories } from "../hooks/useSortedCategories";
 import { calculateTotalSpent, calculateTotalIncome, calculateTotalBudget } from "../services/budget";
 import { generateInsights } from "../services/insights";
 import { getCurrentMonth, filterByMonth } from "../utils/dates";
@@ -28,11 +29,12 @@ export default function DashboardPage() {
         goals, updateGoalAmount, updateGoalTarget, updateGoalName,
     } = useFinanceStore();
     const {
-        estimatedIncome, savingsTarget, categoryBudgets, categories, categorizationRules, featuredGoalId, budgetHistory, hasLoaded: settingsLoaded,
-        setEstimatedIncome, setSavingsTarget, setCategoryBudgets, setCategories,
+        estimatedIncome, savingsTarget, categoryBudgets, categorizationRules, featuredGoalId, budgetHistory, hasLoaded: settingsLoaded,
+        setEstimatedIncome, setSavingsTarget, setCategoryBudgets,
         addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance,
         addRule, removeRule, setFeaturedGoalId,
     } = useSettingsStore();
+    const categories = useSortedCategories();
 
     if (!hasLoaded || !settingsLoaded) {
         return <Layout><p>{t.loading}</p></Layout>;
@@ -104,7 +106,6 @@ export default function DashboardPage() {
                 onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
                 onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
                 onToggleExcludeFromBalance={(value, excludeFromBalance) => setCategoryExcludeFromBalance(uid, value, excludeFromBalance)}
-                onReorderCategories={(reordered) => setCategories(uid, reordered)}
                 categorizationRules={categorizationRules}
                 goals={goals}
                 onAddRule={(keyword, category, goalId) => addRule(uid, keyword, category, goalId)}

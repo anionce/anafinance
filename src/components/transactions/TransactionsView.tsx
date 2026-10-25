@@ -11,7 +11,7 @@ import DateRangeFilter from "./DateRangeFilter";
 import AddTransactionDialog from "./AddTransactionDialog";
 import { useFinanceStore } from "../../store/financeStore";
 import { useUIStore } from "../../store/uiStore";
-import { useSettingsStore } from "../../store/settingsStore";
+import { useSortedCategories } from "../../hooks/useSortedCategories";
 import { useAuthStore } from "../../store/authStore";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
@@ -35,7 +35,7 @@ export default function TransactionsView({ kind }: Props) {
     const [searchQuery, setSearchQuery] = useState("");
     const { transactions, hasLoaded, resolveCategory, updateNotes, splitTransaction, removeTransaction, addTransaction } = useFinanceStore();
     const { dateFilter, setDateFilter } = useUIStore();
-    const { categories } = useSettingsStore();
+    const categories = useSortedCategories();
 
     const noComputableValues = useMemo(
         () => new Set(categories.filter((c) => c.noComputable).map((c) => c.value)),

@@ -61,8 +61,6 @@ export interface TranslationSet {
     newCategoryPlaceholder: string;
     categoriesHint: string;
     close: string;
-    moveCategoryUpLabel: string;
-    moveCategoryDownLabel: string;
     accountMenuPreferencesLabel: string;
     combinedTransactionsViewLabel: string;
     showNoComputableTabLabel: string;
@@ -265,9 +263,7 @@ export const translations: Record<Locale, TranslationSet> = {
 
         manageCategoriesDialogTitle: "Gestionar categorías",
         newCategoryPlaceholder: "Nueva categoría (ej: 🎨 Arte)",
-        categoriesHint: "Los cambios se guardan al momento y afectan a toda la app. Usa las flechas para ordenarlas: las primeras aparecerán antes al clasificar.",
-        moveCategoryUpLabel: "Subir",
-        moveCategoryDownLabel: "Bajar",
+        categoriesHint: "Los cambios se guardan al momento y afectan a toda la app. Las categorías se ordenan siempre alfabéticamente.",
         accountMenuPreferencesLabel: "Preferencias",
         combinedTransactionsViewLabel: "Ver ingresos y gastos en la misma pestaña",
         showNoComputableTabLabel: "Mostrar pestaña de \"No computables\"",
@@ -469,9 +465,7 @@ export const translations: Record<Locale, TranslationSet> = {
 
         manageCategoriesDialogTitle: "Manage categories",
         newCategoryPlaceholder: "New category (e.g. 🎨 Art)",
-        categoriesHint: "Changes save instantly and affect the whole app. Use the arrows to reorder them: the ones on top will show up first when classifying.",
-        moveCategoryUpLabel: "Move up",
-        moveCategoryDownLabel: "Move down",
+        categoriesHint: "Changes save instantly and affect the whole app. Categories are always sorted alphabetically.",
         accountMenuPreferencesLabel: "Preferences",
         combinedTransactionsViewLabel: "Show income and expenses in the same tab",
         showNoComputableTabLabel: "Show a \"Not counted\" tab",

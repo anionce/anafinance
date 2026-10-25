@@ -25,7 +25,6 @@ interface SettingsState {
     /** `month` ("YYYY-MM") defaults to the current month; pass a past month to correct its
      *  history without touching the current budget or any other month's snapshot. */
     setCategoryBudgets: (uid: string, budgets: Record<string, CategoryBudget>, month?: string) => Promise<void>;
-    setCategories: (uid: string, categories: Category[]) => Promise<void>;
     addCategory: (uid: string, value: string, label: string) => Promise<void>;
     updateCategoryLabel: (uid: string, value: string, label: string) => Promise<void>;
     setCategoryNoComputable: (uid: string, value: string, noComputable: boolean) => Promise<void>;
@@ -77,11 +76,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const patch = isCurrentMonth ? { categoryBudgets: budgets, budgetHistory } : { budgetHistory };
         set(patch);
         await saveSettings(uid, patch);
-    },
-
-    async setCategories(uid, categories) {
-        set({ categories });
-        await saveSettings(uid, { categories });
     },
 
     async addCategory(uid, value, label) {

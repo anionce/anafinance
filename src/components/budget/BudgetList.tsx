@@ -28,7 +28,6 @@ interface Props {
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
     onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
     onToggleExcludeFromBalance: (value: string, excludeFromBalance: boolean) => void;
-    onReorderCategories: (categories: Category[]) => void;
     categorizationRules: CategorizationRule[];
     goals: Goal[];
     onAddRule: (keyword: string, category: string, goalId?: string) => void;
@@ -57,7 +56,6 @@ export default function BudgetList({
     onToggleNoComputable,
     onToggleIncomeOnly,
     onToggleExcludeFromBalance,
-    onReorderCategories,
     categorizationRules,
     goals,
     onAddRule,
@@ -68,6 +66,12 @@ export default function BudgetList({
     const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
     const spentByCategory = calculateSpentByCategory(transactions, budgets);
     const hasBudgets = Object.keys(budgets).length > 0;
+    // `categories` arrives alphabetized; keep budget cards in that order (any
+    // budget whose category no longer exists goes last).
+    const budgetKeys = [
+        ...categories.map((c) => c.value).filter((value) => budgets[value]),
+        ...Object.keys(budgets).filter((key) => !categories.some((c) => c.value === key)),
+    ];
 
     return (
         <Card sx={{ mt: 4, p: 3 }}>
@@ -87,7 +91,8 @@ export default function BudgetList({
             </Box>
 
             {hasBudgets && <Grid container spacing={2}>
-                {Object.entries(budgets).map(([key, budget]) => {
+                {budgetKeys.map((key) => {
+                    const budget = budgets[key];
                     const spent = spentByCategory[key] ?? 0;
                     const pct = calculatePercentage(spent, budget.amount);
                     const pctRaw = calculateRawPercentage(spent, budget.amount);
@@ -143,7 +148,6 @@ export default function BudgetList({
                 onToggleNoComputable={onToggleNoComputable}
                 onToggleIncomeOnly={onToggleIncomeOnly}
                 onToggleExcludeFromBalance={onToggleExcludeFromBalance}
-                onReorder={onReorderCategories}
             />
 
             <CategorizationRulesDialog

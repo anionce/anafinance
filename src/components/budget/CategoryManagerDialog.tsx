@@ -13,16 +13,12 @@ import {
     Checkbox,
     Menu,
     MenuItem,
-    Divider,
     Tooltip,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
@@ -38,14 +34,12 @@ interface Props {
     onToggleNoComputable: (value: string, noComputable: boolean) => void;
     onToggleIncomeOnly: (value: string, incomeOnly: boolean) => void;
     onToggleExcludeFromBalance: (value: string, excludeFromBalance: boolean) => void;
-    onReorder: (categories: Category[]) => void;
 }
 
-export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly, onToggleExcludeFromBalance, onReorder }: Props) {
+export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly, onToggleExcludeFromBalance }: Props) {
     const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
-    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [menuFor, setMenuFor] = useState<{ index: number; el: HTMLElement } | null>(null);
 
     // Resets the drafts each time the dialog opens (not on every render while
@@ -71,26 +65,6 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
         setNewLabel("");
     }
 
-    function move(index: number, delta: number) {
-        const target = index + delta;
-        if (target < 0 || target >= categories.length) return;
-        const reordered = [...categories];
-        [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-        onReorder(reordered);
-    }
-
-    function handleDrop(targetIndex: number) {
-        if (draggedIndex === null || draggedIndex === targetIndex) {
-            setDraggedIndex(null);
-            return;
-        }
-        const reordered = [...categories];
-        const [moved] = reordered.splice(draggedIndex, 1);
-        reordered.splice(targetIndex, 0, moved);
-        onReorder(reordered);
-        setDraggedIndex(null);
-    }
-
     const menuCategory = menuFor ? categories[menuFor.index] : undefined;
 
     return (
@@ -99,20 +73,7 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
             <DialogContent>
                 <Stack spacing={1}>
                     {categories.map((cat, index) => (
-                        <Box
-                            key={cat.value}
-                            sx={{ display: "flex", alignItems: "center", gap: 0.5, opacity: draggedIndex === index ? 0.4 : 1 }}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => handleDrop(index)}
-                        >
-                            <Box
-                                draggable
-                                onDragStart={() => setDraggedIndex(index)}
-                                onDragEnd={() => setDraggedIndex(null)}
-                                sx={{ display: "flex", alignItems: "center", opacity: 0.4, cursor: "grab", "&:active": { cursor: "grabbing" } }}
-                            >
-                                <DragIndicatorIcon fontSize="small" />
-                            </Box>
+                        <Box key={cat.value} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                             <TextField
                                 size="small"
                                 value={drafts[cat.value] ?? cat.label}
@@ -153,23 +114,6 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
 
             <Menu anchorEl={menuFor?.el} open={!!menuFor} onClose={() => setMenuFor(null)}>
                 {menuFor && menuCategory && [
-                    <MenuItem
-                        key="up"
-                        disabled={menuFor.index === 0}
-                        onClick={() => { move(menuFor.index, -1); setMenuFor(null); }}
-                    >
-                        <ArrowUpwardIcon fontSize="small" sx={{ mr: 1.5 }} />
-                        {t.moveCategoryUpLabel}
-                    </MenuItem>,
-                    <MenuItem
-                        key="down"
-                        disabled={menuFor.index === categories.length - 1}
-                        onClick={() => { move(menuFor.index, 1); setMenuFor(null); }}
-                    >
-                        <ArrowDownwardIcon fontSize="small" sx={{ mr: 1.5 }} />
-                        {t.moveCategoryDownLabel}
-                    </MenuItem>,
-                    <Divider key="divider" />,
                     <MenuItem key="noComputable" onClick={() => onToggleNoComputable(menuCategory.value, !menuCategory.noComputable)}>
                         <Checkbox size="small" checked={!!menuCategory.noComputable} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
                         <Typography variant="body2" sx={{ flex: 1 }}>{t.noComputableLabel}</Typography>

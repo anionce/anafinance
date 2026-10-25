@@ -25,6 +25,7 @@ import Logo from "./Logo";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useAuthStore } from "../store/authStore";
+import { useSortedCategories } from "../hooks/useSortedCategories";
 import { useTranslation } from "../i18n/useTranslation";
 import type { Locale } from "../store/localeStore";
 
@@ -56,11 +57,12 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
     const signOut = useAuthStore((s) => s.signOut);
     const { transactions, goals, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
     const {
-        categories, categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab, estimatedIncome, savingsTarget, setSavingsTarget,
-        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance, setCategories,
+        categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab, estimatedIncome, savingsTarget, setSavingsTarget,
+        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance,
         addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView, setShowNoComputableTab,
     } = useSettingsStore();
     const { t, locale, setLocale } = useTranslation();
+    const categories = useSortedCategories();
 
     const navItems = [
         { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
@@ -295,7 +297,6 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
                 onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
                 onToggleExcludeFromBalance={(value, excludeFromBalance) => setCategoryExcludeFromBalance(uid, value, excludeFromBalance)}
-                onReorder={(reordered) => setCategories(uid, reordered)}
             />
             <CategorizationRulesDialog
                 open={openDialog === "rules"}
