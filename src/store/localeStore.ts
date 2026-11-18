@@ -4,10 +4,10 @@ export type Locale = "es" | "en";
 
 const STORAGE_KEY = "locale";
 
-function getInitialLocale(): Locale {
+const getInitialLocale = (): Locale => {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored === "en" || stored === "es" ? stored : "es";
-}
+};
 
 interface LocaleState {
     locale: Locale;

@@ -11,10 +11,14 @@ interface Props {
     onChange: (filter: Partial<DateFilter>) => void;
 }
 
-export default function DateRangeFilter({ transactions, value, onChange }: Props) {
+export const DateRangeFilter = ({ transactions, value, onChange }: Props) => {
     const { t, locale } = useTranslation();
-    const months = Array.from(new Set([getCurrentMonth(), ...getAvailableMonths(transactions)])).sort().reverse();
-    const years = Array.from(new Set([getCurrentYear(), ...getAvailableYears(transactions)])).sort().reverse();
+    const months = Array.from(new Set([getCurrentMonth(), ...getAvailableMonths(transactions)]))
+        .sort()
+        .reverse();
+    const years = Array.from(new Set([getCurrentYear(), ...getAvailableYears(transactions)]))
+        .sort()
+        .reverse();
 
     const [fromDraft, setFromDraft] = useState(value.from);
     const [toDraft, setToDraft] = useState(value.to);
@@ -35,7 +39,9 @@ export default function DateRangeFilter({ transactions, value, onChange }: Props
             {value.mode === "monthly" && (
                 <Select size="small" value={value.month} onChange={(e) => onChange({ month: e.target.value })}>
                     {months.map((m) => (
-                        <MenuItem key={m} value={m}>{formatMonthLabel(m, locale)}</MenuItem>
+                        <MenuItem key={m} value={m}>
+                            {formatMonthLabel(m, locale)}
+                        </MenuItem>
                     ))}
                 </Select>
             )}
@@ -43,7 +49,9 @@ export default function DateRangeFilter({ transactions, value, onChange }: Props
             {value.mode === "annual" && (
                 <Select size="small" value={value.year} onChange={(e) => onChange({ year: e.target.value })}>
                     {years.map((y) => (
-                        <MenuItem key={y} value={y}>{y}</MenuItem>
+                        <MenuItem key={y} value={y}>
+                            {y}
+                        </MenuItem>
                     ))}
                 </Select>
             )}
@@ -73,4 +81,4 @@ export default function DateRangeFilter({ transactions, value, onChange }: Props
             )}
         </Box>
     );
-}
+};

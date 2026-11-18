@@ -6,21 +6,14 @@ import type { CategorizationRule } from "./CategorizationRule";
 
 export interface Settings {
     estimatedIncome: number;
-    /** Minimum amount to set aside each month — the budget can't exceed estimatedIncome minus this. */
     savingsTarget: number;
     categoryBudgets: Record<string, CategoryBudget>;
     categories: Category[];
     categorizationRules: CategorizationRule[];
-    /** Which goal to show in the Dashboard's featured-goal card. Empty means "pick automatically". */
     featuredGoalId: string;
     onboardingComplete: boolean;
-    /** When true, Expenses and Income share a single "Transactions" tab instead of separate ones. */
     combinedTransactionsView: boolean;
-    /** Snapshot of categoryBudgets saved each time it changes, keyed by the "YYYY-MM" month it
-     *  took effect. A month with no entry of its own carries forward the closest earlier one. */
     budgetHistory: Record<string, Record<string, CategoryBudget>>;
-    /** When true, shows a dedicated nav tab listing transactions in "no computable"
-     *  categories, so a miscategorized one can be found and corrected. */
     showNoComputableTab: boolean;
 }
 

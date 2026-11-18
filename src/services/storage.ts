@@ -1,201 +1,85 @@
-import {
-    collection,
-    deleteDoc,
-    doc,
-    getDocs,
-    setDoc,
-    writeBatch,
-} from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, setDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Transaction } from "../types/Transaction";
 import type { Goal } from "../types/Goal";
 import type { Settings } from "../types/Settings";
-import { DEFAULT_SETTINGS } from "../types/Settings";
-import type { CategoryBudget } from "../types/Budget";
+import { settingsFromDocument, settingsToDocument } from "./settingsDocument";
+import { findNewTransactions } from "./transactionMatching";
 
 const TRANSACTIONS_COLLECTION = "transactions";
 const GOALS_COLLECTION = "goals";
 const SETTINGS_DOC_ID = "general";
 
-function transactionsPath(uid: string) {
-    return `users/${uid}/${TRANSACTIONS_COLLECTION}`;
-}
+const transactionsPath = (uid: string) => `users/${uid}/${TRANSACTIONS_COLLECTION}`;
 
-function goalsPath(uid: string) {
-    return `users/${uid}/${GOALS_COLLECTION}`;
-}
+const goalsPath = (uid: string) => `users/${uid}/${GOALS_COLLECTION}`;
 
-function settingsDocPath(uid: string) {
-    return `users/${uid}/settings/${SETTINGS_DOC_ID}`;
-}
+const settingsDocPath = (uid: string) => `users/${uid}/settings/${SETTINGS_DOC_ID}`;
 
-export async function loadTransactions(uid: string): Promise<Transaction[]> {
+export const loadTransactions = async (uid: string): Promise<Transaction[]> => {
     const snapshot = await getDocs(collection(db, transactionsPath(uid)));
     return snapshot.docs.map((d) => d.data() as Transaction);
-}
+};
 
-export async function saveTransaction(uid: string, t: Transaction): Promise<void> {
+export const saveTransaction = async (uid: string, t: Transaction): Promise<void> => {
     await setDoc(doc(db, transactionsPath(uid), t.id), t);
-}
+};
 
-/**
- * Merges existing transactions with incoming ones and saves the new ones to
- * Firestore. Returns { merged, added }, where `added` is only the incoming
- * transactions that were genuinely new — callers that react to "new"
- * transactions (e.g. crediting a linked goal) must use `added`, not `merged`,
- * or a re-import of the same file would double-count already-processed ones.
- *
- * Matches on date+amount content (a multiset comparison) rather than on the
- * transaction `id` string. The id is a hash computed from a transaction's
- * fields, and that hash formula has changed over time (e.g. to stop
- * description differences between language exports from creating
- * duplicates) — comparing raw ids would make every already-imported
- * transaction look "new" again after such a change, re-adding it and
- * flagging it for category review. Comparing stored field values instead is
- * immune to that.
- */
-export async function mergeTransactions(
+export const mergeTransactions = async (
     uid: string,
     existing: Transaction[],
-    incoming: Transaction[]
-): Promise<{ merged: Transaction[]; added: Transaction[] }> {
-    const existingCounts = new Map<string, number>();
-    for (const t of existing) {
-        const key = `${t.date}|${t.amount}`;
-        existingCounts.set(key, (existingCounts.get(key) ?? 0) + 1);
-
-        // A split transaction's own amount is one of the portions, not the
-        // original row's — also occupy a slot at the pre-split amount so a
-        // re-imported file still matches the original row instead of
-        // re-adding it as a new pending transaction.
-        if (t.splitFromAmount !== undefined) {
-            const splitKey = `${t.date}|${t.splitFromAmount}`;
-            existingCounts.set(splitKey, (existingCounts.get(splitKey) ?? 0) + 1);
-        }
+    incoming: Transaction[],
+): Promise<{ merged: Transaction[]; added: Transaction[] }> => {
+    const added = findNewTransactions(existing, incoming);
+    if (added.length > 0) {
+        const batch = writeBatch(db);
+        for (const t of added) batch.set(doc(db, transactionsPath(uid), t.id), t);
+        await batch.commit();
     }
+    return { merged: [...existing, ...added], added };
+};
 
-    const newOnes: Transaction[] = [];
-    for (const t of incoming) {
-        const key = `${t.date}|${t.amount}`;
-        const remaining = existingCounts.get(key) ?? 0;
-        if (remaining > 0) {
-            existingCounts.set(key, remaining - 1);
-        } else {
-            newOnes.push(t);
-        }
-    }
-
-    const batch = writeBatch(db);
-    for (const t of newOnes) {
-        batch.set(doc(db, transactionsPath(uid), t.id), t);
-    }
-    await batch.commit();
-
-    return {
-        merged: [...existing, ...newOnes],
-        added: newOnes,
-    };
-}
-
-export async function deleteTransaction(uid: string, id: string): Promise<void> {
+export const deleteTransaction = async (uid: string, id: string): Promise<void> => {
     await deleteDoc(doc(db, transactionsPath(uid), id));
-}
+};
 
-export async function deleteTransactions(uid: string, ids: string[]): Promise<void> {
+export const deleteTransactions = async (uid: string, ids: string[]): Promise<void> => {
     const batch = writeBatch(db);
     for (const id of ids) {
         batch.delete(doc(db, transactionsPath(uid), id));
     }
     await batch.commit();
-}
+};
 
-export async function updateTransactionCategory(uid: string, id: string, category: string): Promise<void> {
+export const updateTransactionCategory = async (uid: string, id: string, category: string): Promise<void> => {
     await setDoc(doc(db, transactionsPath(uid), id), { category }, { merge: true });
-}
+};
 
-export async function updateTransactionNotes(uid: string, id: string, notes: string): Promise<void> {
+export const updateTransactionNotes = async (uid: string, id: string, notes: string): Promise<void> => {
     await setDoc(doc(db, transactionsPath(uid), id), { notes }, { merge: true });
-}
+};
 
-/**
- * Older documents store each category budget as a plain number (always
- * monthly). Normalizes those into the current `{ amount, period }` shape so
- * existing data keeps working without a migration.
- */
-function normalizeCategoryBudgets(raw: unknown): Record<string, CategoryBudget> {
-    if (!raw || typeof raw !== "object") return DEFAULT_SETTINGS.categoryBudgets;
-
-    const result: Record<string, CategoryBudget> = {};
-    for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-        if (typeof value === "number") {
-            result[key] = { amount: value, period: "monthly" };
-        } else if (value && typeof value === "object" && "amount" in value) {
-            result[key] = value as CategoryBudget;
-        }
-    }
-    return result;
-}
-
-function normalizeBudgetHistory(raw: unknown): Record<string, Record<string, CategoryBudget>> {
-    if (!raw || typeof raw !== "object") return {};
-
-    const result: Record<string, Record<string, CategoryBudget>> = {};
-    for (const [month, monthBudgets] of Object.entries(raw as Record<string, unknown>)) {
-        result[month] = normalizeCategoryBudgets(monthBudgets);
-    }
-    return result;
-}
-
-async function getSettingsDocData(uid: string): Promise<Record<string, unknown>> {
+const getSettingsDocData = async (uid: string): Promise<Record<string, unknown>> => {
     const snapshot = await getDocs(collection(db, `users/${uid}/settings`));
-    const found = snapshot.docs.find((d) => d.id === SETTINGS_DOC_ID);
-    return found?.data() ?? {};
-}
+    return snapshot.docs.find((d) => d.id === SETTINGS_DOC_ID)?.data() ?? {};
+};
 
-// The settings document field is still named `ingresosEstimados` from before
-// the codebase was translated to English; mapped to `estimatedIncome` here so
-// existing documents don't need a migration for this one field.
-export async function loadSettings(uid: string): Promise<Settings> {
-    const data = await getSettingsDocData(uid);
-    return {
-        estimatedIncome: (data.ingresosEstimados as number) ?? DEFAULT_SETTINGS.estimatedIncome,
-        savingsTarget: (data.savingsTarget as number) ?? DEFAULT_SETTINGS.savingsTarget,
-        categoryBudgets: normalizeCategoryBudgets(data.categoryBudgets),
-        categories: (data.categories as Settings["categories"]) ?? DEFAULT_SETTINGS.categories,
-        categorizationRules: (data.categorizationRules as Settings["categorizationRules"]) ?? DEFAULT_SETTINGS.categorizationRules,
-        featuredGoalId: (data.featuredGoalId as string) ?? DEFAULT_SETTINGS.featuredGoalId,
-        onboardingComplete: (data.onboardingComplete as boolean) ?? DEFAULT_SETTINGS.onboardingComplete,
-        combinedTransactionsView: (data.combinedTransactionsView as boolean) ?? DEFAULT_SETTINGS.combinedTransactionsView,
-        budgetHistory: normalizeBudgetHistory(data.budgetHistory),
-        showNoComputableTab: (data.showNoComputableTab as boolean) ?? DEFAULT_SETTINGS.showNoComputableTab,
-    };
-}
+export const loadSettings = async (uid: string): Promise<Settings> => settingsFromDocument(await getSettingsDocData(uid));
 
-export async function saveSettings(uid: string, settings: Partial<Settings>): Promise<void> {
-    const { estimatedIncome, ...rest } = settings;
-    const data: Record<string, unknown> = { ...rest };
-    if (estimatedIncome !== undefined) {
-        data.ingresosEstimados = estimatedIncome;
-    }
-    // mergeFields (not merge: true) — Firestore's merge:true recursively
-    // merges map-typed fields like categoryBudgets/budgetHistory key by key,
-    // so a category removed locally (simply absent from the new value) never
-    // actually gets deleted server-side; it silently survives and comes back
-    // on the next load. mergeFields instead replaces each named top-level
-    // field wholesale, which is what every caller already assumes when it
-    // builds `data` as the complete, final value of that field.
+export const saveSettings = async (uid: string, settings: Partial<Settings>): Promise<void> => {
+    const data = settingsToDocument(settings);
     await setDoc(doc(db, settingsDocPath(uid)), data, { mergeFields: Object.keys(data) });
-}
+};
 
-export async function loadGoals(uid: string): Promise<Goal[]> {
+export const loadGoals = async (uid: string): Promise<Goal[]> => {
     const snapshot = await getDocs(collection(db, goalsPath(uid)));
     return snapshot.docs.map((d) => d.data() as Goal);
-}
+};
 
-export async function saveGoal(uid: string, goal: Goal): Promise<void> {
+export const saveGoal = async (uid: string, goal: Goal): Promise<void> => {
     await setDoc(doc(db, goalsPath(uid), goal.id), goal);
-}
+};
 
-export async function deleteGoal(uid: string, id: string): Promise<void> {
+export const deleteGoal = async (uid: string, id: string): Promise<void> => {
     await deleteDoc(doc(db, goalsPath(uid), id));
-}
+};

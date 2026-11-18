@@ -33,29 +33,29 @@ interface Props {
     onRemove: (id: string) => void;
 }
 
-export default function CategorizationRulesDialog({ open, onClose, categories, goals, rules, onAdd, onRemove }: Props) {
+export const CategorizationRulesDialog = ({ open, onClose, categories, goals, rules, onAdd, onRemove }: Props) => {
     const { t, locale } = useTranslation();
     const [keyword, setKeyword] = useState("");
     const [category, setCategory] = useState(categories[0]?.value ?? "");
     const [goalId, setGoalId] = useState(NO_GOAL);
 
-    function handleAdd() {
+    const handleAdd = () => {
         const trimmed = keyword.trim();
         if (!trimmed || !category) return;
         onAdd(trimmed, category, goalId || undefined);
         setKeyword("");
         setGoalId(NO_GOAL);
-    }
+    };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogTitle>{t.rulesDialogTitle}</DialogTitle>
             <DialogContent>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{t.rulesHint}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {t.rulesHint}
+                </Typography>
                 <Stack spacing={1.5}>
-                    {rules.length === 0 && (
-                        <Typography color="text.secondary">{t.noRulesYet}</Typography>
-                    )}
+                    {rules.length === 0 && <Typography color="text.secondary">{t.noRulesYet}</Typography>}
                     {rules.map((rule) => {
                         const cat = categories.find((c) => c.value === rule.category);
                         const goal = rule.goalId ? goals.find((g) => g.id === rule.goalId) : undefined;
@@ -63,7 +63,12 @@ export default function CategorizationRulesDialog({ open, onClose, categories, g
                             <Box key={rule.id} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                 <Typography variant="body2" sx={{ flex: 1 }}>
                                     <strong>"{rule.keyword}"</strong> {t.ruleGoesTo} {cat ? getCategoryLabel(cat, locale) : rule.category}
-                                    {goal && <> {t.ruleAlsoCredits} {goal.name}</>}
+                                    {goal && (
+                                        <>
+                                            {" "}
+                                            {t.ruleAlsoCredits} {goal.name}
+                                        </>
+                                    )}
                                 </Typography>
                                 <IconButton size="small" onClick={() => onRemove(rule.id)}>
                                     <DeleteOutlineIcon fontSize="small" sx={{ opacity: 0.5 }} />
@@ -82,14 +87,11 @@ export default function CategorizationRulesDialog({ open, onClose, categories, g
                                 onKeyDown={(e) => e.key === "Enter" && handleAdd()}
                                 fullWidth
                             />
-                            <Select
-                                size="small"
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                sx={{ minWidth: 140 }}
-                            >
+                            <Select size="small" value={category} onChange={(e) => setCategory(e.target.value)} sx={{ minWidth: 140 }}>
                                 {categories.map((c) => (
-                                    <MenuItem key={c.value} value={c.value}>{getCategoryLabel(c, locale)}</MenuItem>
+                                    <MenuItem key={c.value} value={c.value}>
+                                        {getCategoryLabel(c, locale)}
+                                    </MenuItem>
                                 ))}
                             </Select>
                             <IconButton size="small" onClick={handleAdd} disabled={!keyword.trim()}>
@@ -97,16 +99,12 @@ export default function CategorizationRulesDialog({ open, onClose, categories, g
                             </IconButton>
                         </Box>
                         {goals.length > 0 && (
-                            <Select
-                                size="small"
-                                value={goalId}
-                                onChange={(e) => setGoalId(e.target.value)}
-                                displayEmpty
-                                fullWidth
-                            >
+                            <Select size="small" value={goalId} onChange={(e) => setGoalId(e.target.value)} displayEmpty fullWidth>
                                 <MenuItem value={NO_GOAL}>{t.ruleNoGoalOption}</MenuItem>
                                 {goals.map((g) => (
-                                    <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+                                    <MenuItem key={g.id} value={g.id}>
+                                        {g.name}
+                                    </MenuItem>
                                 ))}
                             </Select>
                         )}
@@ -118,4 +116,4 @@ export default function CategorizationRulesDialog({ open, onClose, categories, g
             </DialogActions>
         </Dialog>
     );
-}
+};

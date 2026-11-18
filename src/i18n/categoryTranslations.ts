@@ -1,11 +1,6 @@
 import type { Locale } from "../store/localeStore";
 import type { Category } from "../types/Category";
 
-/**
- * Translated labels for the default seed categories only. Categories a user
- * renames or adds themselves are free text with no known translation, so
- * they're shown as stored regardless of locale.
- */
 const CATEGORY_LABEL_TRANSLATIONS: Record<string, Record<Locale, string>> = {
     ropa: { es: "👕 Ropa", en: "👕 Clothing" },
     libros: { es: "📚 Libros", en: "📚 Books" },
@@ -24,13 +19,12 @@ const CATEGORY_LABEL_TRANSLATIONS: Record<string, Record<Locale, string>> = {
     vinted_wallapop: { es: "💵 Vinted/Wallapop", en: "💵 Vinted/Wallapop" },
 };
 
-/** Alphabetical by display name, ignoring the leading emoji and accents, in the given locale. */
-export function sortCategoriesAlphabetically(categories: Category[], locale: Locale): Category[] {
+export const sortCategoriesAlphabetically = (categories: Category[], locale: Locale): Category[] => {
     const sortKey = (c: Category) => getCategoryLabel(c, locale).replace(/^[^\p{L}\p{N}]+/u, "");
     return [...categories].sort((a, b) => sortKey(a).localeCompare(sortKey(b), locale, { sensitivity: "base" }));
-}
+};
 
-export function getCategoryLabel(category: Category, locale: Locale): string {
+export const getCategoryLabel = (category: Category, locale: Locale): string => {
     if (category.customLabel) return category.label;
     return CATEGORY_LABEL_TRANSLATIONS[category.value]?.[locale] ?? category.label;
-}
+};

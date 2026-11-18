@@ -5,5 +5,4 @@ export interface Goal {
     currentAmount: number;
 }
 
-/** Value stays "colchon" to match the id already persisted in Firestore. */
 export const FEATURED_GOAL_ID = "colchon";

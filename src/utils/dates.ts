@@ -1,44 +1,46 @@
 import type { Transaction } from "../types/Transaction";
 import type { CategoryBudget } from "../types/Budget";
 
-export function getCurrentMonth(): string {
-    return new Date().toISOString().slice(0, 7);
-}
+export const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-/** Adds `delta` calendar months to a "YYYY-MM" string, returning the result in the same format. */
-export function shiftMonth(month: string, delta: number): string {
+const pad = (value: number) => String(value).padStart(2, "0");
+
+export const toDateKey = (date: Date): string => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
+export const parseDateKey = (key: string): Date => {
+    const [year, month, day] = key.split("-").map(Number);
+    return new Date(year, month - 1, day);
+};
+
+export const toMonthKey = (date: Date): string => `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+
+export const getCurrentMonth = (): string => toMonthKey(new Date());
+
+export const shiftMonth = (month: string, delta: number): string => {
     const [year, monthIndex] = month.split("-").map(Number);
-    const date = new Date(year, monthIndex - 1 + delta, 1);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
+    return toMonthKey(new Date(year, monthIndex - 1 + delta, 1));
+};
 
-export function getAvailableMonths(transactions: Transaction[]): string[] {
-    return Array.from(new Set(transactions.map((t) => t.date.slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m))))
+export const getAvailableMonths = (transactions: Transaction[]): string[] =>
+    Array.from(new Set(transactions.map((t) => t.date.slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m))))
         .sort()
         .reverse();
-}
 
-export function getAvailableYears(transactions: Transaction[]): string[] {
-    return Array.from(new Set(transactions.map((t) => t.date.slice(0, 4)).filter((y) => /^\d{4}$/.test(y))))
+export const getAvailableYears = (transactions: Transaction[]): string[] =>
+    Array.from(new Set(transactions.map((t) => t.date.slice(0, 4)).filter((y) => /^\d{4}$/.test(y))))
         .sort()
         .reverse();
-}
 
-export function filterByMonth(transactions: Transaction[], month: string): Transaction[] {
-    return transactions.filter((t) => t.date.startsWith(month));
-}
+export const filterByMonth = (transactions: Transaction[], month: string): Transaction[] =>
+    transactions.filter((t) => t.date.startsWith(month));
 
-/**
- * Bimonthly periods are calendar-aligned pairs (Jan-Feb, Mar-Apr, ...),
- * identified as "YYYY-Pn" where n is 1-6.
- */
-export function getCurrentBimonthlyPeriod(): string {
+export const getCurrentBimonthlyPeriod = (): string => {
     const [year, month] = getCurrentMonth().split("-").map(Number);
     const pairIndex = Math.ceil(month / 2);
     return `${year}-P${pairIndex}`;
-}
+};
 
-export function filterByBimonthlyPeriod(transactions: Transaction[], period: string): Transaction[] {
+export const filterByBimonthlyPeriod = (transactions: Transaction[], period: string): Transaction[] => {
     const [yearStr, pairStr] = period.split("-P");
     const year = Number(yearStr);
     const pairIndex = Number(pairStr);
@@ -49,16 +51,15 @@ export function filterByBimonthlyPeriod(transactions: Transaction[], period: str
         const [txYear, txMonth] = t.date.split("-").map(Number);
         return txYear === year && (txMonth === startMonth || txMonth === endMonth);
     });
-}
+};
 
-/** Calendar-aligned blocks of `intervalMonths`, counted from January, identified as "YYYY-N{interval}-{blockIndex}". */
-export function getCurrentNMonthPeriod(intervalMonths: number): string {
+export const getCurrentNMonthPeriod = (intervalMonths: number): string => {
     const [year, month] = getCurrentMonth().split("-").map(Number);
     const blockIndex = Math.ceil(month / intervalMonths);
     return `${year}-N${intervalMonths}-${blockIndex}`;
-}
+};
 
-export function filterByNMonthPeriod(transactions: Transaction[], period: string, intervalMonths: number): Transaction[] {
+export const filterByNMonthPeriod = (transactions: Transaction[], period: string, intervalMonths: number): Transaction[] => {
     const match = period.match(/^(\d+)-N\d+-(\d+)$/);
     if (!match) return [];
     const year = Number(match[1]);
@@ -70,35 +71,28 @@ export function filterByNMonthPeriod(transactions: Transaction[], period: string
         const [txYear, txMonth] = t.date.split("-").map(Number);
         return txYear === year && txMonth >= startMonth && txMonth <= endMonth;
     });
-}
+};
 
-export function getCurrentYear(): string {
-    return String(new Date().getFullYear());
-}
+export const getCurrentYear = (): string => String(new Date().getFullYear());
 
-export function filterByYear(transactions: Transaction[], year: string): Transaction[] {
-    return transactions.filter((t) => t.date.startsWith(year));
-}
+export const filterByYear = (transactions: Transaction[], year: string): Transaction[] =>
+    transactions.filter((t) => t.date.startsWith(year));
 
-function getISOWeekString(date: Date): string {
+const getISOWeekString = (date: Date): string => {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
     d.setUTCDate(d.getUTCDate() + 4 - dayNum);
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / MS_PER_DAY + 1) / 7);
     return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
-}
+};
 
-export function getCurrentWeek(): string {
-    return getISOWeekString(new Date());
-}
+export const getCurrentWeek = (): string => getISOWeekString(new Date());
 
-export function filterByWeek(transactions: Transaction[], week: string): Transaction[] {
-    return transactions.filter((t) => getISOWeekString(new Date(t.date)) === week);
-}
+export const filterByWeek = (transactions: Transaction[], week: string): Transaction[] =>
+    transactions.filter((t) => getISOWeekString(parseDateKey(t.date)) === week);
 
-/** Filters transactions down to a budget's own current period, whatever that period is. */
-export function filterByBudgetPeriod(transactions: Transaction[], budget: CategoryBudget): Transaction[] {
+export const filterByBudgetPeriod = (transactions: Transaction[], budget: CategoryBudget): Transaction[] => {
     switch (budget.period) {
         case "weekly":
             return filterByWeek(transactions, getCurrentWeek());
@@ -114,10 +108,9 @@ export function filterByBudgetPeriod(transactions: Transaction[], budget: Catego
         default:
             return filterByMonth(transactions, getCurrentMonth());
     }
-}
+};
 
-/** Converts any budget period's amount into its monthly-equivalent, so periods can blend into a single monthly view. */
-export function monthlyEquivalentAmount(budget: CategoryBudget): number {
+export const monthlyEquivalentAmount = (budget: CategoryBudget): number => {
     switch (budget.period) {
         case "weekly":
             return budget.amount * (52 / 12);
@@ -131,7 +124,7 @@ export function monthlyEquivalentAmount(budget: CategoryBudget): number {
         default:
             return budget.amount;
     }
-}
+};
 
 export interface DateFilter {
     mode: "monthly" | "annual" | "custom";
@@ -141,12 +134,12 @@ export interface DateFilter {
     to: string;
 }
 
-export function defaultDateFilter(): DateFilter {
+export const defaultDateFilter = (): DateFilter => {
     const now = getCurrentMonth();
     return { mode: "monthly", month: now, year: now.slice(0, 4), from: now + "-01", to: now + "-28" };
-}
+};
 
-export function filterByDateFilter(transactions: Transaction[], filter: DateFilter): Transaction[] {
+export const filterByDateFilter = (transactions: Transaction[], filter: DateFilter): Transaction[] => {
     switch (filter.mode) {
         case "annual":
             return filterByYear(transactions, filter.year);
@@ -156,16 +149,22 @@ export function filterByDateFilter(transactions: Transaction[], filter: DateFilt
         default:
             return filterByMonth(transactions, filter.month);
     }
-}
+};
 
-export function sortByDateDesc(transactions: Transaction[]): Transaction[] {
-    return [...transactions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-}
+export const sortByDateDesc = (transactions: Transaction[]): Transaction[] =>
+    [...transactions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
-/** Localized "Month Year" label for a "YYYY-MM" string, e.g. "julio de 2026". Falls back to the raw string if malformed. */
-export function formatMonthLabel(month: string, locale: string): string {
+export const formatMonthLabel = (month: string, locale: string): string => {
     const [year, monthIndex] = month.split("-").map(Number);
     if (!year || !monthIndex) return month;
     const date = new Date(year, monthIndex - 1, 1);
     return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" }).format(date);
-}
+};
+
+export const formatShortDate = (iso: string, locale: string): string => {
+    const [year, month, day] = iso.split("-").map(Number);
+    if (!year || !month || !day) return iso;
+    return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { day: "numeric", month: "short", year: "numeric" }).format(
+        new Date(year, month - 1, day),
+    );
+};

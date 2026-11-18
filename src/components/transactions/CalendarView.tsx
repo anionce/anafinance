@@ -1,15 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-    Box,
-    Typography,
-    IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    Stack,
-    useMediaQuery,
-    useTheme,
-} from "@mui/material";
+import { Box, Typography, IconButton, Dialog, DialogTitle, DialogContent, Stack, useMediaQuery, useTheme } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import type { Transaction } from "../../types/Transaction";
@@ -17,8 +7,9 @@ import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { formatCurrency } from "../../utils/currency";
-import { getCurrentMonth, formatMonthLabel, shiftMonth } from "../../utils/dates";
+import { formatMonthLabel, getCurrentMonth, shiftMonth, toDateKey } from "../../utils/dates";
 import { accent } from "../../theme/colors";
+import { groupByDay, monthGridCells } from "../../utils/calendar";
 
 interface Props {
     transactions: Transaction[];
@@ -27,76 +18,57 @@ interface Props {
 
 const MAX_VISIBLE_PER_DAY = 3;
 
-function todayISO(): string {
-    return new Date().toISOString().slice(0, 10);
-}
-
-function weekdayLabels(locale: string): string[] {
+const weekdayLabels = (locale: string): string[] => {
     const formatter = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { weekday: "short" });
-    // 2024-01-01 is a Monday — a stable reference week to read labels off.
+
     return Array.from({ length: 7 }, (_, i) => {
         const d = new Date(2024, 0, 1 + i);
         const label = formatter.format(d);
         return label.charAt(0).toUpperCase() + label.slice(1);
     });
-}
+};
 
-export default function CalendarView({ transactions, categories }: Props) {
+export const CalendarView = ({ transactions, categories }: Props) => {
     const { t, locale } = useTranslation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [viewMonth, setViewMonth] = useState(getCurrentMonth());
     const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-    const [year, month] = viewMonth.split("-").map(Number);
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const firstWeekday = (new Date(year, month - 1, 1).getDay() + 6) % 7;
-
-    const byDay = useMemo(() => {
-        const map = new Map<string, Transaction[]>();
-        for (const tx of transactions) {
-            if (!tx.date.startsWith(viewMonth)) continue;
-            const list = map.get(tx.date) ?? [];
-            list.push(tx);
-            map.set(tx.date, list);
-        }
-        return map;
-    }, [transactions, viewMonth]);
-
-    const cells: (string | null)[] = [
-        ...Array(firstWeekday).fill(null),
-        ...Array.from({ length: daysInMonth }, (_, i) => `${viewMonth}-${String(i + 1).padStart(2, "0")}`),
-    ];
-    while (cells.length % 7 !== 0) cells.push(null);
-
-    const today = todayISO();
-    const selectedDayTransactions = selectedDay ? byDay.get(selectedDay) ?? [] : [];
+    const byDay = useMemo(() => groupByDay(transactions, viewMonth), [transactions, viewMonth]);
+    const cells = monthGridCells(viewMonth);
+    const today = toDateKey(new Date());
+    const selectedDayTransactions = selectedDay ? (byDay.get(selectedDay) ?? []) : [];
 
     return (
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 2 }}>
-                <IconButton size="small" onClick={() => setViewMonth(shiftMonth(viewMonth, -1))}>
+                <IconButton size="small" aria-label={t.prevMonthTooltip} onClick={() => setViewMonth(shiftMonth(viewMonth, -1))}>
                     <ChevronLeftIcon />
                 </IconButton>
                 <Typography variant="h6" sx={{ minWidth: 200, textAlign: "center", textTransform: "capitalize" }}>
                     {formatMonthLabel(viewMonth, locale)}
                 </Typography>
-                <IconButton size="small" onClick={() => setViewMonth(shiftMonth(viewMonth, 1))}>
+                <IconButton size="small" aria-label={t.nextMonthTooltip} onClick={() => setViewMonth(shiftMonth(viewMonth, 1))}>
                     <ChevronRightIcon />
                 </IconButton>
             </Box>
 
-            <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: "16px", overflow: "hidden", bgcolor: "background.paper" }}>
+            <Box
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: "16px", overflow: "hidden", bgcolor: "background.paper" }}
+            >
                 <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", bgcolor: "background.default" }}>
                     {weekdayLabels(locale).map((label) => (
                         <Box key={label} sx={{ p: 1, textAlign: "center" }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>{label}</Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>
+                                {label}
+                            </Typography>
                         </Box>
                     ))}
                 </Box>
                 <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
                     {cells.map((dateStr, i) => {
-                        const dayTransactions = dateStr ? byDay.get(dateStr) ?? [] : [];
+                        const dayTransactions = dateStr ? (byDay.get(dateStr) ?? []) : [];
                         const isToday = dateStr === today;
                         const visible = dayTransactions.slice(0, MAX_VISIBLE_PER_DAY);
                         const extra = dayTransactions.length - visible.length;
@@ -125,8 +97,11 @@ export default function CalendarView({ transactions, categories }: Props) {
                                                 color: isToday ? "primary.contrastText" : "text.secondary",
                                                 bgcolor: isToday ? "primary.main" : "transparent",
                                                 borderRadius: "999px",
-                                                width: 20, height: 20,
-                                                display: "flex", alignItems: "center", justifyContent: "center",
+                                                width: 20,
+                                                height: 20,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
                                             }}
                                         >
                                             {Number(dateStr.slice(-2))}
@@ -135,10 +110,16 @@ export default function CalendarView({ transactions, categories }: Props) {
                                             dayTransactions.length > 0 && (
                                                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.375, mt: 0.5 }}>
                                                     {dayTransactions.slice(0, 6).map((tx) => (
-                                                        <Box key={tx.id} sx={{
-                                                            width: 5, height: 5, borderRadius: "50%", flexShrink: 0,
-                                                            bgcolor: tx.amount < 0 ? accent.budget : accent.income,
-                                                        }} />
+                                                        <Box
+                                                            key={tx.id}
+                                                            sx={{
+                                                                width: 5,
+                                                                height: 5,
+                                                                borderRadius: "50%",
+                                                                flexShrink: 0,
+                                                                bgcolor: tx.amount < 0 ? accent.budget : accent.income,
+                                                            }}
+                                                        />
                                                     ))}
                                                 </Box>
                                             )
@@ -146,11 +127,20 @@ export default function CalendarView({ transactions, categories }: Props) {
                                             <Stack spacing={0.25} sx={{ mt: 0.5 }}>
                                                 {visible.map((tx) => (
                                                     <Box key={tx.id} sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
-                                                        <Box sx={{
-                                                            width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                                                            bgcolor: tx.amount < 0 ? accent.budget : accent.income,
-                                                        }} />
-                                                        <Typography variant="caption" noWrap sx={{ fontSize: "0.68rem", color: "text.primary" }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 6,
+                                                                height: 6,
+                                                                borderRadius: "50%",
+                                                                flexShrink: 0,
+                                                                bgcolor: tx.amount < 0 ? accent.budget : accent.income,
+                                                            }}
+                                                        />
+                                                        <Typography
+                                                            variant="caption"
+                                                            noWrap
+                                                            sx={{ fontSize: "0.68rem", color: "text.primary" }}
+                                                        >
                                                             {tx.description}
                                                         </Typography>
                                                     </Box>
@@ -182,15 +172,21 @@ export default function CalendarView({ transactions, categories }: Props) {
                             return (
                                 <Box key={tx.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
                                     <Box sx={{ minWidth: 0 }}>
-                                        <Typography variant="body2" noWrap>{tx.description}</Typography>
+                                        <Typography variant="body2" noWrap>
+                                            {tx.description}
+                                        </Typography>
                                         {category && (
                                             <Typography variant="caption" color="text.secondary">
                                                 {getCategoryLabel(category, locale)}
                                             </Typography>
                                         )}
                                     </Box>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, color: tx.amount < 0 ? accent.budget : accent.income, whiteSpace: "nowrap" }}>
-                                        {tx.amount < 0 ? "−" : "+"}{formatCurrency(Math.abs(tx.amount), 2)}
+                                    <Typography
+                                        variant="body2"
+                                        sx={{ fontWeight: 700, color: tx.amount < 0 ? accent.budget : accent.income, whiteSpace: "nowrap" }}
+                                    >
+                                        {tx.amount < 0 ? "−" : "+"}
+                                        {formatCurrency(Math.abs(tx.amount), 2)}
                                     </Typography>
                                 </Box>
                             );
@@ -200,4 +196,4 @@ export default function CalendarView({ transactions, categories }: Props) {
             </Dialog>
         </Box>
     );
-}
+};

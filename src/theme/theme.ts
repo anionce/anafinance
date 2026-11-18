@@ -3,7 +3,7 @@ import { createTheme } from "@mui/material/styles";
 const fraunces = "'Fraunces', serif";
 const inter = "'Inter', sans-serif";
 
-export default createTheme({
+export const theme = createTheme({
     palette: {
         mode: "light",
         primary: {

@@ -23,6 +23,7 @@ import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { deriveNewCategory, resolveCategoryLabelEdit } from "../../utils/categoryDrafts";
+import { useOnOpen } from "../../hooks/useOnOpen";
 
 interface Props {
     open: boolean;
@@ -36,34 +37,35 @@ interface Props {
     onToggleExcludeFromBalance: (value: string, excludeFromBalance: boolean) => void;
 }
 
-export default function CategoryManagerDialog({ open, onClose, categories, onUpdateLabel, onRemove, onAdd, onToggleNoComputable, onToggleIncomeOnly, onToggleExcludeFromBalance }: Props) {
+export const CategoryManagerDialog = ({
+    open,
+    onClose,
+    categories,
+    onUpdateLabel,
+    onRemove,
+    onAdd,
+    onToggleNoComputable,
+    onToggleIncomeOnly,
+    onToggleExcludeFromBalance,
+}: Props) => {
     const { t, locale } = useTranslation();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [newLabel, setNewLabel] = useState("");
     const [menuFor, setMenuFor] = useState<{ index: number; el: HTMLElement } | null>(null);
 
-    // Resets the drafts each time the dialog opens (not on every render while
-    // open) — adjusting state during render instead of an effect, per
-    // https://react.dev/learn/you-might-not-need-an-effect#adjusting-state-based-on-a-prop
-    const [wasOpen, setWasOpen] = useState(open);
-    if (open !== wasOpen) {
-        setWasOpen(open);
-        if (open) {
-            setDrafts(Object.fromEntries(categories.map((c) => [c.value, getCategoryLabel(c, locale)])));
-        }
-    }
+    useOnOpen(open, () => setDrafts(Object.fromEntries(categories.map((c) => [c.value, getCategoryLabel(c, locale)]))));
 
-    function handleLabelBlur(value: string) {
+    const handleLabelBlur = (value: string) => {
         const label = resolveCategoryLabelEdit(value, drafts[value], categories, locale);
         if (label) onUpdateLabel(value, label);
-    }
+    };
 
-    function handleAdd() {
+    const handleAdd = () => {
         const next = deriveNewCategory(newLabel, categories);
         if (!next) return;
         onAdd(next.value, next.label);
         setNewLabel("");
-    }
+    };
 
     const menuCategory = menuFor ? categories[menuFor.index] : undefined;
 
@@ -113,36 +115,50 @@ export default function CategoryManagerDialog({ open, onClose, categories, onUpd
             </DialogActions>
 
             <Menu anchorEl={menuFor?.el} open={!!menuFor} onClose={() => setMenuFor(null)}>
-                {menuFor && menuCategory && [
-                    <MenuItem key="noComputable" onClick={() => onToggleNoComputable(menuCategory.value, !menuCategory.noComputable)}>
-                        <Checkbox size="small" checked={!!menuCategory.noComputable} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
-                        <Typography variant="body2" sx={{ flex: 1 }}>{t.noComputableLabel}</Typography>
-                        <Tooltip title={t.noComputableInfo} arrow placement="top">
-                            <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
-                                <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
-                            </IconButton>
-                        </Tooltip>
-                    </MenuItem>,
-                    <MenuItem key="incomeOnly" onClick={() => onToggleIncomeOnly(menuCategory.value, !menuCategory.incomeOnly)}>
-                        <Checkbox size="small" checked={!!menuCategory.incomeOnly} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
-                        <Typography variant="body2" sx={{ flex: 1 }}>{t.incomeOnlyLabel}</Typography>
-                        <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
-                            <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
-                                <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
-                            </IconButton>
-                        </Tooltip>
-                    </MenuItem>,
-                    <MenuItem key="excludeFromBalance" onClick={() => onToggleExcludeFromBalance(menuCategory.value, !menuCategory.excludeFromBalance)}>
-                        <Checkbox size="small" checked={!!menuCategory.excludeFromBalance} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
-                        <Typography variant="body2" sx={{ flex: 1 }}>{t.excludeFromBalanceLabel}</Typography>
-                        <Tooltip title={t.excludeFromBalanceInfo} arrow placement="top">
-                            <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
-                                <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
-                            </IconButton>
-                        </Tooltip>
-                    </MenuItem>,
-                ]}
+                {menuFor &&
+                    menuCategory && [
+                        <MenuItem key="noComputable" onClick={() => onToggleNoComputable(menuCategory.value, !menuCategory.noComputable)}>
+                            <Checkbox size="small" checked={!!menuCategory.noComputable} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
+                            <Typography variant="body2" sx={{ flex: 1 }}>
+                                {t.noComputableLabel}
+                            </Typography>
+                            <Tooltip title={t.noComputableInfo} arrow placement="top">
+                                <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                                    <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
+                                </IconButton>
+                            </Tooltip>
+                        </MenuItem>,
+                        <MenuItem key="incomeOnly" onClick={() => onToggleIncomeOnly(menuCategory.value, !menuCategory.incomeOnly)}>
+                            <Checkbox size="small" checked={!!menuCategory.incomeOnly} sx={{ p: 0, mr: 1.5, pointerEvents: "none" }} />
+                            <Typography variant="body2" sx={{ flex: 1 }}>
+                                {t.incomeOnlyLabel}
+                            </Typography>
+                            <Tooltip title={t.incomeOnlyInfo} arrow placement="top">
+                                <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                                    <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
+                                </IconButton>
+                            </Tooltip>
+                        </MenuItem>,
+                        <MenuItem
+                            key="excludeFromBalance"
+                            onClick={() => onToggleExcludeFromBalance(menuCategory.value, !menuCategory.excludeFromBalance)}
+                        >
+                            <Checkbox
+                                size="small"
+                                checked={!!menuCategory.excludeFromBalance}
+                                sx={{ p: 0, mr: 1.5, pointerEvents: "none" }}
+                            />
+                            <Typography variant="body2" sx={{ flex: 1 }}>
+                                {t.excludeFromBalanceLabel}
+                            </Typography>
+                            <Tooltip title={t.excludeFromBalanceInfo} arrow placement="top">
+                                <IconButton size="small" sx={{ p: 0.5, ml: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                                    <InfoOutlinedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
+                                </IconButton>
+                            </Tooltip>
+                        </MenuItem>,
+                    ]}
             </Menu>
         </Dialog>
     );
-}
+};

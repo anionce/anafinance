@@ -20,6 +20,8 @@ import type { Category } from "../../types/Category";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { formatCurrency } from "../../utils/currency";
+import { useOnOpen } from "../../hooks/useOnOpen";
+import { halfAndHalf, isFullyAssigned, isValidSplit, remainingToSplit, type SplitPortion } from "../../utils/split";
 
 interface Props {
     open: boolean;
@@ -29,62 +31,51 @@ interface Props {
     onConfirm: (portions: { category: string; amount: number }[]) => void;
 }
 
-interface Portion {
-    category: string;
-    amount: string;
-}
-
-export default function SplitTransactionDialog({ open, transaction, categories, onClose, onConfirm }: Props) {
+export const SplitTransactionDialog = ({ open, transaction, categories, onClose, onConfirm }: Props) => {
     const { t, locale } = useTranslation();
-    const [portions, setPortions] = useState<Portion[]>([]);
+    const [portions, setPortions] = useState<SplitPortion[]>([]);
 
-    // Resets the 50/50 split each time the dialog opens for a transaction —
-    // see the same comment in CategoryManagerDialog.tsx.
-    const [wasOpen, setWasOpen] = useState(open);
-    if (open !== wasOpen) {
-        setWasOpen(open);
-        if (open && transaction) {
-            const total = Math.abs(transaction.amount);
-            const half = Math.round((total / 2) * 100) / 100;
-            setPortions([
-                { category: transaction.category || (categories[0]?.value ?? ""), amount: String(half) },
-                { category: categories[0]?.value ?? "", amount: String(Math.round((total - half) * 100) / 100) },
-            ]);
-        }
-    }
+    useOnOpen(open, () => {
+        if (transaction) setPortions(halfAndHalf(transaction, categories[0]?.value ?? ""));
+    });
 
     if (!transaction) return null;
 
     const total = Math.abs(transaction.amount);
-    const assigned = portions.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-    const remaining = Math.round((total - assigned) * 100) / 100;
-    const allValid = portions.length >= 2 && portions.every((p) => p.category && Number(p.amount) > 0);
-    const canConfirm = allValid && Math.abs(remaining) < 0.01;
+    const remaining = remainingToSplit(total, portions);
+    const fullyAssigned = isFullyAssigned(remaining);
+    const canConfirm = isValidSplit(total, portions);
 
-    function updatePortion(index: number, patch: Partial<Portion>) {
+    const updatePortion = (index: number, patch: Partial<SplitPortion>) => {
         setPortions((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)));
-    }
+    };
 
-    function addPortion() {
+    const addPortion = () => {
         setPortions((prev) => [...prev, { category: categories[0]?.value ?? "", amount: "" }]);
-    }
+    };
 
-    function removePortion(index: number) {
+    const removePortion = (index: number) => {
         setPortions((prev) => prev.filter((_, i) => i !== index));
-    }
+    };
 
-    function handleConfirm() {
+    const handleConfirm = () => {
         if (!canConfirm) return;
         onConfirm(portions.map((p) => ({ category: p.category, amount: Number(p.amount) })));
-    }
+    };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogTitle>{t.splitDialogTitle}</DialogTitle>
             <DialogContent>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{transaction.description}</Typography>
-                <Typography variant="h6" sx={{ mb: 2 }}>{formatCurrency(total)}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{t.splitDialogHint}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    {transaction.description}
+                </Typography>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    {formatCurrency(total)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {t.splitDialogHint}
+                </Typography>
 
                 <Stack spacing={1.5}>
                     {portions.map((portion, i) => (
@@ -103,7 +94,9 @@ export default function SplitTransactionDialog({ open, transaction, categories, 
                                 fullWidth
                             >
                                 {categories.map((c) => (
-                                    <MenuItem key={c.value} value={c.value}>{getCategoryLabel(c, locale)}</MenuItem>
+                                    <MenuItem key={c.value} value={c.value}>
+                                        {getCategoryLabel(c, locale)}
+                                    </MenuItem>
                                 ))}
                             </Select>
                             <IconButton size="small" onClick={() => removePortion(i)} disabled={portions.length <= 2}>
@@ -116,15 +109,17 @@ export default function SplitTransactionDialog({ open, transaction, categories, 
                         {t.splitAddPortion}
                     </Button>
 
-                    <Typography variant="body2" color={Math.abs(remaining) < 0.01 ? "success.main" : "warning.main"}>
-                        {Math.abs(remaining) < 0.01 ? t.splitAllAssignedLabel : t.splitRemainingLabel(formatCurrency(remaining, 2))}
+                    <Typography variant="body2" color={fullyAssigned ? "success.main" : "warning.main"}>
+                        {fullyAssigned ? t.splitAllAssignedLabel : t.splitRemainingLabel(formatCurrency(remaining, 2))}
                     </Typography>
                 </Stack>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>{t.cancel}</Button>
-                <Button variant="contained" disabled={!canConfirm} onClick={handleConfirm}>{t.splitConfirm}</Button>
+                <Button variant="contained" disabled={!canConfirm} onClick={handleConfirm}>
+                    {t.splitConfirm}
+                </Button>
             </DialogActions>
         </Dialog>
     );
-}
+};

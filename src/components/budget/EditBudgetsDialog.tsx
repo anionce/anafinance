@@ -1,23 +1,14 @@
 import { useState } from "react";
-import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    TextField,
-    Select,
-    MenuItem,
-    Stack,
-    Box,
-    Typography,
-} from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from "@mui/material";
 import type { Category } from "../../types/Category";
-import type { BudgetPeriod, CategoryBudget } from "../../types/Budget";
+import type { CategoryBudget } from "../../types/Budget";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { calculateMaxSpending, calculateTotalBudget } from "../../services/budget";
 import { formatCurrency } from "../../utils/currency";
+import { useOnOpen } from "../../hooks/useOnOpen";
+import { BudgetDraftFields } from "./BudgetDraftFields";
+import { isBudgetable, parseAmount, parseBudgetDrafts, toBudgetDraft, toBudgetDrafts, type BudgetDraft } from "../../utils/budgetDrafts";
 
 interface Props {
     open: boolean;
@@ -31,58 +22,35 @@ interface Props {
     onSaveSavingsTarget: (savingsTarget: number) => void;
 }
 
-function parseAmount(raw: string, fallback: number): number {
-    const num = Number(raw);
-    return raw.trim() !== "" && !isNaN(num) && num >= 0 ? num : fallback;
-}
-
-export default function EditBudgetsDialog({ open, onClose, categories, budgets, onSave, title, estimatedIncome, savingsTarget, onSaveSavingsTarget }: Props) {
+export const EditBudgetsDialog = ({
+    open,
+    onClose,
+    categories,
+    budgets,
+    onSave,
+    title,
+    estimatedIncome,
+    savingsTarget,
+    onSaveSavingsTarget,
+}: Props) => {
     const { t, locale } = useTranslation();
-    const [amountDraft, setAmountDraft] = useState<Record<string, string>>({});
-    const [periodDraft, setPeriodDraft] = useState<Record<string, BudgetPeriod>>({});
-    const [intervalDraft, setIntervalDraft] = useState<Record<string, string>>({});
+    const [drafts, setDrafts] = useState<Record<string, BudgetDraft>>({});
     const [savingsDraft, setSavingsDraft] = useState("");
 
-    // Resets the drafts each time the dialog opens, not on every render while
-    // open — see the same comment in CategoryManagerDialog.tsx.
-    const [wasOpen, setWasOpen] = useState(open);
-    if (open !== wasOpen) {
-        setWasOpen(open);
-        if (open) {
-            setAmountDraft(Object.fromEntries(categories.map((c) => [c.value, String(budgets[c.value]?.amount ?? "")])));
-            setPeriodDraft(Object.fromEntries(categories.map((c) => [c.value, budgets[c.value]?.period ?? "monthly"])));
-            setIntervalDraft(Object.fromEntries(categories.map((c) => [c.value, String(budgets[c.value]?.intervalMonths ?? 3)])));
-            setSavingsDraft(String(savingsTarget));
-        }
-    }
+    useOnOpen(open, () => {
+        setDrafts(toBudgetDrafts(categories, budgets));
+        setSavingsDraft(String(savingsTarget));
+    });
 
-    function buildBudgets(): Record<string, CategoryBudget> {
-        const parsed: Record<string, CategoryBudget> = {};
-        for (const [key, value] of Object.entries(amountDraft)) {
-            const num = Number(value);
-            if (value.trim() !== "" && !isNaN(num) && num > 0) {
-                const period = periodDraft[key] ?? "monthly";
-                parsed[key] = {
-                    amount: num,
-                    period,
-                    ...(period === "everyNMonths" ? { intervalMonths: Math.max(Number(intervalDraft[key]) || 1, 1) } : {}),
-                };
-            }
-        }
-        return parsed;
-    }
-
-    function handleSave() {
-        onSave(buildBudgets());
+    const handleSave = () => {
+        onSave(parseBudgetDrafts(drafts));
         onSaveSavingsTarget(parseAmount(savingsDraft, savingsTarget));
         onClose();
-    }
+    };
 
     const maxSpending = calculateMaxSpending(estimatedIncome, parseAmount(savingsDraft, savingsTarget));
-    const assigned = calculateTotalBudget(buildBudgets());
+    const assigned = calculateTotalBudget(parseBudgetDrafts(drafts));
     const overMax = assigned > maxSpending;
-
-    const editableCategories = categories.filter((c) => !c.noComputable && !c.incomeOnly);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -112,48 +80,22 @@ export default function EditBudgetsDialog({ open, onClose, categories, budgets, 
                         : t.savingsAssignedWithin(formatCurrency(assigned), formatCurrency(maxSpending - assigned))}
                 </Typography>
                 <Stack spacing={2}>
-                    {editableCategories.map((cat) => (
-                        <Box key={cat.value} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                            <Typography variant="body2">{getCategoryLabel(cat, locale)}</Typography>
-                            <Box sx={{ display: "flex", gap: 1 }}>
-                                <TextField
-                                    type="number"
-                                    size="small"
-                                    value={amountDraft[cat.value] ?? ""}
-                                    onChange={(e) => setAmountDraft((d) => ({ ...d, [cat.value]: e.target.value }))}
-                                    sx={{ flex: 1 }}
-                                />
-                                <Select
-                                    size="small"
-                                    value={periodDraft[cat.value] ?? "monthly"}
-                                    onChange={(e) => setPeriodDraft((d) => ({ ...d, [cat.value]: e.target.value as BudgetPeriod }))}
-                                    sx={{ minWidth: 140 }}
-                                >
-                                    <MenuItem value="weekly">{t.weekly}</MenuItem>
-                                    <MenuItem value="monthly">{t.monthly}</MenuItem>
-                                    <MenuItem value="bimonthly">{t.bimonthly}</MenuItem>
-                                    <MenuItem value="everyNMonths">{t.everyNMonths}</MenuItem>
-                                    <MenuItem value="yearly">{t.yearly}</MenuItem>
-                                </Select>
-                            </Box>
-                            {periodDraft[cat.value] === "everyNMonths" && (
-                                <TextField
-                                    type="number"
-                                    size="small"
-                                    label={t.intervalMonthsLabel}
-                                    value={intervalDraft[cat.value] ?? ""}
-                                    onChange={(e) => setIntervalDraft((d) => ({ ...d, [cat.value]: e.target.value }))}
-                                    sx={{ maxWidth: 180 }}
-                                />
-                            )}
-                        </Box>
+                    {categories.filter(isBudgetable).map((cat) => (
+                        <BudgetDraftFields
+                            key={cat.value}
+                            label={getCategoryLabel(cat, locale)}
+                            draft={drafts[cat.value] ?? toBudgetDraft()}
+                            onChange={(draft) => setDrafts((d) => ({ ...d, [cat.value]: draft }))}
+                        />
                     ))}
                 </Stack>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>{t.cancel}</Button>
-                <Button variant="contained" onClick={handleSave}>{t.save}</Button>
+                <Button variant="contained" onClick={handleSave}>
+                    {t.save}
+                </Button>
             </DialogActions>
         </Dialog>
     );
-}
+};

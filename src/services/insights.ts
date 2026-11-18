@@ -2,38 +2,26 @@ import type { Transaction } from "../types/Transaction";
 import type { Category } from "../types/Category";
 import type { Locale } from "../store/localeStore";
 import { calculateTotalSpent } from "./budget";
-import { getCurrentMonth, filterByMonth, shiftMonth } from "../utils/dates";
+import { filterByMonth, getCurrentMonth, MS_PER_DAY, parseDateKey, shiftMonth, toDateKey } from "../utils/dates";
 import { translations } from "../i18n/translations";
 import { getCategoryLabel } from "../i18n/categoryTranslations";
 
 const MIN_DAYS_TO_MENTION = 7;
 const SIGNIFICANT_CHANGE_PCT = 10;
 
-function daysBetween(a: Date, b: Date): number {
-    return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
-}
+const daysBetween = (a: Date, b: Date): number => Math.round((a.getTime() - b.getTime()) / MS_PER_DAY);
 
-function splitEmoji(label: string): { emoji: string; name: string } {
+const splitEmoji = (label: string): { emoji: string; name: string } => {
     const [emoji, ...rest] = label.split(" ");
     return { emoji, name: rest.join(" ") };
-}
+};
 
-/**
- * Generates short messages from real comparisons: total spend vs. last
- * month (only if that month has data), and days without spending in each
- * category, always bounded to the real available history (never assumes
- * more months than are actually on record).
- */
-export function generateInsights(
-    transactions: Transaction[],
-    categories: Category[],
-    locale: Locale
-): string[] {
+export const generateInsights = (transactions: Transaction[], categories: Category[], locale: Locale): string[] => {
     if (transactions.length === 0) return [];
 
     const t = translations[locale];
     const insights: string[] = [];
-    const today = new Date();
+    const today = parseDateKey(toDateKey(new Date()));
     const currentMonth = getCurrentMonth();
     const previousMonth = shiftMonth(currentMonth, -1);
     const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
@@ -51,23 +39,17 @@ export function generateInsights(
         }
     }
 
-    const earliestDate = transactions.reduce(
-        (earliest, tx) => (tx.date < earliest ? tx.date : earliest),
-        transactions[0].date
-    );
-    const historyStart = new Date(earliestDate);
+    const earliestDate = transactions.reduce((earliest, tx) => (tx.date < earliest ? tx.date : earliest), transactions[0].date);
+    const historyStart = parseDateKey(earliestDate);
 
     for (const cat of categories) {
-        // Categories that never represent an expense
         if (cat.noComputable) continue;
 
         const lastPurchaseDate = transactions
             .filter((tx) => tx.category === cat.value && tx.amount < 0)
             .reduce<string | null>((latest, tx) => (!latest || tx.date > latest ? tx.date : latest), null);
 
-        // If nothing was ever spent in this category, count from the start of
-        // the available history, not from an arbitrary date.
-        const since = lastPurchaseDate ? new Date(lastPurchaseDate) : historyStart;
+        const since = lastPurchaseDate ? parseDateKey(lastPurchaseDate) : historyStart;
         const days = daysBetween(today, since);
 
         if (days >= MIN_DAYS_TO_MENTION) {
@@ -77,4 +59,4 @@ export function generateInsights(
     }
 
     return insights;
-}
+};

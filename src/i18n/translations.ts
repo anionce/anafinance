@@ -9,12 +9,10 @@ export interface TranslationSet {
     navNoComputable: string;
     loading: string;
     genericErrorMessage: string;
-
     importExcelButton: string;
     importSuccessMessage: (count: number) => string;
     importNoNewMessage: string;
     importErrorMessage: string;
-
     statusOverTitle: string;
     statusTightTitle: string;
     statusOkTitle: string;
@@ -25,7 +23,6 @@ export interface TranslationSet {
     incomeCardTitle: string;
     balanceCardTitle: string;
     balanceCardSubtitle: string;
-
     budgetByCategoryTitle: string;
     manageCategoriesTooltip: string;
     editBudgetTooltip: string;
@@ -42,7 +39,6 @@ export interface TranslationSet {
     budgetExceedsMaxSpend: (max: string) => string;
     cancel: string;
     save: string;
-
     prevMonthTooltip: string;
     nextMonthTooltip: string;
     budgetHistoryTooltip: string;
@@ -64,7 +60,6 @@ export interface TranslationSet {
     accountMenuPreferencesLabel: string;
     combinedTransactionsViewLabel: string;
     showNoComputableTabLabel: string;
-
     savingsGoalsTitle: string;
     goalLabel: string;
     targetLabel: string;
@@ -77,9 +72,10 @@ export interface TranslationSet {
     colAmount: string;
     colCategory: string;
     colNotes: string;
+    editCategoryLabel: string;
+    editNotesLabel: string;
     noCategoryPlaceholder: string;
     searchPlaceholder: string;
-
     reviewDialogTitle: (remaining: number) => string;
     finish: string;
     next: string;
@@ -91,7 +87,6 @@ export interface TranslationSet {
 
     noTransactionsToShow: string;
     otherCategoryLabel: string;
-
     totalSpentTitle: string;
     totalIncomeTitle: string;
     allMonths: string;
@@ -120,14 +115,12 @@ export interface TranslationSet {
     everyNMonthsChip: (n: number) => string;
     yearly: string;
     intervalMonthsLabel: string;
-
     noComputableLabel: string;
     noComputableInfo: string;
     incomeOnlyLabel: string;
     incomeOnlyInfo: string;
     excludeFromBalanceLabel: string;
     excludeFromBalanceInfo: string;
-
     manageRulesTooltip: string;
     rulesDialogTitle: string;
     rulesHint: string;
@@ -136,7 +129,6 @@ export interface TranslationSet {
     ruleGoesTo: string;
     ruleNoGoalOption: string;
     ruleAlsoCredits: string;
-
     splitTooltip: string;
     splitDialogTitle: string;
     splitDialogHint: string;
@@ -144,20 +136,17 @@ export interface TranslationSet {
     splitRemainingLabel: (amount: string) => string;
     splitAllAssignedLabel: string;
     splitConfirm: string;
-
     addTransactionButton: string;
     addTransactionDialogTitle: string;
     transactionTypeExpense: string;
     transactionTypeIncome: string;
     deleteTransactionTooltip: string;
-
     appName: string;
     signInTitle: string;
     signInSubtitle: string;
     signInWithGoogle: string;
     signInError: string;
     signOut: string;
-
     onboardingWelcomeTitle: string;
     onboardingWelcomeSubtitle: string;
     onboardingStepCategories: string;
@@ -183,22 +172,18 @@ export interface TranslationSet {
     mappingNotACurrency: string;
     mappingConfirm: string;
     mappingPreviewTitle: string;
-
     signOutConfirmTitle: string;
     signOutConfirmMessage: string;
     signOutConfirmButton: string;
     accountMenuLanguageLabel: string;
-
     deleteTransactionConfirmTitle: string;
     deleteTransactionConfirmMessage: string;
     deleteSelectedConfirmMessage: (count: number) => string;
     deleteConfirmButton: string;
-
     selectedCountLabel: (count: number) => string;
     bulkDeleteButton: string;
     bulkCategoryButton: string;
     bulkAssignCategoryTitle: string;
-
     importingMessage: string;
     importHelpInfo: string;
 }
@@ -213,12 +198,11 @@ export const translations: Record<Locale, TranslationSet> = {
         navNoComputable: "No computables",
         loading: "Cargando...",
         genericErrorMessage: "Algo salió mal. Inténtalo de nuevo.",
-
         importExcelButton: "Importar Excel o PDF",
-        importSuccessMessage: (count) => `${count} movimiento${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"} importado${count === 1 ? "" : "s"}`,
+        importSuccessMessage: (count) =>
+            `${count} movimiento${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"} importado${count === 1 ? "" : "s"}`,
         importNoNewMessage: "Ese archivo no tenía movimientos nuevos por importar.",
         importErrorMessage: "No se pudo importar el archivo. Inténtalo de nuevo.",
-
         statusOverTitle: "Te has pasado del presupuesto",
         statusTightTitle: "Vas ajustada este mes",
         statusOkTitle: "Vas bien este mes",
@@ -229,13 +213,11 @@ export const translations: Record<Locale, TranslationSet> = {
         incomeCardTitle: "Ingresos del mes",
         balanceCardTitle: "Balance del mes",
         balanceCardSubtitle: "Ingresos − gastos",
-
         budgetByCategoryTitle: "Presupuesto por categoría",
         manageCategoriesTooltip: "Gestionar categorías",
         editBudgetTooltip: "Editar presupuesto",
         remainingAmount: (amount) => `Quedan ${amount}`,
         overspentAmount: (amount) => `Te has pasado ${amount}`,
-
         editBudgetDialogTitle: "Editar presupuesto por categoría",
         editBudgetDialogHint: "Deja una categoría vacía o en 0 para que no cuente en el presupuesto.",
         estimatedIncomeLabel: "Ingresos al mes",
@@ -246,7 +228,6 @@ export const translations: Record<Locale, TranslationSet> = {
         budgetExceedsMaxSpend: (max) => `Tu presupuesto supera lo que puedes gastar (${max})`,
         cancel: "Cancelar",
         save: "Guardar",
-
         prevMonthTooltip: "Mes anterior",
         nextMonthTooltip: "Mes siguiente",
         budgetHistoryTooltip: "Historial de presupuestos",
@@ -260,30 +241,28 @@ export const translations: Record<Locale, TranslationSet> = {
         budgetHistoryTotalLabel: "Total",
         budgetHistoryEditButton: "Editar este mes",
         editBudgetDialogTitleForMonth: (month) => `Editar presupuesto — ${month}`,
-
         manageCategoriesDialogTitle: "Gestionar categorías",
         newCategoryPlaceholder: "Nueva categoría (ej: 🎨 Arte)",
         categoriesHint: "Los cambios se guardan al momento y afectan a toda la app. Las categorías se ordenan siempre alfabéticamente.",
         accountMenuPreferencesLabel: "Preferencias",
         combinedTransactionsViewLabel: "Ver ingresos y gastos en la misma pestaña",
-        showNoComputableTabLabel: "Mostrar pestaña de \"No computables\"",
+        showNoComputableTabLabel: 'Mostrar pestaña de "No computables"',
         close: "Cerrar",
-
         savingsGoalsTitle: "Objetivos de ahorro",
         goalLabel: "Objetivo",
         targetLabel: "Meta (€)",
         add: "Añadir",
         noGoalsYet: "Todavía no tienes objetivos de ahorro.",
         percentAchieved: (pct) => `${pct}% conseguido`,
-
         colDescription: "Concepto",
         colDate: "Fecha",
         colAmount: "Importe",
         colCategory: "Categoría",
         colNotes: "Notas",
+        editCategoryLabel: "Cambiar categoría",
+        editNotesLabel: "Editar notas",
         noCategoryPlaceholder: "— sin categoría —",
         searchPlaceholder: "Buscar por concepto o importe",
-
         reviewDialogTitle: (remaining) => `Clasificar movimiento (quedan ${remaining})`,
         finish: "Terminar",
         next: "Siguiente",
@@ -291,11 +270,10 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDiscardOneButton: "Descartar este",
         reviewDiscardAllButton: "Descartar todos",
         reviewDiscardAllConfirmTitle: "¿Descartar movimientos pendientes?",
-        reviewDiscardAllConfirmMessage: (count) => `Se eliminarán los ${count} movimientos pendientes de clasificar. Esta acción no se puede deshacer.`,
-
+        reviewDiscardAllConfirmMessage: (count) =>
+            `Se eliminarán los ${count} movimientos pendientes de clasificar. Esta acción no se puede deshacer.`,
         noTransactionsToShow: "No hay movimientos para mostrar.",
         otherCategoryLabel: "Otros",
-
         totalSpentTitle: "Total gastado",
         totalIncomeTitle: "Total ingresado",
         allMonths: "Todos los meses",
@@ -311,12 +289,10 @@ export const translations: Record<Locale, TranslationSet> = {
         calendarDayDialogTitle: (date) => date,
         calendarNoTransactionsThisDay: "No hay movimientos este día.",
         categoryFilterChip: (name) => `Categoría: ${name}`,
-
         insightsTitle: "Resumen",
         spentLessMessage: (pct) => `💚 Este mes has gastado un ${pct}% menos que el anterior.`,
         spentMoreMessage: (pct) => `⚠️ Este mes has gastado un ${pct}% más que el anterior.`,
         daysWithoutSpending: (emoji, days, categoryName) => `${emoji} Llevas ${days} días sin gastar en ${categoryName}.`,
-
         weekly: "Semanal",
         monthly: "Mensual",
         bimonthly: "Bimestral",
@@ -324,23 +300,24 @@ export const translations: Record<Locale, TranslationSet> = {
         everyNMonthsChip: (n) => `Cada ${n} meses`,
         yearly: "Anual",
         intervalMonthsLabel: "Cada cuántos meses",
-
         noComputableLabel: "No computable",
-        noComputableInfo: "Los movimientos de esta categoría no cuentan ni como gasto ni como ingreso en ningún sitio de la app (totales, presupuesto, gráficos...). Útil para bizums entre cuentas propias, devoluciones, etc.",
+        noComputableInfo:
+            "Los movimientos de esta categoría no cuentan ni como gasto ni como ingreso en ningún sitio de la app (totales, presupuesto, gráficos...). Útil para bizums entre cuentas propias, devoluciones, etc.",
         incomeOnlyLabel: "Solo ingreso",
-        incomeOnlyInfo: "Esta categoría es solo para ingresos, así que no tiene sentido ponerle un presupuesto de gasto — no aparecerá en la lista para asignar presupuesto.",
+        incomeOnlyInfo:
+            "Esta categoría es solo para ingresos, así que no tiene sentido ponerle un presupuesto de gasto — no aparecerá en la lista para asignar presupuesto.",
         excludeFromBalanceLabel: "Excluir del balance",
-        excludeFromBalanceInfo: "Los movimientos de esta categoría seguirán contando en Gastos/Ingresos y en el presupuesto, pero no sumarán ni restarán en el balance mensual del Dashboard.",
-
+        excludeFromBalanceInfo:
+            "Los movimientos de esta categoría seguirán contando en Gastos/Ingresos y en el presupuesto, pero no sumarán ni restarán en el balance mensual del Dashboard.",
         manageRulesTooltip: "Reglas de categorización",
         rulesDialogTitle: "Reglas de categorización",
-        rulesHint: "Si la descripción de un movimiento importado incluye esta palabra, se le asignará automáticamente la categoría elegida.",
+        rulesHint:
+            "Si la descripción de un movimiento importado incluye esta palabra, se le asignará automáticamente la categoría elegida.",
         ruleKeywordPlaceholder: "Palabra clave (ej: netflix)",
         noRulesYet: "Todavía no tienes reglas de categorización.",
         ruleGoesTo: "va a",
         ruleNoGoalOption: "Sin objetivo",
         ruleAlsoCredits: "y suma a",
-
         splitTooltip: "Dividir movimiento",
         splitDialogTitle: "Dividir movimiento",
         splitDialogHint: "Reparte el importe en varias porciones, cada una con su propia categoría.",
@@ -348,28 +325,27 @@ export const translations: Record<Locale, TranslationSet> = {
         splitRemainingLabel: (amount) => `Quedan ${amount} por asignar`,
         splitAllAssignedLabel: "Todo el importe está asignado",
         splitConfirm: "Dividir",
-
         addTransactionButton: "Añadir movimiento",
         addTransactionDialogTitle: "Añadir movimiento",
         transactionTypeExpense: "Gasto",
         transactionTypeIncome: "Ingreso",
         deleteTransactionTooltip: "Eliminar movimiento",
-
         appName: "Cala",
         signInTitle: "Bienvenido a Cala",
         signInSubtitle: "Inicia sesión para ver y gestionar tu presupuesto.",
         signInWithGoogle: "Continuar con Google",
         signInError: "No se pudo iniciar sesión. Inténtalo de nuevo.",
         signOut: "Cerrar sesión",
-
         onboardingWelcomeTitle: "Vamos a configurar tu presupuesto",
         onboardingWelcomeSubtitle: "Cuatro pasos rápidos y ya puedes empezar a usar la app.",
         onboardingStepCategories: "Categorías",
         onboardingStepBudgets: "Presupuesto",
         onboardingStepGoals: "Objetivos",
         onboardingStepImport: "Importar",
-        onboardingCategoriesHint: "Estas son las categorías de partida. Puedes editarlas, borrarlas o añadir las tuyas — también podrás cambiarlas más adelante.",
-        onboardingBudgetsHint: "Ponle un límite a las categorías que quieras controlar y elige cada cuánto se aplica (por defecto, mensual — puedes cambiarlo por categoría). Puedes dejar el resto vacías y añadirlas cuando quieras.",
+        onboardingCategoriesHint:
+            "Estas son las categorías de partida. Puedes editarlas, borrarlas o añadir las tuyas — también podrás cambiarlas más adelante.",
+        onboardingBudgetsHint:
+            "Ponle un límite a las categorías que quieras controlar y elige cada cuánto se aplica (por defecto, mensual — puedes cambiarlo por categoría). Puedes dejar el resto vacías y añadirlas cuando quieras.",
         onboardingGoalsHint: "Añade algún objetivo de ahorro si quieres empezar a trackearlo ya. Es opcional, puedes saltarte este paso.",
         onboardingImportHint: "Importa tu primer Excel del banco para empezar a ver tus movimientos.",
         onboardingImportSkipHint: "Puedes hacerlo más tarde desde el Dashboard.",
@@ -377,34 +353,32 @@ export const translations: Record<Locale, TranslationSet> = {
         onboardingSkip: "Saltar",
         onboardingFinish: "Empezar",
         onboardingAddedGoals: (count) => `${count} objetivo${count === 1 ? "" : "s"} añadido${count === 1 ? "" : "s"}`,
-
         mappingTitle: "No reconocemos este formato de Excel",
         mappingHint: "Parece que no es de BBVA. Dinos qué columna es cada cosa y lo importamos igual.",
         mappingDateColumn: "Columna de fecha",
-        mappingDateColumnHint: "Si tu banco muestra dos columnas de fecha (p. ej. \"Fecha\" y \"F. Valor\"), elige \"Fecha\" — es la fecha real de la operación; \"F. Valor\" es cuándo se liquida y puede variar por fines de semana o festivos.",
+        mappingDateColumnHint:
+            'Si tu banco muestra dos columnas de fecha (p. ej. "Fecha" y "F. Valor"), elige "Fecha" — es la fecha real de la operación; "F. Valor" es cuándo se liquida y puede variar por fines de semana o festivos.',
         mappingDescriptionColumn: "Columna de concepto",
         mappingAmountColumn: "Columna de importe",
         mappingNotACurrency: "Alguna fila no tiene un importe numérico válido y se ignorará.",
         mappingConfirm: "Importar con este mapeo",
         mappingPreviewTitle: "Vista previa de las primeras filas",
-
         signOutConfirmTitle: "¿Cerrar sesión?",
         signOutConfirmMessage: "Tendrás que volver a iniciar sesión para ver tus movimientos.",
         signOutConfirmButton: "Cerrar sesión",
         accountMenuLanguageLabel: "Idioma",
-
         deleteTransactionConfirmTitle: "¿Eliminar movimiento?",
         deleteTransactionConfirmMessage: "Esta acción no se puede deshacer.",
-        deleteSelectedConfirmMessage: (count) => `Vas a eliminar ${count} movimiento${count === 1 ? "" : "s"}. Esta acción no se puede deshacer.`,
+        deleteSelectedConfirmMessage: (count) =>
+            `Vas a eliminar ${count} movimiento${count === 1 ? "" : "s"}. Esta acción no se puede deshacer.`,
         deleteConfirmButton: "Eliminar",
-
         selectedCountLabel: (count) => `${count} seleccionado${count === 1 ? "" : "s"}`,
         bulkDeleteButton: "Eliminar",
         bulkCategoryButton: "Asignar categoría",
         bulkAssignCategoryTitle: "Asignar categoría a los movimientos seleccionados",
-
         importingMessage: "Importando movimientos...",
-        importHelpInfo: "¿Cómo consigo el archivo? En BBVA: entra en la cuenta > Movimientos > pulsa el icono de descarga (⬇) > elige formato Excel o PDF y el rango de fechas > descarga el archivo y súbelo aquí. Si el formato se reconoce automáticamente, usamos la columna \"Fecha\" (fecha de la operación), no \"F. Valor\". Con PDF, si las columnas no se detectan bien, te pedimos que las indiques a mano.",
+        importHelpInfo:
+            '¿Cómo consigo el archivo? En BBVA: entra en la cuenta > Movimientos > pulsa el icono de descarga (⬇) > elige formato Excel o PDF y el rango de fechas > descarga el archivo y súbelo aquí. Si el formato se reconoce automáticamente, usamos la columna "Fecha" (fecha de la operación), no "F. Valor". Con PDF, si las columnas no se detectan bien, te pedimos que las indiques a mano.',
     },
     en: {
         navDashboard: "Dashboard",
@@ -415,12 +389,10 @@ export const translations: Record<Locale, TranslationSet> = {
         navNoComputable: "Not counted",
         loading: "Loading...",
         genericErrorMessage: "Something went wrong. Please try again.",
-
         importExcelButton: "Import Excel or PDF",
         importSuccessMessage: (count) => `${count} new transaction${count === 1 ? "" : "s"} imported`,
         importNoNewMessage: "That file had no new transactions to import.",
         importErrorMessage: "Couldn't import the file. Please try again.",
-
         statusOverTitle: "You've gone over budget",
         statusTightTitle: "It's tight this month",
         statusOkTitle: "You're doing okay this month",
@@ -431,13 +403,11 @@ export const translations: Record<Locale, TranslationSet> = {
         incomeCardTitle: "Income this month",
         balanceCardTitle: "Monthly balance",
         balanceCardSubtitle: "Income − expenses",
-
         budgetByCategoryTitle: "Budget by category",
         manageCategoriesTooltip: "Manage categories",
         editBudgetTooltip: "Edit budget",
         remainingAmount: (amount) => `${amount} left`,
         overspentAmount: (amount) => `You've overspent by ${amount}`,
-
         editBudgetDialogTitle: "Edit budget by category",
         editBudgetDialogHint: "Leave a category empty or at 0 so it isn't counted in the budget.",
         estimatedIncomeLabel: "Monthly income",
@@ -448,7 +418,6 @@ export const translations: Record<Locale, TranslationSet> = {
         budgetExceedsMaxSpend: (max) => `Your budget exceeds what you can spend (${max})`,
         cancel: "Cancel",
         save: "Save",
-
         prevMonthTooltip: "Previous month",
         nextMonthTooltip: "Next month",
         budgetHistoryTooltip: "Budget history",
@@ -462,30 +431,28 @@ export const translations: Record<Locale, TranslationSet> = {
         budgetHistoryTotalLabel: "Total",
         budgetHistoryEditButton: "Edit this month",
         editBudgetDialogTitleForMonth: (month) => `Edit budget — ${month}`,
-
         manageCategoriesDialogTitle: "Manage categories",
         newCategoryPlaceholder: "New category (e.g. 🎨 Art)",
         categoriesHint: "Changes save instantly and affect the whole app. Categories are always sorted alphabetically.",
         accountMenuPreferencesLabel: "Preferences",
         combinedTransactionsViewLabel: "Show income and expenses in the same tab",
-        showNoComputableTabLabel: "Show a \"Not counted\" tab",
+        showNoComputableTabLabel: 'Show a "Not counted" tab',
         close: "Close",
-
         savingsGoalsTitle: "Savings goals",
         goalLabel: "Goal",
         targetLabel: "Target (€)",
         add: "Add",
         noGoalsYet: "You don't have any savings goals yet.",
         percentAchieved: (pct) => `${pct}% achieved`,
-
         colDescription: "Description",
         colDate: "Date",
         colAmount: "Amount",
         colCategory: "Category",
         colNotes: "Notes",
+        editCategoryLabel: "Change category",
+        editNotesLabel: "Edit notes",
         noCategoryPlaceholder: "— no category —",
         searchPlaceholder: "Search by description or amount",
-
         reviewDialogTitle: (remaining) => `Classify transaction (${remaining} left)`,
         finish: "Finish",
         next: "Next",
@@ -493,11 +460,10 @@ export const translations: Record<Locale, TranslationSet> = {
         reviewDiscardOneButton: "Discard this one",
         reviewDiscardAllButton: "Discard all",
         reviewDiscardAllConfirmTitle: "Discard pending transactions?",
-        reviewDiscardAllConfirmMessage: (count) => `This will delete the ${count} transactions still pending classification. This can't be undone.`,
-
+        reviewDiscardAllConfirmMessage: (count) =>
+            `This will delete the ${count} transactions still pending classification. This can't be undone.`,
         noTransactionsToShow: "No transactions to show.",
         otherCategoryLabel: "Other",
-
         totalSpentTitle: "Total spent",
         totalIncomeTitle: "Total income",
         allMonths: "All months",
@@ -513,12 +479,10 @@ export const translations: Record<Locale, TranslationSet> = {
         calendarDayDialogTitle: (date) => date,
         calendarNoTransactionsThisDay: "No transactions this day.",
         categoryFilterChip: (name) => `Category: ${name}`,
-
         insightsTitle: "Summary",
         spentLessMessage: (pct) => `💚 You've spent ${pct}% less than last month.`,
         spentMoreMessage: (pct) => `⚠️ You've spent ${pct}% more than last month.`,
         daysWithoutSpending: (emoji, days, categoryName) => `${emoji} You haven't spent on ${categoryName} in ${days} days.`,
-
         weekly: "Weekly",
         monthly: "Monthly",
         bimonthly: "Bimonthly",
@@ -526,14 +490,15 @@ export const translations: Record<Locale, TranslationSet> = {
         everyNMonthsChip: (n) => `Every ${n} months`,
         yearly: "Yearly",
         intervalMonthsLabel: "Every how many months",
-
         noComputableLabel: "Not counted",
-        noComputableInfo: "Transactions in this category don't count as expense or income anywhere in the app (totals, budget, charts...). Useful for transfers between your own accounts, refunds, etc.",
+        noComputableInfo:
+            "Transactions in this category don't count as expense or income anywhere in the app (totals, budget, charts...). Useful for transfers between your own accounts, refunds, etc.",
         incomeOnlyLabel: "Income only",
-        incomeOnlyInfo: "This category is only ever income, so a spending budget wouldn't make sense for it — it won't show up in the list for assigning a budget.",
+        incomeOnlyInfo:
+            "This category is only ever income, so a spending budget wouldn't make sense for it — it won't show up in the list for assigning a budget.",
         excludeFromBalanceLabel: "Exclude from balance",
-        excludeFromBalanceInfo: "Transactions in this category still count toward Expenses/Income and the budget, but won't add to or subtract from the Dashboard's monthly balance.",
-
+        excludeFromBalanceInfo:
+            "Transactions in this category still count toward Expenses/Income and the budget, but won't add to or subtract from the Dashboard's monthly balance.",
         manageRulesTooltip: "Categorization rules",
         rulesDialogTitle: "Categorization rules",
         rulesHint: "If an imported transaction's description includes this word, it'll automatically get the chosen category.",
@@ -542,7 +507,6 @@ export const translations: Record<Locale, TranslationSet> = {
         ruleGoesTo: "goes to",
         ruleNoGoalOption: "No goal",
         ruleAlsoCredits: "and credits",
-
         splitTooltip: "Split transaction",
         splitDialogTitle: "Split transaction",
         splitDialogHint: "Divide the amount into several portions, each with its own category.",
@@ -550,20 +514,17 @@ export const translations: Record<Locale, TranslationSet> = {
         splitRemainingLabel: (amount) => `${amount} left to assign`,
         splitAllAssignedLabel: "The full amount is assigned",
         splitConfirm: "Split",
-
         addTransactionButton: "Add transaction",
         addTransactionDialogTitle: "Add transaction",
         transactionTypeExpense: "Expense",
         transactionTypeIncome: "Income",
         deleteTransactionTooltip: "Delete transaction",
-
         appName: "Cala",
         signInTitle: "Welcome to Cala",
         signInSubtitle: "Sign in to see and manage your budget.",
         signInWithGoogle: "Continue with Google",
         signInError: "Couldn't sign in. Please try again.",
         signOut: "Sign out",
-
         onboardingWelcomeTitle: "Let's set up your budget",
         onboardingWelcomeSubtitle: "Four quick steps and you're ready to go.",
         onboardingStepCategories: "Categories",
@@ -571,7 +532,8 @@ export const translations: Record<Locale, TranslationSet> = {
         onboardingStepGoals: "Goals",
         onboardingStepImport: "Import",
         onboardingCategoriesHint: "These are the starting categories. Edit, delete, or add your own — you can always change them later.",
-        onboardingBudgetsHint: "Set a limit for the categories you want to track and choose how often it applies (monthly by default — you can change it per category). You can leave the rest empty and add them later.",
+        onboardingBudgetsHint:
+            "Set a limit for the categories you want to track and choose how often it applies (monthly by default — you can change it per category). You can leave the rest empty and add them later.",
         onboardingGoalsHint: "Add a savings goal if you want to start tracking one now. This step is optional.",
         onboardingImportHint: "Import your first bank Excel file to start seeing your transactions.",
         onboardingImportSkipHint: "You can do this later from the Dashboard.",
@@ -579,33 +541,31 @@ export const translations: Record<Locale, TranslationSet> = {
         onboardingSkip: "Skip",
         onboardingFinish: "Get started",
         onboardingAddedGoals: (count) => `${count} goal${count === 1 ? "" : "s"} added`,
-
         mappingTitle: "We don't recognize this Excel format",
         mappingHint: "This doesn't look like a BBVA export. Tell us which column is which and we'll import it anyway.",
         mappingDateColumn: "Date column",
-        mappingDateColumnHint: "If your bank shows two date columns (e.g. \"Fecha\" and \"F. Valor\"), pick \"Fecha\" — that's the actual transaction date; \"F. Valor\" is the value/settlement date and can shift on weekends or holidays.",
+        mappingDateColumnHint:
+            'If your bank shows two date columns (e.g. "Fecha" and "F. Valor"), pick "Fecha" — that\'s the actual transaction date; "F. Valor" is the value/settlement date and can shift on weekends or holidays.',
         mappingDescriptionColumn: "Description column",
         mappingAmountColumn: "Amount column",
         mappingNotACurrency: "Some rows don't have a valid numeric amount and will be skipped.",
         mappingConfirm: "Import with this mapping",
         mappingPreviewTitle: "Preview of the first rows",
-
         signOutConfirmTitle: "Sign out?",
         signOutConfirmMessage: "You'll need to sign in again to see your transactions.",
         signOutConfirmButton: "Sign out",
         accountMenuLanguageLabel: "Language",
-
         deleteTransactionConfirmTitle: "Delete transaction?",
         deleteTransactionConfirmMessage: "This action can't be undone.",
-        deleteSelectedConfirmMessage: (count) => `You're about to delete ${count} transaction${count === 1 ? "" : "s"}. This action can't be undone.`,
+        deleteSelectedConfirmMessage: (count) =>
+            `You're about to delete ${count} transaction${count === 1 ? "" : "s"}. This action can't be undone.`,
         deleteConfirmButton: "Delete",
-
         selectedCountLabel: (count) => `${count} selected`,
         bulkDeleteButton: "Delete",
         bulkCategoryButton: "Assign category",
         bulkAssignCategoryTitle: "Assign a category to the selected transactions",
-
         importingMessage: "Importing transactions...",
-        importHelpInfo: "How do I get the file? In BBVA: open your account > Movimientos (Transactions) > tap the download icon (⬇) > choose Excel or PDF format and the date range > download the file and upload it here. When the format is auto-detected, we use the \"Fecha\" column (transaction date), not \"F. Valor\". With PDFs, if the columns aren't detected well, we'll ask you to point them out manually.",
+        importHelpInfo:
+            'How do I get the file? In BBVA: open your account > Movimientos (Transactions) > tap the download icon (⬇) > choose Excel or PDF format and the date range > download the file and upload it here. When the format is auto-detected, we use the "Fecha" column (transaction date), not "F. Valor". With PDFs, if the columns aren\'t detected well, we\'ll ask you to point them out manually.',
     },
 };

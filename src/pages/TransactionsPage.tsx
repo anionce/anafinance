@@ -1,5 +1,3 @@
-import TransactionsView from "../components/transactions/TransactionsView";
+import { TransactionsView } from "../components/transactions/TransactionsView";
 
-export default function TransactionsPage() {
-    return <TransactionsView kind="all" />;
-}
+export const TransactionsPage = () => <TransactionsView kind="all" />;

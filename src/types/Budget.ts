@@ -3,7 +3,6 @@ export type BudgetPeriod = "weekly" | "monthly" | "bimonthly" | "everyNMonths" |
 export interface CategoryBudget {
     amount: number;
     period: BudgetPeriod;
-    /** Only used when period === "everyNMonths": how many months each period spans. */
     intervalMonths?: number;
 }
 

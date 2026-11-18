@@ -1,5 +1,3 @@
-import TransactionsView from "../components/transactions/TransactionsView";
+import { TransactionsView } from "../components/transactions/TransactionsView";
 
-export default function NoComputablePage() {
-    return <TransactionsView kind="noComputable" />;
-}
+export const NoComputablePage = () => <TransactionsView kind="noComputable" />;

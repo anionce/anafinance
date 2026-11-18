@@ -11,7 +11,7 @@ interface Props {
     onClose: () => void;
 }
 
-export default function ConfirmDialog({ open, title, message, confirmLabel, danger, onConfirm, onClose }: Props) {
+export const ConfirmDialog = ({ open, title, message, confirmLabel, danger, onConfirm, onClose }: Props) => {
     const { t } = useTranslation();
 
     return (
@@ -23,7 +23,10 @@ export default function ConfirmDialog({ open, title, message, confirmLabel, dang
             <DialogActions>
                 <Button onClick={onClose}>{t.cancel}</Button>
                 <Button
-                    onClick={() => { onConfirm(); onClose(); }}
+                    onClick={() => {
+                        onConfirm();
+                        onClose();
+                    }}
                     color={danger ? "error" : "primary"}
                     variant="contained"
                 >
@@ -32,4 +35,4 @@ export default function ConfirmDialog({ open, title, message, confirmLabel, dang
             </DialogActions>
         </Dialog>
     );
-}
+};

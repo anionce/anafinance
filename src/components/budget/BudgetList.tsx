@@ -13,8 +13,8 @@ import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { accent } from "../../theme/colors";
-import CategoryManagerDialog from "./CategoryManagerDialog";
-import CategorizationRulesDialog from "./CategorizationRulesDialog";
+import { CategoryManagerDialog } from "./CategoryManagerDialog";
+import { CategorizationRulesDialog } from "./CategorizationRulesDialog";
 import type { TranslationSet } from "../../i18n/translations";
 
 interface Props {
@@ -34,18 +34,23 @@ interface Props {
     onRemoveRule: (id: string) => void;
 }
 
-function periodChipLabel(budget: CategoryBudget, t: TranslationSet): string | null {
+const periodChipLabel = (budget: CategoryBudget, t: TranslationSet): string | null => {
     switch (budget.period) {
-        case "weekly": return t.weekly;
-        case "bimonthly": return t.bimonthly;
-        case "everyNMonths": return t.everyNMonthsChip(Math.max(budget.intervalMonths ?? 1, 1));
-        case "yearly": return t.yearly;
+        case "weekly":
+            return t.weekly;
+        case "bimonthly":
+            return t.bimonthly;
+        case "everyNMonths":
+            return t.everyNMonthsChip(Math.max(budget.intervalMonths ?? 1, 1));
+        case "yearly":
+            return t.yearly;
         case "monthly":
-        default: return null;
+        default:
+            return null;
     }
-}
+};
 
-export default function BudgetList({
+export const BudgetList = ({
     transactions,
     categories,
     budgets,
@@ -60,14 +65,13 @@ export default function BudgetList({
     goals,
     onAddRule,
     onRemoveRule,
-}: Props) {
+}: Props) => {
     const { t, locale } = useTranslation();
     const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
     const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
     const spentByCategory = calculateSpentByCategory(transactions, budgets);
     const hasBudgets = Object.keys(budgets).length > 0;
-    // `categories` arrives alphabetized; keep budget cards in that order (any
-    // budget whose category no longer exists goes last).
+
     const budgetKeys = [
         ...categories.map((c) => c.value).filter((value) => budgets[value]),
         ...Object.keys(budgets).filter((key) => !categories.some((c) => c.value === key)),
@@ -90,53 +94,69 @@ export default function BudgetList({
                 </Box>
             </Box>
 
-            {hasBudgets && <Grid container spacing={2}>
-                {budgetKeys.map((key) => {
-                    const budget = budgets[key];
-                    const spent = spentByCategory[key] ?? 0;
-                    const pct = calculatePercentage(spent, budget.amount);
-                    const pctRaw = calculateRawPercentage(spent, budget.amount);
-                    const remaining = calculateRemaining(spent, budget.amount);
-                    const category = categories.find((c) => c.value === key);
-                    const label = category ? getCategoryLabel(category, locale) : key;
-                    const over = spent > budget.amount;
-                    const chipLabel = periodChipLabel(budget, t);
+            {hasBudgets && (
+                <Grid container spacing={2}>
+                    {budgetKeys.map((key) => {
+                        const budget = budgets[key];
+                        const spent = spentByCategory[key] ?? 0;
+                        const pct = calculatePercentage(spent, budget.amount);
+                        const pctRaw = calculateRawPercentage(spent, budget.amount);
+                        const remaining = calculateRemaining(spent, budget.amount);
+                        const category = categories.find((c) => c.value === key);
+                        const label = category ? getCategoryLabel(category, locale) : key;
+                        const over = spent > budget.amount;
+                        const chipLabel = periodChipLabel(budget, t);
 
-                    return (
-                        <Grid key={key} size={{ xs: 12, sm: 6 }}>
-                            <Box sx={{ p: 2, borderRadius: "10px", border: "1px solid", borderColor: "divider", bgcolor: "background.paper", height: "100%" }}>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                    <Typography variant="body1" sx={{ fontWeight: 600, flex: 1 }}>{label}</Typography>
-                                    {chipLabel && (
-                                        <Chip label={chipLabel} size="small" variant="outlined" />
-                                    )}
-                                </Box>
-                                <Typography variant="h6" sx={{ mb: 1 }}>
-                                    {formatCurrency(spent)}{" "}
-                                    <Typography component="span" variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>
-                                        / {formatCurrency(budget.amount)}
-                                    </Typography>
-                                </Typography>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={pct}
+                        return (
+                            <Grid key={key} size={{ xs: 12, sm: 6 }}>
+                                <Box
                                     sx={{
-                                        height: 8,
-                                        bgcolor: accent.budgetSoft,
-                                        "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.statusGreat },
+                                        p: 2,
+                                        borderRadius: "10px",
+                                        border: "1px solid",
+                                        borderColor: "divider",
+                                        bgcolor: "background.paper",
+                                        height: "100%",
                                     }}
-                                />
-                                <Typography variant="body2" color={over ? "error" : "text.secondary"} sx={{ mt: 1 }}>
-                                    {over
-                                        ? t.overspentAmount(formatCurrency(Math.abs(remaining)))
-                                        : t.remainingAmount(formatCurrency(remaining))}
-                                    {" · "}{pctRaw.toFixed(0)}%
-                                </Typography>
-                            </Box>
-                        </Grid>
-                    );
-                })}
-            </Grid>}
+                                >
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, flex: 1 }}>
+                                            {label}
+                                        </Typography>
+                                        {chipLabel && <Chip label={chipLabel} size="small" variant="outlined" />}
+                                    </Box>
+                                    <Typography variant="h6" sx={{ mb: 1 }}>
+                                        {formatCurrency(spent)}{" "}
+                                        <Typography
+                                            component="span"
+                                            variant="body2"
+                                            sx={{ color: "text.secondary", fontFamily: "inherit" }}
+                                        >
+                                            / {formatCurrency(budget.amount)}
+                                        </Typography>
+                                    </Typography>
+                                    <LinearProgress
+                                        variant="determinate"
+                                        value={pct}
+                                        sx={{
+                                            height: 8,
+                                            bgcolor: accent.budgetSoft,
+                                            "& .MuiLinearProgress-bar": { bgcolor: over ? "error.main" : accent.statusGreat },
+                                        }}
+                                    />
+                                    <Typography variant="body2" color={over ? "error" : "text.secondary"} sx={{ mt: 1 }}>
+                                        {over
+                                            ? t.overspentAmount(formatCurrency(Math.abs(remaining)))
+                                            : t.remainingAmount(formatCurrency(remaining))}
+                                        {" · "}
+                                        {pctRaw.toFixed(0)}%
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                        );
+                    })}
+                </Grid>
+            )}
 
             <CategoryManagerDialog
                 open={categoriesDialogOpen}
@@ -161,4 +181,4 @@ export default function BudgetList({
             />
         </Card>
     );
-}
+};

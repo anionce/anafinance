@@ -6,7 +6,7 @@ interface Props {
     loading?: boolean;
 }
 
-export default function ImportExcelButton({ onImport, loading }: Props) {
+export const ImportExcelButton = ({ onImport, loading }: Props) => {
     const { t } = useTranslation();
 
     return (
@@ -33,4 +33,4 @@ export default function ImportExcelButton({ onImport, loading }: Props) {
             />
         </Button>
     );
-}
+};

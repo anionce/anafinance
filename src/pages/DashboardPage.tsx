@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
-import Layout from "../components/Layout";
-import Dashboard from "../components/dashboard/Dashboard";
-import InsightsCard from "../components/dashboard/InsightsCard";
-import ImportExcelFlow from "../components/transactions/ImportExcelFlow";
-import AddTransactionDialog from "../components/transactions/AddTransactionDialog";
-import BudgetList from "../components/budget/BudgetList";
-import EditBudgetsDialog from "../components/budget/EditBudgetsDialog";
-import BudgetHistoryDialog from "../components/budget/BudgetHistoryDialog";
+import { Layout } from "../components/Layout";
+import { Dashboard } from "../components/dashboard/Dashboard";
+import { InsightsCard } from "../components/dashboard/InsightsCard";
+import { ImportExcelFlow } from "../components/transactions/ImportExcelFlow";
+import { AddTransactionDialog } from "../components/transactions/AddTransactionDialog";
+import { BudgetList } from "../components/budget/BudgetList";
+import { EditBudgetsDialog } from "../components/budget/EditBudgetsDialog";
+import { BudgetHistoryDialog } from "../components/budget/BudgetHistoryDialog";
 import { useFinanceStore } from "../store/financeStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useAuthStore } from "../store/authStore";
@@ -18,44 +18,54 @@ import { getCurrentMonth, filterByMonth } from "../utils/dates";
 import { FEATURED_GOAL_ID } from "../types/Goal";
 import { useTranslation } from "../i18n/useTranslation";
 
-export default function DashboardPage() {
+export const DashboardPage = () => {
     const { t, locale } = useTranslation();
     const uid = useAuthStore((s) => s.user?.uid ?? "");
     const [budgetsDialogOpen, setBudgetsDialogOpen] = useState(false);
     const [budgetHistoryOpen, setBudgetHistoryOpen] = useState(false);
     const [addTransactionOpen, setAddTransactionOpen] = useState(false);
+    const { transactions, hasLoaded, addTransaction, goals, updateGoalAmount, updateGoalTarget, updateGoalName } = useFinanceStore();
     const {
-        transactions, hasLoaded, addTransaction,
-        goals, updateGoalAmount, updateGoalTarget, updateGoalName,
-    } = useFinanceStore();
-    const {
-        estimatedIncome, savingsTarget, categoryBudgets, categorizationRules, featuredGoalId, budgetHistory, hasLoaded: settingsLoaded,
-        setEstimatedIncome, setSavingsTarget, setCategoryBudgets,
-        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance,
-        addRule, removeRule, setFeaturedGoalId,
+        estimatedIncome,
+        savingsTarget,
+        categoryBudgets,
+        categorizationRules,
+        featuredGoalId,
+        budgetHistory,
+        hasLoaded: settingsLoaded,
+        setEstimatedIncome,
+        setSavingsTarget,
+        setCategoryBudgets,
+        addCategory,
+        updateCategoryLabel,
+        removeCategory,
+        setCategoryNoComputable,
+        setCategoryIncomeOnly,
+        setCategoryExcludeFromBalance,
+        addRule,
+        removeRule,
+        setFeaturedGoalId,
     } = useSettingsStore();
     const categories = useSortedCategories();
 
     if (!hasLoaded || !settingsLoaded) {
-        return <Layout><p>{t.loading}</p></Layout>;
+        return (
+            <Layout>
+                <p>{t.loading}</p>
+            </Layout>
+        );
     }
 
-    const featuredGoal =
-        goals.find((g) => g.id === featuredGoalId) ??
-        goals.find((g) => g.id === FEATURED_GOAL_ID) ??
-        goals[0];
+    const featuredGoal = goals.find((g) => g.id === featuredGoalId) ?? goals.find((g) => g.id === FEATURED_GOAL_ID) ?? goals[0];
     const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
     const hasIncomeData = transactions.some((tx) => tx.amount > 0 && !noComputableValues.has(tx.category));
 
-    const currentMonthTransactions = filterByMonth(transactions, getCurrentMonth())
-        .filter((tx) => !noComputableValues.has(tx.category));
+    const currentMonthTransactions = filterByMonth(transactions, getCurrentMonth()).filter((tx) => !noComputableValues.has(tx.category));
     const totalBudget = calculateTotalBudget(categoryBudgets);
     const totalSpentThisMonth = calculateTotalSpent(currentMonthTransactions);
     const totalIncomeThisMonth = calculateTotalIncome(currentMonthTransactions);
     const insights = generateInsights(transactions, categories, locale);
 
-    // A category can be left out of the balance specifically while still
-    // counting toward the totals above (budget, "Ingresos del mes"...).
     const excludedFromBalanceValues = new Set(categories.filter((c) => c.excludeFromBalance).map((c) => c.value));
     const balanceTransactions = currentMonthTransactions.filter((tx) => !excludedFromBalanceValues.has(tx.category));
     const monthlyBalance = calculateTotalIncome(balanceTransactions) - calculateTotalSpent(balanceTransactions);
@@ -141,4 +151,4 @@ export default function DashboardPage() {
             />
         </Layout>
     );
-}
+};

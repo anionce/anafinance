@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-    Box,
-    Card,
-    Typography,
-    LinearProgress,
-    IconButton,
-    TextField,
-    Button,
-    Stack,
-} from "@mui/material";
+import { Box, Card, Typography, LinearProgress, IconButton, TextField, Button, Stack } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditIcon from "@mui/icons-material/Edit";
@@ -30,20 +21,20 @@ interface Props {
     onRemove: (id: string) => void;
 }
 
-export default function GoalsList({ goals, onAdd, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove }: Props) {
+export const GoalsList = ({ goals, onAdd, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove }: Props) => {
     const { t } = useTranslation();
     const [adding, setAdding] = useState(false);
     const [name, setName] = useState("");
     const [target, setTarget] = useState("");
 
-    function handleAdd() {
+    const handleAdd = () => {
         const parsedTarget = Number(target);
-        if (!name.trim() || isNaN(parsedTarget)) return;
+        if (!name.trim() || Number.isNaN(parsedTarget)) return;
         onAdd({ name: name.trim(), targetAmount: parsedTarget, currentAmount: 0 });
         setName("");
         setTarget("");
         setAdding(false);
-    }
+    };
 
     return (
         <Card sx={{ p: 3 }}>
@@ -60,14 +51,21 @@ export default function GoalsList({ goals, onAdd, onUpdateAmount, onUpdateName, 
             {adding && (
                 <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
                     <TextField size="small" label={t.goalLabel} value={name} onChange={(e) => setName(e.target.value)} />
-                    <TextField size="small" label={t.targetLabel} type="number" value={target} onChange={(e) => setTarget(e.target.value)} sx={{ maxWidth: 120 }} />
-                    <Button variant="contained" size="small" onClick={handleAdd}>{t.add}</Button>
+                    <TextField
+                        size="small"
+                        label={t.targetLabel}
+                        type="number"
+                        value={target}
+                        onChange={(e) => setTarget(e.target.value)}
+                        sx={{ maxWidth: 120 }}
+                    />
+                    <Button variant="contained" size="small" onClick={handleAdd}>
+                        {t.add}
+                    </Button>
                 </Stack>
             )}
 
-            {goals.length === 0 && !adding && (
-                <Typography color="text.secondary">{t.noGoalsYet}</Typography>
-            )}
+            {goals.length === 0 && !adding && <Typography color="text.secondary">{t.noGoalsYet}</Typography>}
 
             {goals.map((goal) => (
                 <GoalRow
@@ -81,18 +79,29 @@ export default function GoalsList({ goals, onAdd, onUpdateAmount, onUpdateName, 
             ))}
         </Card>
     );
-}
+};
 
-function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove }: {
+const GoalRow = ({
+    goal,
+    onUpdateAmount,
+    onUpdateName,
+    onUpdateTarget,
+    onRemove,
+}: {
     goal: Goal;
     onUpdateAmount: (id: string, currentAmount: number) => void;
     onUpdateName: (id: string, name: string) => void;
     onUpdateTarget: (id: string, targetAmount: number) => void;
     onRemove: (id: string) => void;
-}) {
+}) => {
     const { t } = useTranslation();
     const amountEdit = useInlineEdit(goal.currentAmount, String, parseNonEmptyNumber, (v) => onUpdateAmount(goal.id, v));
-    const nameEdit = useInlineEdit(goal.name, (v) => v, parseNonEmptyText, (v) => onUpdateName(goal.id, v));
+    const nameEdit = useInlineEdit(
+        goal.name,
+        (v) => v,
+        parseNonEmptyText,
+        (v) => onUpdateName(goal.id, v),
+    );
     const targetEdit = useInlineEdit(goal.targetAmount, String, parseNonEmptyNumber, (v) => onUpdateTarget(goal.id, v));
 
     const pct = calculatePercentage(goal.currentAmount, goal.targetAmount);
@@ -117,7 +126,9 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                     </Box>
                 ) : (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <Typography variant="h6" sx={{ lineHeight: 1 }}>{goal.name}</Typography>
+                        <Typography variant="h6" sx={{ lineHeight: 1 }}>
+                            {goal.name}
+                        </Typography>
                         <IconButton size="small" onClick={nameEdit.start}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
@@ -144,7 +155,9 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                             {formatCurrency(goal.currentAmount)}
                         </Typography>
                     )}
-                    <Typography variant="h6" color="text.secondary">/</Typography>
+                    <Typography variant="h6" color="text.secondary">
+                        /
+                    </Typography>
                     {targetEdit.editing ? (
                         <TextField
                             size="small"
@@ -175,7 +188,8 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
                 variant="determinate"
                 value={pct}
                 sx={{
-                    height: 8, mt: 1,
+                    height: 8,
+                    mt: 1,
                     bgcolor: accent.savingsSoft,
                     "& .MuiLinearProgress-bar": { bgcolor: accent.savings },
                 }}
@@ -185,4 +199,4 @@ function GoalRow({ goal, onUpdateAmount, onUpdateName, onUpdateTarget, onRemove 
             </Typography>
         </Box>
     );
-}
+};

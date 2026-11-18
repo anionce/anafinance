@@ -1,30 +1,28 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
-import DashboardPage from "./pages/DashboardPage";
-import ExpensesPage from "./pages/ExpensesPage";
-import IncomesPage from "./pages/IncomesPage";
-import TransactionsPage from "./pages/TransactionsPage";
-import GoalsPage from "./pages/GoalsPage";
-import NoComputablePage from "./pages/NoComputablePage";
-import LoginPage from "./pages/LoginPage";
-import OnboardingPage from "./pages/OnboardingPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { ExpensesPage } from "./pages/ExpensesPage";
+import { IncomesPage } from "./pages/IncomesPage";
+import { TransactionsPage } from "./pages/TransactionsPage";
+import { GoalsPage } from "./pages/GoalsPage";
+import { NoComputablePage } from "./pages/NoComputablePage";
+import { LoginPage } from "./pages/LoginPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
 import { useAuthStore } from "./store/authStore";
 import { useFinanceStore } from "./store/financeStore";
 import { useSettingsStore } from "./store/settingsStore";
 import { useToastStore } from "./store/toastStore";
 import { useTranslation } from "./i18n/useTranslation";
-import GlobalToast from "./components/GlobalToast";
+import { GlobalToast } from "./components/GlobalToast";
 
-function FullScreenLoader() {
-    return (
-        <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <CircularProgress />
-        </Box>
-    );
-}
+const FullScreenLoader = () => (
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress />
+    </Box>
+);
 
-function AuthenticatedApp({ uid }: { uid: string }) {
+const AuthenticatedApp = ({ uid }: { uid: string }) => {
     const financeLoaded = useFinanceStore((s) => s.hasLoaded);
     const loadFinance = useFinanceStore((s) => s.load);
     const settingsLoaded = useSettingsStore((s) => s.hasLoaded);
@@ -59,9 +57,9 @@ function AuthenticatedApp({ uid }: { uid: string }) {
             <Route path="/onboarding" element={<Navigate to="/" replace />} />
         </Routes>
     );
-}
+};
 
-export default function App() {
+export const App = () => {
     const { t } = useTranslation();
     const user = useAuthStore((s) => s.user);
     const authLoading = useAuthStore((s) => s.authLoading);
@@ -81,17 +79,11 @@ export default function App() {
         }
     }, [user, resetFinance, resetSettings]);
 
-    // Backstop for the many store actions (category edits, budget saves, goal
-    // updates...) that don't handle their own failures: without this, a
-    // rejected Firestore write fails completely silently for the user, with
-    // only a console warning nobody sees. Flows that already show their own
-    // specific error (sign-in, file import) still do — this only catches
-    // what nothing else does.
     useEffect(() => {
-        function handleRejection(event: PromiseRejectionEvent) {
+        const handleRejection = (event: PromiseRejectionEvent) => {
             console.error(event.reason);
             showError(t.genericErrorMessage);
-        }
+        };
         window.addEventListener("unhandledrejection", handleRejection);
         return () => window.removeEventListener("unhandledrejection", handleRejection);
     }, [t, showError]);
@@ -110,4 +102,4 @@ export default function App() {
             <GlobalToast />
         </>
     );
-}
+};

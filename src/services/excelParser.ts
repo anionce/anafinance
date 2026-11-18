@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import type { Transaction } from '../types/Transaction';
+import type { Transaction } from "../types/Transaction";
 import { categorize } from "./categorizer";
 import { hashTransaction } from "./hash";
 import { readPdfRows } from "./pdfParser";
@@ -13,7 +13,6 @@ export interface ColumnMapping {
 
 export class UnrecognizedBankFormatError extends Error {
     rows: unknown[][];
-
     constructor(rows: unknown[][]) {
         super('Could not find the header row ("Concepto") in the Excel file.');
         this.name = "UnrecognizedBankFormatError";
@@ -21,7 +20,7 @@ export class UnrecognizedBankFormatError extends Error {
     }
 }
 
-export async function readSheetRows(file: File): Promise<unknown[][]> {
+export const readSheetRows = async (file: File): Promise<unknown[][]> => {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -30,13 +29,12 @@ export async function readSheetRows(file: File): Promise<unknown[][]> {
         header: 1,
         defval: null,
     });
-}
+};
 
-/** Best-guess header row: the row with the most non-empty cells among the first 20 rows. */
-export function guessHeaderRowIndex(rows: unknown[][]): number {
+export const guessHeaderRowIndex = (rows: unknown[][]): number => {
     let best = 0;
     let bestCount = -1;
-    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+    for (let i = 0; i < Math.min(rows.length, HEADER_SEARCH_ROWS); i++) {
         const count = rows[i].filter((cell) => cell != null && String(cell).trim() !== "").length;
         if (count > bestCount) {
             bestCount = count;
@@ -44,12 +42,9 @@ export function guessHeaderRowIndex(rows: unknown[][]): number {
         }
     }
     return best;
-}
+};
 
-// BBVA's export headers change with the account's display language. Each
-// entry lists the accepted header text (lowercased) per language so the file
-// is still auto-recognized instead of falling back to manual column mapping.
-const BBVA_HEADER_ALIASES = {
+const BBVA_HEADER_ALIASES_BY_LANGUAGE = {
     fecha: ["fecha", "data", "operación", "operacion"],
     fValor: ["f.valor", "data valor", "fecha valor"],
     concepto: ["concepto", "concepte"],
@@ -57,133 +52,109 @@ const BBVA_HEADER_ALIASES = {
     importe: ["importe", "import"],
 };
 
-function detectBbvaMapping(rows: unknown[][]): { headerRowIndex: number; col: Record<string, number> } | null {
+type BbvaColumn = keyof typeof BBVA_HEADER_ALIASES_BY_LANGUAGE;
+
+const HEADER_SEARCH_ROWS = 20;
+
+const detectBbvaMapping = (rows: unknown[][]): { headerRowIndex: number; col: Record<BbvaColumn, number> } | null => {
     const headerRowIndex = rows.findIndex((row) =>
-        row.some((cell) => typeof cell === "string" && BBVA_HEADER_ALIASES.concepto.includes(cell.trim().toLowerCase()))
+        row.some((cell) => typeof cell === "string" && BBVA_HEADER_ALIASES_BY_LANGUAGE.concepto.includes(cell.trim().toLowerCase())),
     );
 
     if (headerRowIndex === -1) return null;
 
-    const headerRow = rows[headerRowIndex].map((h) =>
-        typeof h === "string" ? h.trim().toLowerCase() : h
-    );
+    const headerRow = rows[headerRowIndex].map((h) => (typeof h === "string" ? h.trim().toLowerCase() : h));
 
-    function findCol(aliases: string[]): number {
+    const findCol = (aliases: string[]): number => {
         for (const alias of aliases) {
             const idx = headerRow.indexOf(alias);
             if (idx !== -1) return idx;
         }
         return -1;
-    }
+    };
 
     return {
         headerRowIndex,
         col: {
-            fecha: findCol(BBVA_HEADER_ALIASES.fecha),
-            fValor: findCol(BBVA_HEADER_ALIASES.fValor),
-            concepto: findCol(BBVA_HEADER_ALIASES.concepto),
-            movimiento: findCol(BBVA_HEADER_ALIASES.movimiento),
-            importe: findCol(BBVA_HEADER_ALIASES.importe),
+            fecha: findCol(BBVA_HEADER_ALIASES_BY_LANGUAGE.fecha),
+            fValor: findCol(BBVA_HEADER_ALIASES_BY_LANGUAGE.fValor),
+            concepto: findCol(BBVA_HEADER_ALIASES_BY_LANGUAGE.concepto),
+            movimiento: findCol(BBVA_HEADER_ALIASES_BY_LANGUAGE.movimiento),
+            importe: findCol(BBVA_HEADER_ALIASES_BY_LANGUAGE.importe),
         },
     };
+};
+
+interface ParsedRow {
+    date: string;
+    description: string;
+    amount: number;
 }
 
-function transactionsFromBbvaRows(rows: unknown[][], headerRowIndex: number, col: Record<string, number>): Transaction[] {
-    const dataRows = rows.slice(headerRowIndex + 1);
-    const transactions: Transaction[] = [];
+const toTransactions = (rows: (ParsedRow | null)[]): Transaction[] => {
+    const occurrences = new Map<string, number>();
+    return rows.flatMap((row) => {
+        if (!row) return [];
+        const sameDayAndAmount = `${row.date}|${row.amount}`;
+        const occurrence = occurrences.get(sameDayAndAmount) ?? 0;
+        occurrences.set(sameDayAndAmount, occurrence + 1);
+        return [
+            {
+                id: hashTransaction(row.date, row.amount, occurrence),
+                date: row.date,
+                description: row.description,
+                amount: row.amount,
+                category: categorize(row.description, row.amount) ?? "",
+            },
+        ];
+    });
+};
 
-    // Counts how many times we've already seen the same date+description+amount
-    // combination in this file, so identical transactions can be told apart
-    // (e.g. two coffees with the same amount on the same day)
-    const occurrenceCount = new Map<string, number>();
+const readBbvaRow = (row: unknown[], col: Record<BbvaColumn, number>): ParsedRow | null => {
+    const concepto = row[col.concepto];
+    const importe = row[col.importe];
+    if (concepto == null || importe == null) return null;
 
-    for (const row of dataRows) {
-        const concepto = row[col.concepto];
-        const importe = row[col.importe];
+    const amount = Number(importe);
+    const isRepeatedHeaderRow = Number.isNaN(amount);
+    if (isRepeatedHeaderRow) return null;
 
-        if (concepto == null || importe == null) continue;
+    const movimiento = String(row[col.movimiento] ?? "").trim();
+    const concept = String(concepto).trim();
+    return {
+        date: excelDateToISO(row[col.fecha] ?? row[col.fValor]),
+        description: movimiento ? `${concept} — ${movimiento}` : concept,
+        amount,
+    };
+};
 
-        const amount = Number(importe);
-        // Repeated header rows on a PDF's continuation pages have their own
-        // label text sitting in these columns (e.g. concepto "Concepto",
-        // importe "Importe") — not a real transaction, so a non-numeric
-        // amount means this row is furniture, not data.
-        if (isNaN(amount)) continue;
+const readMappedRow = (row: unknown[], mapping: ColumnMapping): ParsedRow | null => {
+    const rawDescription = row[mapping.descriptionCol];
+    const rawAmount = row[mapping.amountCol];
+    if (rawDescription == null || rawAmount == null) return null;
 
-        const rawDate = row[col.fecha] ?? row[col.fValor];
-        const movimiento = String(row[col.movimiento] ?? "").trim();
-        const description = movimiento ? `${String(concepto).trim()} — ${movimiento}` : String(concepto).trim();
-        const isoDate = excelDateToISO(rawDate);
+    const amount = Number(String(rawAmount).replace(",", "."));
+    if (Number.isNaN(amount)) return null;
 
-        // Keyed by date+amount only (not description) so the same file
-        // re-exported in another language still dedupes correctly.
-        const baseKey = `${isoDate}|${amount}`;
-        const occurrence = occurrenceCount.get(baseKey) ?? 0;
-        occurrenceCount.set(baseKey, occurrence + 1);
+    return { date: excelDateToISO(row[mapping.dateCol]), description: String(rawDescription).trim(), amount };
+};
 
-        transactions.push({
-            id: hashTransaction(isoDate, amount, occurrence),
-            date: isoDate,
-            description,
-            amount,
-            category: categorize(description, amount) ?? "",
-        });
-    }
+export const transactionsFromMapping = (rows: unknown[][], mapping: ColumnMapping): Transaction[] =>
+    toTransactions(rows.slice(mapping.headerRowIndex + 1).map((row) => readMappedRow(row, mapping)));
 
-    return transactions;
-}
-
-export function transactionsFromMapping(rows: unknown[][], mapping: ColumnMapping): Transaction[] {
-    const dataRows = rows.slice(mapping.headerRowIndex + 1);
-    const transactions: Transaction[] = [];
-    const occurrenceCount = new Map<string, number>();
-
-    for (const row of dataRows) {
-        const rawDescription = row[mapping.descriptionCol];
-        const rawAmount = row[mapping.amountCol];
-        if (rawDescription == null || rawAmount == null) continue;
-
-        const amount = Number(String(rawAmount).replace(",", "."));
-        if (isNaN(amount)) continue;
-
-        const description = String(rawDescription).trim();
-        const isoDate = excelDateToISO(row[mapping.dateCol]);
-
-        const baseKey = `${isoDate}|${amount}`;
-        const occurrence = occurrenceCount.get(baseKey) ?? 0;
-        occurrenceCount.set(baseKey, occurrence + 1);
-
-        transactions.push({
-            id: hashTransaction(isoDate, amount, occurrence),
-            date: isoDate,
-            description,
-            amount,
-            category: categorize(description, amount) ?? "",
-        });
-    }
-
-    return transactions;
-}
-
-function isPdfFile(file: File): boolean {
-    return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-}
-
-/** Reads either a spreadsheet or a PDF bank statement into the same row-grid shape. */
-export async function readBankFileRows(file: File): Promise<unknown[][]> {
-    return isPdfFile(file) ? readPdfRows(file) : readSheetRows(file);
-}
-
-export async function parseExcel(file: File): Promise<Transaction[]> {
-    const rows = await readBankFileRows(file);
+export const parseBankRows = (rows: unknown[][]): Transaction[] => {
     const bbva = detectBbvaMapping(rows);
-
     if (!bbva) throw new UnrecognizedBankFormatError(rows);
+    return toTransactions(rows.slice(bbva.headerRowIndex + 1).map((row) => readBbvaRow(row, bbva.col)));
+};
 
-    return transactionsFromBbvaRows(rows, bbva.headerRowIndex, bbva.col);
-}
+const isPdfFile = (file: File): boolean => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 
-function excelDateToISO(value: unknown): string {
+export const readBankFileRows = async (file: File): Promise<unknown[][]> => (isPdfFile(file) ? readPdfRows(file) : readSheetRows(file));
+
+export const parseExcel = async (file: File): Promise<Transaction[]> => parseBankRows(await readBankFileRows(file));
+
+const excelDateToISO = (value: unknown): string => {
     if (typeof value === "string") {
         const [d, m, y] = value.split("/");
         if (d && m && y) return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
@@ -194,4 +165,4 @@ function excelDateToISO(value: unknown): string {
         return `${date.y}-${String(date.m).padStart(2, "0")}-${String(date.d).padStart(2, "0")}`;
     }
     return "";
-}
+};

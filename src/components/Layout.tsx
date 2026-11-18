@@ -1,282 +1,142 @@
 import { useState, type ReactNode } from "react";
-import {
-    Container, Tabs, Tab, Box, Typography, Avatar, ButtonBase, ToggleButtonGroup, ToggleButton,
-    BottomNavigation, BottomNavigationAction, Paper, Drawer, Divider, Button, Switch, FormControlLabel,
-} from "@mui/material";
-import LogoutIcon from "@mui/icons-material/Logout";
-import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
-import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
-import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
-import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
-import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
-import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
-import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
-import RuleOutlinedIcon from "@mui/icons-material/RuleOutlined";
-import EditIcon from "@mui/icons-material/Edit";
-import HistoryIcon from "@mui/icons-material/History";
+import { BottomNavigation, BottomNavigationAction, Box, ButtonBase, Container, Paper, Tab, Tabs, Typography } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import ReviewDialog from "./transactions/ReviewDialog";
-import ConfirmDialog from "./ConfirmDialog";
-import CategoryManagerDialog from "./budget/CategoryManagerDialog";
-import CategorizationRulesDialog from "./budget/CategorizationRulesDialog";
-import EditBudgetsDialog from "./budget/EditBudgetsDialog";
-import BudgetHistoryDialog from "./budget/BudgetHistoryDialog";
-import Logo from "./Logo";
-import { useFinanceStore } from "../store/financeStore";
-import { useSettingsStore } from "../store/settingsStore";
-import { useAuthStore } from "../store/authStore";
 import { useSortedCategories } from "../hooks/useSortedCategories";
 import { useTranslation } from "../i18n/useTranslation";
-import type { Locale } from "../store/localeStore";
+import { useAuthStore } from "../store/authStore";
+import { useFinanceStore } from "../store/financeStore";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { AccountDrawer } from "./layout/AccountDrawer";
+import { SettingsDialogs, type SettingsDialog } from "./layout/SettingsDialogs";
+import { useNavItems } from "./layout/useNavItems";
+import { UserAvatar } from "./layout/UserAvatar";
+import { Logo } from "./Logo";
+import { ReviewDialog } from "./transactions/ReviewDialog";
 
 interface Props {
     children: ReactNode;
-    /**
-     * "page" (default): normal document flow, the browser page scrolls.
-     * "contained": fixed-height shell with its own inner scroll region, used
-     * by pages with a DataGrid that needs to fill the remaining viewport
-     * height and scroll internally instead of growing the page.
-     */
     scrollMode?: "page" | "contained";
 }
 
-type DrawerDialog = "categories" | "rules" | "budgets" | "budgetHistory" | null;
+const HOME_PATH = "/";
 
-function getUserInitial(user: { displayName: string | null; email: string | null }): string {
-    return (user.displayName ?? user.email ?? "?").charAt(0).toUpperCase();
-}
+const headerSx = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    rowGap: 1,
+    pb: 1.5,
+    borderBottom: 1,
+    borderColor: "divider",
+    mb: 2,
+    flexShrink: 0,
+};
 
-export default function Layout({ children, scrollMode = "page" }: Props) {
+const bottomNavSx = {
+    display: { xs: "block", sm: "none" },
+    position: "fixed",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTop: 1,
+    borderColor: "divider",
+    borderRadius: 0,
+    zIndex: 1100,
+};
+
+export const Layout = ({ children, scrollMode = "page" }: Props) => {
+    const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
-    const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
-    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-    const [openDialog, setOpenDialog] = useState<DrawerDialog>(null);
-    const uid = useAuthStore((s) => s.user?.uid ?? "");
+    const navItems = useNavItems();
+    const categories = useSortedCategories();
     const user = useAuthStore((s) => s.user);
     const signOut = useAuthStore((s) => s.signOut);
-    const { transactions, goals, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
-    const {
-        categoryBudgets, categorizationRules, combinedTransactionsView, budgetHistory, showNoComputableTab, estimatedIncome, savingsTarget, setSavingsTarget,
-        addCategory, updateCategoryLabel, removeCategory, setCategoryNoComputable, setCategoryIncomeOnly, setCategoryExcludeFromBalance,
-        addRule, removeRule, setCategoryBudgets, setCombinedTransactionsView, setShowNoComputableTab,
-    } = useSettingsStore();
-    const { t, locale, setLocale } = useTranslation();
-    const categories = useSortedCategories();
+    const { transactions, resolveCategory, removeTransaction, removeTransactions } = useFinanceStore();
+    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+    const [openDialog, setOpenDialog] = useState<SettingsDialog | null>(null);
 
-    const navItems = [
-        { label: t.navDashboard, path: "/", icon: <SpaceDashboardOutlinedIcon /> },
-        ...(combinedTransactionsView
-            ? [{ label: t.navTransactions, path: "/transactions", icon: <ReceiptLongOutlinedIcon /> }]
-            : [
-                { label: t.navExpenses, path: "/expenses", icon: <ShoppingBagOutlinedIcon /> },
-                { label: t.navIncome, path: "/income", icon: <TrendingUpOutlinedIcon /> },
-            ]),
-        { label: t.navGoals, path: "/goals", icon: <SavingsOutlinedIcon /> },
-        ...(showNoComputableTab
-            ? [{ label: t.navNoComputable, path: "/no-computable", icon: <VisibilityOffOutlinedIcon /> }]
-            : []),
-    ];
-
+    const uid = user?.uid ?? "";
     const pending = transactions.filter((tx) => tx.category === "");
-    const currentTab = navItems.some((item) => item.path === location.pathname) ? location.pathname : "/";
-
+    const currentTab = navItems.some((item) => item.path === location.pathname) ? location.pathname : HOME_PATH;
     const contained = scrollMode === "contained";
 
-    function openMenuItem(id: Exclude<DrawerDialog, null>) {
+    const openSettingsDialog = (dialog: SettingsDialog) => {
         setAccountMenuOpen(false);
-        setOpenDialog(id);
-    }
+        setOpenDialog(dialog);
+    };
+
+    const askToSignOut = () => {
+        setAccountMenuOpen(false);
+        setSignOutConfirmOpen(true);
+    };
 
     return (
         <Container
             maxWidth="lg"
-            sx={contained
-                ? { py: 3, pb: { xs: 9, sm: 3 }, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }
-                : { py: 3, pb: { xs: 9, sm: 3 }, minHeight: "100vh", display: "flex", flexDirection: "column" }
-            }
+            sx={{
+                py: 3,
+                pb: { xs: 9, sm: 3 },
+                display: "flex",
+                flexDirection: "column",
+                ...(contained ? { height: "100vh", overflow: "hidden" } : { minHeight: "100vh" }),
+            }}
         >
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", rowGap: 1, pb: 1.5, borderBottom: 1, borderColor: "divider", mb: 2, flexShrink: 0 }}>
+            <Box sx={headerSx}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 2, sm: 5 }, minWidth: 0 }}>
-                    <Box
-                        onClick={() => navigate("/")}
-                        sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0, cursor: "pointer" }}
-                    >
+                    <ButtonBase onClick={() => navigate(HOME_PATH)} sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
                         <Logo size={26} />
                         <Typography variant="h6" sx={{ color: "primary.main", whiteSpace: "nowrap", lineHeight: 1 }}>
                             {t.appName}
                         </Typography>
-                    </Box>
-                    <Tabs value={currentTab} onChange={(_, value) => navigate(value)} sx={{ minHeight: 0, display: { xs: "none", sm: "flex" } }}>
+                    </ButtonBase>
+                    <Tabs
+                        value={currentTab}
+                        onChange={(_, value) => navigate(value)}
+                        sx={{ minHeight: 0, display: { xs: "none", sm: "flex" } }}
+                    >
                         {navItems.map((item) => (
                             <Tab key={item.path} label={item.label} value={item.path} sx={{ minHeight: 0, py: 1 }} />
                         ))}
                     </Tabs>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
-                    {user && (
-                        <ButtonBase
-                            onClick={() => setAccountMenuOpen(true)}
-                            sx={{ borderRadius: "50%" }}
-                        >
-                            <Avatar
-                                src={user.photoURL ?? undefined}
-                                alt={user.displayName ?? user.email ?? ""}
-                                sx={{ width: 32, height: 32 }}
-                            >
-                                {!user.photoURL && getUserInitial(user)}
-                            </Avatar>
-                        </ButtonBase>
-                    )}
-                </Box>
-            </Box>
-            <Drawer anchor="right" open={accountMenuOpen} onClose={() => setAccountMenuOpen(false)}>
-                <Box sx={{ width: 280, p: 3, display: "flex", flexDirection: "column", gap: 2.5, height: "100%" }}>
-                    {user && (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                            <Avatar
-                                src={user.photoURL ?? undefined}
-                                alt={user.displayName ?? user.email ?? ""}
-                                sx={{ width: 48, height: 48 }}
-                            >
-                                {!user.photoURL && getUserInitial(user)}
-                            </Avatar>
-                            <Box sx={{ minWidth: 0 }}>
-                                {user.displayName && (
-                                    <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>{user.displayName}</Typography>
-                                )}
-                                <Typography variant="body2" color="text.secondary" noWrap>{user.email}</Typography>
-                            </Box>
-                        </Box>
-                    )}
-
-                    <Divider />
-
-                    <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                            {t.accountMenuLanguageLabel}
-                        </Typography>
-                        <ToggleButtonGroup
-                            value={locale}
-                            exclusive
-                            size="small"
-                            onChange={(_, value: Locale | null) => value && setLocale(value)}
-                            sx={{
-                                "& .MuiToggleButton-root": {
-                                    border: "none",
-                                    borderRadius: "999px !important",
-                                    px: 1.5,
-                                    color: "text.secondary",
-                                    "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } },
-                                },
-                                bgcolor: "background.default",
-                                borderRadius: "999px",
-                                p: 0.5,
-                            }}
-                        >
-                            <ToggleButton value="es">ES</ToggleButton>
-                            <ToggleButton value="en">EN</ToggleButton>
-                        </ToggleButtonGroup>
-                    </Box>
-
-                    <Divider />
-
-                    <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                            {t.accountMenuPreferencesLabel}
-                        </Typography>
-                        <FormControlLabel
-                            sx={{ ml: 0 }}
-                            control={
-                                <Switch
-                                    size="small"
-                                    checked={combinedTransactionsView}
-                                    onChange={(e) => setCombinedTransactionsView(uid, e.target.checked)}
-                                />
-                            }
-                            label={<Typography variant="body2">{t.combinedTransactionsViewLabel}</Typography>}
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0 }}
-                            control={
-                                <Switch
-                                    size="small"
-                                    checked={showNoComputableTab}
-                                    onChange={(e) => setShowNoComputableTab(uid, e.target.checked)}
-                                />
-                            }
-                            label={<Typography variant="body2">{t.showNoComputableTabLabel}</Typography>}
-                        />
-                    </Box>
-
-                    <Divider />
-
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                        <Button
-                            startIcon={<CategoryOutlinedIcon />}
-                            color="inherit"
-                            onClick={() => openMenuItem("categories")}
-                            sx={{ justifyContent: "flex-start" }}
-                        >
-                            {t.manageCategoriesTooltip}
-                        </Button>
-                        <Button
-                            startIcon={<RuleOutlinedIcon />}
-                            color="inherit"
-                            onClick={() => openMenuItem("rules")}
-                            sx={{ justifyContent: "flex-start" }}
-                        >
-                            {t.manageRulesTooltip}
-                        </Button>
-                        <Button
-                            startIcon={<EditIcon />}
-                            color="inherit"
-                            onClick={() => openMenuItem("budgets")}
-                            sx={{ justifyContent: "flex-start" }}
-                        >
-                            {t.editBudgetTooltip}
-                        </Button>
-                        <Button
-                            startIcon={<HistoryIcon />}
-                            color="inherit"
-                            onClick={() => openMenuItem("budgetHistory")}
-                            sx={{ justifyContent: "flex-start" }}
-                        >
-                            {t.budgetHistoryTooltip}
-                        </Button>
-                    </Box>
-
-                    <Box sx={{ flexGrow: 1 }} />
-
-                    <Divider />
-
-                    <Button
-                        startIcon={<LogoutIcon />}
-                        color="error"
-                        onClick={() => {
-                            setAccountMenuOpen(false);
-                            setSignOutConfirmOpen(true);
-                        }}
-                        sx={{ justifyContent: "flex-start" }}
+                {user && (
+                    <ButtonBase
+                        onClick={() => setAccountMenuOpen(true)}
+                        aria-label={t.accountMenuPreferencesLabel}
+                        sx={{ borderRadius: "50%" }}
                     >
-                        {t.signOut}
-                    </Button>
-                </Box>
-            </Drawer>
+                        <UserAvatar user={user} size={32} />
+                    </ButtonBase>
+                )}
+            </Box>
+
             {contained ? (
-                <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-                    {children}
-                </Box>
+                <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>{children}</Box>
             ) : (
                 children
             )}
+
+            <AccountDrawer
+                open={accountMenuOpen}
+                onClose={() => setAccountMenuOpen(false)}
+                onOpenDialog={openSettingsDialog}
+                onSignOut={askToSignOut}
+            />
+            <SettingsDialogs open={openDialog} onClose={() => setOpenDialog(null)} />
             <ReviewDialog
                 pending={pending}
                 categories={categories}
                 onResolve={(id, category) => resolveCategory(uid, id, category)}
                 onDiscardOne={(id) => removeTransaction(uid, id)}
-                onDiscardAll={() => removeTransactions(uid, pending.map((tx) => tx.id))}
-                onFinish={() => {}}
+                onDiscardAll={() =>
+                    removeTransactions(
+                        uid,
+                        pending.map((tx) => tx.id),
+                    )
+                }
             />
             <ConfirmDialog
                 open={signOutConfirmOpen}
@@ -285,60 +145,9 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
                 message={t.signOutConfirmMessage}
                 confirmLabel={t.signOutConfirmButton}
                 danger
-                onConfirm={() => signOut()}
+                onConfirm={signOut}
             />
-            <CategoryManagerDialog
-                open={openDialog === "categories"}
-                onClose={() => setOpenDialog(null)}
-                categories={categories}
-                onUpdateLabel={(value, label) => updateCategoryLabel(uid, value, label)}
-                onAdd={(value, label) => addCategory(uid, value, label)}
-                onRemove={(value) => removeCategory(uid, value)}
-                onToggleNoComputable={(value, noComputable) => setCategoryNoComputable(uid, value, noComputable)}
-                onToggleIncomeOnly={(value, incomeOnly) => setCategoryIncomeOnly(uid, value, incomeOnly)}
-                onToggleExcludeFromBalance={(value, excludeFromBalance) => setCategoryExcludeFromBalance(uid, value, excludeFromBalance)}
-            />
-            <CategorizationRulesDialog
-                open={openDialog === "rules"}
-                onClose={() => setOpenDialog(null)}
-                categories={categories}
-                goals={goals}
-                rules={categorizationRules}
-                onAdd={(keyword, category, goalId) => addRule(uid, keyword, category, goalId)}
-                onRemove={(id) => removeRule(uid, id)}
-            />
-            <EditBudgetsDialog
-                open={openDialog === "budgets"}
-                onClose={() => setOpenDialog(null)}
-                categories={categories}
-                budgets={categoryBudgets}
-                onSave={(budgets) => setCategoryBudgets(uid, budgets)}
-                estimatedIncome={estimatedIncome}
-                savingsTarget={savingsTarget}
-                onSaveSavingsTarget={(savings) => setSavingsTarget(uid, savings)}
-            />
-            <BudgetHistoryDialog
-                open={openDialog === "budgetHistory"}
-                onClose={() => setOpenDialog(null)}
-                categories={categories}
-                categoryBudgets={categoryBudgets}
-                budgetHistory={budgetHistory}
-                transactions={transactions}
-                onSaveMonth={(month, budgets) => setCategoryBudgets(uid, budgets, month)}
-                estimatedIncome={estimatedIncome}
-                savingsTarget={savingsTarget}
-                onSaveSavingsTarget={(savings) => setSavingsTarget(uid, savings)}
-            />
-            <Paper
-                elevation={0}
-                sx={{
-                    display: { xs: "block", sm: "none" },
-                    position: "fixed", bottom: 0, left: 0, right: 0,
-                    borderTop: 1, borderColor: "divider",
-                    borderRadius: 0,
-                    zIndex: 1100,
-                }}
-            >
+            <Paper elevation={0} sx={bottomNavSx}>
                 <BottomNavigation value={currentTab} onChange={(_, value) => navigate(value)} showLabels>
                     {navItems.map((item) => (
                         <BottomNavigationAction key={item.path} label={item.label} value={item.path} icon={item.icon} />
@@ -347,4 +156,4 @@ export default function Layout({ children, scrollMode = "page" }: Props) {
             </Paper>
         </Container>
     );
-}
+};

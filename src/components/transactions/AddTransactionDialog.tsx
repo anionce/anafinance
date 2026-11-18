@@ -16,21 +16,19 @@ import type { Category } from "../../types/Category";
 import type { Transaction } from "../../types/Transaction";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
+import { toDateKey } from "../../utils/dates";
 
 interface Props {
     open: boolean;
     categories: Category[];
-    /** When set, locks the transaction to this type and hides the expense/income toggle. */
     fixedType?: "expense" | "income";
     onClose: () => void;
     onConfirm: (transaction: Omit<Transaction, "id">) => void;
 }
 
-function todayISO(): string {
-    return new Date().toISOString().slice(0, 10);
-}
+const todayISO = (): string => toDateKey(new Date());
 
-export default function AddTransactionDialog({ open, categories, fixedType, onClose, onConfirm }: Props) {
+export const AddTransactionDialog = ({ open, categories, fixedType, onClose, onConfirm }: Props) => {
     const { t, locale } = useTranslation();
     const [type, setType] = useState<"expense" | "income">(fixedType ?? "expense");
     const [date, setDate] = useState(todayISO());
@@ -40,15 +38,15 @@ export default function AddTransactionDialog({ open, categories, fixedType, onCl
 
     const canConfirm = description.trim() !== "" && Number(amount) > 0 && !!date && !!category;
 
-    function reset() {
+    const reset = () => {
         setType(fixedType ?? "expense");
         setDate(todayISO());
         setDescription("");
         setAmount("");
         setCategory(categories[0]?.value ?? "");
-    }
+    };
 
-    function handleConfirm() {
+    const handleConfirm = () => {
         if (!canConfirm) return;
         const magnitude = Math.abs(Number(amount));
         onConfirm({
@@ -59,12 +57,12 @@ export default function AddTransactionDialog({ open, categories, fixedType, onCl
         });
         reset();
         onClose();
-    }
+    };
 
-    function handleClose() {
+    const handleClose = () => {
         reset();
         onClose();
-    }
+    };
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
@@ -92,37 +90,25 @@ export default function AddTransactionDialog({ open, categories, fixedType, onCl
                         slotProps={{ inputLabel: { shrink: true } }}
                     />
 
-                    <TextField
-                        size="small"
-                        label={t.colDescription}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                    />
+                    <TextField size="small" label={t.colDescription} value={description} onChange={(e) => setDescription(e.target.value)} />
 
-                    <TextField
-                        type="number"
-                        size="small"
-                        label={t.colAmount}
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                    />
+                    <TextField type="number" size="small" label={t.colAmount} value={amount} onChange={(e) => setAmount(e.target.value)} />
 
-                    <Select
-                        size="small"
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        displayEmpty
-                    >
+                    <Select size="small" value={category} onChange={(e) => setCategory(e.target.value)} displayEmpty>
                         {categories.map((c) => (
-                            <MenuItem key={c.value} value={c.value}>{getCategoryLabel(c, locale)}</MenuItem>
+                            <MenuItem key={c.value} value={c.value}>
+                                {getCategoryLabel(c, locale)}
+                            </MenuItem>
                         ))}
                     </Select>
                 </Stack>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleClose}>{t.cancel}</Button>
-                <Button variant="contained" disabled={!canConfirm} onClick={handleConfirm}>{t.add}</Button>
+                <Button variant="contained" disabled={!canConfirm} onClick={handleConfirm}>
+                    {t.add}
+                </Button>
             </DialogActions>
         </Dialog>
     );
-}
+};

@@ -20,17 +20,12 @@ interface SliceDatum {
     category: string;
 }
 
-const COLORS = [
-    "#D97757", "#5B9279", "#8B7FB8", "#6B93B8", "#D9A05B",
-    "#C9A876", "#C97B84", "#6FA8A0", "#A67B9E", "#8A94A6",
-];
+const COLORS = ["#D97757", "#5B9279", "#8B7FB8", "#6B93B8", "#D9A05B", "#C9A876", "#C97B84", "#6FA8A0", "#A67B9E", "#8A94A6"];
 
-/** Beyond this many slices, the legend gets long enough to overflow its
- *  card — the smallest categories are folded into a single "Other" slice. */
 const MAX_SLICES = 6;
 const OTHER_CATEGORY = "__other__";
 
-export default function CategoryPieChart({ transactions, categories, selectedCategory, onSelectCategory }: Props) {
+export const CategoryPieChart = ({ transactions, categories, selectedCategory, onSelectCategory }: Props) => {
     const { t, locale } = useTranslation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -47,9 +42,10 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
         .sort((a, b) => b.value - a.value);
 
     const otherTotal = sorted.slice(MAX_SLICES).reduce((sum, d) => sum + d.value, 0);
-    const data: SliceDatum[] = otherTotal > 0
-        ? [...sorted.slice(0, MAX_SLICES), { name: t.otherCategoryLabel, value: otherTotal, category: OTHER_CATEGORY }]
-        : sorted;
+    const data: SliceDatum[] =
+        otherTotal > 0
+            ? [...sorted.slice(0, MAX_SLICES), { name: t.otherCategoryLabel, value: otherTotal, category: OTHER_CATEGORY }]
+            : sorted;
 
     const total = data.reduce((sum, d) => sum + d.value, 0);
 
@@ -61,14 +57,12 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
         );
     }
 
-    function handleSliceClick(entry: unknown) {
+    const handleSliceClick = (entry: unknown) => {
         const category = (entry as { category?: string } | undefined)?.category;
         if (category && category !== OTHER_CATEGORY && onSelectCategory) onSelectCategory(category);
-    }
+    };
 
-    /** Shared by the desktop (vertical list) and mobile (wrapped chips) legends — only the
-     *  container layout and text size differ between them. */
-    function renderLegendItems(variant: "list" | "chips") {
+    const renderLegendItems = (variant: "list" | "chips") => {
         const isList = variant === "list";
         return data.map((d, i) => {
             const pct = total > 0 ? (d.value / total) * 100 : 0;
@@ -77,19 +71,29 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
                     key={d.category}
                     onClick={() => d.category !== OTHER_CATEGORY && onSelectCategory?.(d.category)}
                     sx={{
-                        display: "flex", alignItems: "center", gap: isList ? 0.75 : 0.5,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: isList ? 0.75 : 0.5,
                         cursor: onSelectCategory && d.category !== OTHER_CATEGORY ? "pointer" : "default",
                         opacity: selectedCategory && d.category !== selectedCategory ? 0.4 : 1,
                     }}
                 >
-                    <Box sx={{ width: 10, height: 10, borderRadius: isList ? "2px" : "3px", flexShrink: 0, bgcolor: COLORS[i % COLORS.length] }} />
+                    <Box
+                        sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: isList ? "2px" : "3px",
+                            flexShrink: 0,
+                            bgcolor: COLORS[i % COLORS.length],
+                        }}
+                    />
                     <Typography variant={isList ? "body2" : "caption"} sx={{ whiteSpace: "nowrap" }}>
                         {d.name} ({pct.toFixed(0)}%)
                     </Typography>
                 </Box>
             );
         });
-    }
+    };
 
     return (
         <Box>
@@ -117,14 +121,15 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
                         </Pie>
                         <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                         {!isMobile && (
-                            // Custom content (instead of letting Legend derive its own payload
-                            // from the chart) so the legend's order is provably tied to `data`'s
-                            // highest-to-lowest sort, not whatever order Recharts renders in.
                             <Legend
                                 layout="vertical"
                                 verticalAlign="middle"
                                 align="right"
-                                content={() => <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, pl: 2 }}>{renderLegendItems("list")}</Box>}
+                                content={() => (
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, pl: 2 }}>
+                                        {renderLegendItems("list")}
+                                    </Box>
+                                )}
                             />
                         )}
                     </PieChart>
@@ -138,4 +143,4 @@ export default function CategoryPieChart({ transactions, categories, selectedCat
             )}
         </Box>
     );
-}
+};

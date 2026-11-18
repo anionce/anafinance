@@ -15,7 +15,7 @@ interface Props {
     onNameChange: (name: string) => void;
 }
 
-export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange, onNameChange }: Props) {
+export const FeaturedGoalCard = ({ goal, onAmountChange, onTargetChange, onNameChange }: Props) => {
     const amountEdit = useInlineEdit(goal.currentAmount, String, parseNonEmptyNumber, onAmountChange);
     const targetEdit = useInlineEdit(goal.targetAmount, String, parseNonEmptyNumber, onTargetChange);
     const nameEdit = useInlineEdit(goal.name, (v) => v, parseNonEmptyText, onNameChange);
@@ -28,9 +28,14 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                 <Box
                     sx={{
-                        width: 36, height: 36, borderRadius: "50%",
-                        bgcolor: accent.savingsSoft, color: accent.savings,
-                        display: "flex", alignItems: "center", justifyContent: "center",
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        bgcolor: accent.savingsSoft,
+                        color: accent.savings,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         flexShrink: 0,
                     }}
                 >
@@ -52,7 +57,9 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                     </>
                 ) : (
                     <>
-                        <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>{goal.name}</Typography>
+                        <Typography variant="h6" sx={{ flex: 1, lineHeight: 1 }}>
+                            {goal.name}
+                        </Typography>
                         <IconButton size="small" onClick={nameEdit.start}>
                             <EditIcon sx={{ fontSize: 18, opacity: 0.75 }} />
                         </IconButton>
@@ -63,7 +70,8 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                 value={pct}
                 variant="determinate"
                 sx={{
-                    mb: 2, height: 8,
+                    mb: 2,
+                    height: 8,
                     bgcolor: accent.savingsSoft,
                     "& .MuiLinearProgress-bar": { bgcolor: accent.savings },
                 }}
@@ -97,7 +105,9 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
                 )}
                 {targetEdit.editing ? (
                     <>
-                        <Typography component="span" variant="body2" sx={{ color: "text.secondary" }}>/</Typography>
+                        <Typography component="span" variant="body2" sx={{ color: "text.secondary" }}>
+                            /
+                        </Typography>
                         <TextField
                             size="small"
                             type="number"
@@ -128,4 +138,4 @@ export default function FeaturedGoalCard({ goal, onAmountChange, onTargetChange,
             </Typography>
         </Card>
     );
-}
+};

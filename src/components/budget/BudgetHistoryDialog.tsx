@@ -20,13 +20,16 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import type { Category } from "../../types/Category";
 import type { CategoryBudget } from "../../types/Budget";
 import type { Transaction } from "../../types/Transaction";
-import { getBudgetForMonth, calculateSpentByCategoryForMonth, calculatePercentage } from "../../services/budget";
-import { getAvailableMonths, getCurrentMonth, monthlyEquivalentAmount, formatMonthLabel, shiftMonth } from "../../utils/dates";
+import { calculatePercentage } from "../../services/budget";
+import { historyMonths, monthBudgetReport } from "../../services/budgetHistory";
+import { downloadCsv } from "../../utils/csv";
+import { getCurrentMonth, formatMonthLabel, shiftMonth } from "../../utils/dates";
 import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { accent } from "../../theme/colors";
-import EditBudgetsDialog from "./EditBudgetsDialog";
+import { EditBudgetsDialog } from "./EditBudgetsDialog";
+import { useOnOpen } from "../../hooks/useOnOpen";
 
 interface Props {
     open: boolean;
@@ -41,83 +44,34 @@ interface Props {
     onSaveSavingsTarget: (savingsTarget: number) => void;
 }
 
-interface BudgetRow {
-    category: Category;
-    /** 0 when this category has no budget for the month — spending still shows, just with no target to compare against. */
-    budgetAmount: number;
-    spent: number;
-    remaining: number;
-}
-
-/** How many months past the current one are always offered in the picker, so a
- *  future month's budget can be set in advance even before it has any data. */
-const FUTURE_MONTHS_AHEAD = 12;
-
-function downloadCsv(filename: string, rows: (string | number)[][]) {
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
-}
-
-export default function BudgetHistoryDialog({ open, onClose, categories, categoryBudgets, budgetHistory, transactions, onSaveMonth, estimatedIncome, savingsTarget, onSaveSavingsTarget }: Props) {
+export const BudgetHistoryDialog = ({
+    open,
+    onClose,
+    categories,
+    categoryBudgets,
+    budgetHistory,
+    transactions,
+    onSaveMonth,
+    estimatedIncome,
+    savingsTarget,
+    onSaveSavingsTarget,
+}: Props) => {
     const { t, locale } = useTranslation();
     const [month, setMonth] = useState(getCurrentMonth());
     const [editOpen, setEditOpen] = useState(false);
 
-    // Resets the selected month each time the dialog opens — see the same
-    // comment in CategoryManagerDialog.tsx.
-    const [wasOpen, setWasOpen] = useState(open);
-    if (open !== wasOpen) {
-        setWasOpen(open);
-        if (open) setMonth(getCurrentMonth());
-    }
+    useOnOpen(open, () => setMonth(getCurrentMonth()));
 
-    // Skipped while closed — Layout mounts this dialog on every page, so this
-    // would otherwise re-scan the full transaction list on every render.
-    const { months, effectiveBudgets, rows, totalBudget, totalSpent } = useMemo(() => {
-        if (!open) {
-            return { months: [] as string[], effectiveBudgets: {} as Record<string, CategoryBudget>, rows: [] as BudgetRow[], totalBudget: 0, totalSpent: 0 };
-        }
+    const months = useMemo(
+        () => historyMonths(month, getCurrentMonth(), transactions, budgetHistory),
+        [month, transactions, budgetHistory],
+    );
+    const { effectiveBudgets, rows, totalBudget, totalSpent } = useMemo(
+        () => monthBudgetReport(month, categories, transactions, budgetHistory, categoryBudgets),
+        [month, categories, transactions, budgetHistory, categoryBudgets],
+    );
 
-        const currentMonth = getCurrentMonth();
-        const futureMonths = Array.from({ length: FUTURE_MONTHS_AHEAD }, (_, i) => shiftMonth(currentMonth, i + 1));
-        // Always includes `month` itself — the prev/next arrows can land on a
-        // month outside this "usual" range, and the Select needs a matching
-        // MenuItem for whatever is currently selected.
-        const months = Array.from(new Set([month, ...futureMonths, currentMonth, ...getAvailableMonths(transactions), ...Object.keys(budgetHistory)]))
-            .sort()
-            .reverse();
-
-        const noComputableValues = new Set(categories.filter((c) => c.noComputable).map((c) => c.value));
-        const effectiveBudgets = getBudgetForMonth(budgetHistory, categoryBudgets, month);
-        const spentByCategory = calculateSpentByCategoryForMonth(
-            transactions.filter((tx) => !noComputableValues.has(tx.category)),
-            month
-        );
-
-        // A full breakdown of where money went that month — not just the
-        // categories that happen to have a budget set.
-        const rows: BudgetRow[] = categories
-            .filter((c) => !c.noComputable && !c.incomeOnly && (effectiveBudgets[c.value] || spentByCategory[c.value]))
-            .map((c) => {
-                const budgetAmount = effectiveBudgets[c.value] ? monthlyEquivalentAmount(effectiveBudgets[c.value]) : 0;
-                const spent = spentByCategory[c.value] ?? 0;
-                return { category: c, budgetAmount, spent, remaining: budgetAmount - spent };
-            })
-            .sort((a, b) => b.spent - a.spent);
-
-        const totalBudget = rows.reduce((sum, r) => sum + r.budgetAmount, 0);
-        const totalSpent = rows.reduce((sum, r) => sum + r.spent, 0);
-
-        return { months, effectiveBudgets, rows, totalBudget, totalSpent };
-    }, [open, transactions, budgetHistory, categories, categoryBudgets, month]);
-
-    function handleDownload() {
+    const handleDownload = () => {
         const header = [t.colCategory, t.budgetHistoryColBudget, t.budgetHistoryColSpent, t.budgetHistoryColRemaining];
         const body = rows.map((r) => [
             getCategoryLabel(r.category, locale),
@@ -127,7 +81,7 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
         ]);
         const totalRow = [t.budgetHistoryTotalLabel, totalBudget.toFixed(2), totalSpent.toFixed(2), (totalBudget - totalSpent).toFixed(2)];
         downloadCsv(`presupuesto-${month}.csv`, [header, ...body, totalRow]);
-    }
+    };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -139,7 +93,9 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
                     </IconButton>
                     <Select size="small" value={month} onChange={(e) => setMonth(e.target.value)} fullWidth>
                         {months.map((m) => (
-                            <MenuItem key={m} value={m}>{formatMonthLabel(m, locale)}</MenuItem>
+                            <MenuItem key={m} value={m}>
+                                {formatMonthLabel(m, locale)}
+                            </MenuItem>
                         ))}
                     </Select>
                     <IconButton size="small" onClick={() => setMonth(shiftMonth(month, 1))} title={t.nextMonthTooltip}>
@@ -180,7 +136,9 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
                             );
                         })}
                         <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1, borderTop: 1, borderColor: "divider" }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{t.budgetHistoryTotalLabel}</Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {t.budgetHistoryTotalLabel}
+                            </Typography>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                 {formatCurrency(totalSpent)} / {formatCurrency(totalBudget)}
                             </Typography>
@@ -212,4 +170,4 @@ export default function BudgetHistoryDialog({ open, onClose, categories, categor
             />
         </Dialog>
     );
-}
+};

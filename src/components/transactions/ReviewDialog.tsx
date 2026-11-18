@@ -25,7 +25,7 @@ import { formatCurrency } from "../../utils/currency";
 import { useTranslation } from "../../i18n/useTranslation";
 import { getCategoryLabel } from "../../i18n/categoryTranslations";
 import { useUIStore } from "../../store/uiStore";
-import ConfirmDialog from "../ConfirmDialog";
+import { ConfirmDialog } from "../ConfirmDialog";
 
 interface Props {
     pending: Transaction[];
@@ -33,10 +33,9 @@ interface Props {
     onResolve: (id: string, category: string) => void;
     onDiscardOne: (id: string) => void;
     onDiscardAll: () => void;
-    onFinish: () => void;
 }
 
-export default function ReviewDialog({ pending, categories, onResolve, onDiscardOne, onDiscardAll, onFinish }: Props) {
+export const ReviewDialog = ({ pending, categories, onResolve, onDiscardOne, onDiscardAll }: Props) => {
     const { t, locale } = useTranslation();
     const [selected, setSelected] = useState<string | null>(null);
     const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
@@ -55,56 +54,40 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
 
     const current = pending[0];
     const remaining = pending.length;
-    // Stays dismissed for this exact set of pending items, even across page
-    // navigation — only a genuinely new/changed pending set reopens it.
-    // Hidden while the discard-all confirmation is up so the list of items
-    // shrinking (as each gets deleted) isn't visible behind/through it, and
-    // hidden for the whole discard (not just a pendingIds snapshot) since
-    // deletions resolve one at a time and shrink pendingIds mid-flight,
-    // which would otherwise no longer match the dismissed snapshot.
+
     const open = pendingIds !== reviewDismissedIds && !discardConfirmOpen && !discarding;
 
-    function scrollContentToTop() {
+    const scrollContentToTop = () => {
         contentRef.current?.scrollTo({ top: 0 });
-    }
+    };
 
-    function advance(action: () => void) {
+    const advance = (action: () => void) => {
         action();
         setSelected(null);
         scrollContentToTop();
+    };
 
-        if (remaining === 1) {
-            onFinish();
-        }
-    }
-
-    function handleNext() {
+    const handleNext = () => {
         if (!selected) return;
         advance(() => onResolve(current.id, selected));
-    }
+    };
 
-    function handleDiscardOne() {
+    const handleDiscardOne = () => {
         advance(() => onDiscardOne(current.id));
-    }
+    };
 
-    function handleDismiss() {
-        dismissReview(pendingIds);
-        onFinish();
-    }
+    const handleDismiss = () => dismissReview(pendingIds);
 
-    function handleDiscardAll() {
+    const handleDiscardAll = () => {
         setDiscarding(true);
         dismissReview(pendingIds);
         onDiscardAll();
-        onFinish();
-    }
+    };
 
     return (
         <>
             <Dialog open={open} onClose={handleDismiss} maxWidth="xs" fullWidth>
-                <DialogTitle>
-                    {t.reviewDialogTitle(remaining)}
-                </DialogTitle>
+                <DialogTitle>{t.reviewDialogTitle(remaining)}</DialogTitle>
                 <DialogContent ref={contentRef}>
                     <Typography variant="body1" sx={{ mb: 1 }}>
                         {current.description}
@@ -121,11 +104,7 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
                         onChange={(_, value) => setSelected(value)}
                     >
                         {categories.map((cat) => (
-                            <ToggleButton
-                                key={cat.value}
-                                value={cat.value}
-                                sx={{ justifyContent: "space-between", display: "flex" }}
-                            >
+                            <ToggleButton key={cat.value} value={cat.value} sx={{ justifyContent: "space-between", display: "flex" }}>
                                 {getCategoryLabel(cat, locale)}
                                 {selected === cat.value && <CheckCircleIcon sx={{ fontSize: 20 }} />}
                             </ToggleButton>
@@ -137,12 +116,26 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
                         <MoreVertIcon fontSize="small" />
                     </IconButton>
                     <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={() => setMenuAnchor(null)}>
-                        <MenuItem onClick={() => { setMenuAnchor(null); handleDiscardOne(); }}>
-                            <ListItemIcon><DeleteOutlineIcon fontSize="small" color="error" /></ListItemIcon>
+                        <MenuItem
+                            onClick={() => {
+                                setMenuAnchor(null);
+                                handleDiscardOne();
+                            }}
+                        >
+                            <ListItemIcon>
+                                <DeleteOutlineIcon fontSize="small" color="error" />
+                            </ListItemIcon>
                             <ListItemText sx={{ color: "error.main" }}>{t.reviewDiscardOneButton}</ListItemText>
                         </MenuItem>
-                        <MenuItem onClick={() => { setMenuAnchor(null); setDiscardConfirmOpen(true); }}>
-                            <ListItemIcon><DeleteSweepIcon fontSize="small" color="error" /></ListItemIcon>
+                        <MenuItem
+                            onClick={() => {
+                                setMenuAnchor(null);
+                                setDiscardConfirmOpen(true);
+                            }}
+                        >
+                            <ListItemIcon>
+                                <DeleteSweepIcon fontSize="small" color="error" />
+                            </ListItemIcon>
                             <ListItemText sx={{ color: "error.main" }}>{t.reviewDiscardAllButton}</ListItemText>
                         </MenuItem>
                     </Menu>
@@ -164,4 +157,4 @@ export default function ReviewDialog({ pending, categories, onResolve, onDiscard
             />
         </>
     );
-}
+};

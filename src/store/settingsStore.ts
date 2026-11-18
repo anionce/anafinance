@@ -1,29 +1,17 @@
 import { create } from "zustand";
 import { loadSettings, saveSettings } from "../services/storage";
-import { DEFAULT_SETTINGS } from "../types/Settings";
-import { getCurrentMonth } from "../utils/dates";
-import type { Category } from "../types/Category";
 import type { CategoryBudget } from "../types/Budget";
 import type { CategorizationRule } from "../types/CategorizationRule";
+import type { Category } from "../types/Category";
+import { DEFAULT_SETTINGS, type Settings } from "../types/Settings";
+import { getCurrentMonth } from "../utils/dates";
 
-interface SettingsState {
-    estimatedIncome: number;
-    savingsTarget: number;
-    categoryBudgets: Record<string, CategoryBudget>;
-    categories: Category[];
-    categorizationRules: CategorizationRule[];
-    featuredGoalId: string;
-    onboardingComplete: boolean;
-    combinedTransactionsView: boolean;
-    budgetHistory: Record<string, Record<string, CategoryBudget>>;
-    showNoComputableTab: boolean;
+interface SettingsState extends Settings {
     hasLoaded: boolean;
     load: (uid: string) => Promise<void>;
     reset: () => void;
     setEstimatedIncome: (uid: string, value: number) => Promise<void>;
     setSavingsTarget: (uid: string, value: number) => Promise<void>;
-    /** `month` ("YYYY-MM") defaults to the current month; pass a past month to correct its
-     *  history without touching the current budget or any other month's snapshot. */
     setCategoryBudgets: (uid: string, budgets: Record<string, CategoryBudget>, month?: string) => Promise<void>;
     addCategory: (uid: string, value: string, label: string) => Promise<void>;
     updateCategoryLabel: (uid: string, value: string, label: string) => Promise<void>;
@@ -39,124 +27,72 @@ interface SettingsState {
     setShowNoComputableTab: (uid: string, value: boolean) => Promise<void>;
 }
 
-const INITIAL_STATE = {
-    ...DEFAULT_SETTINGS,
-    hasLoaded: false,
-};
+const INITIAL_STATE = { ...DEFAULT_SETTINGS, hasLoaded: false };
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
-    ...INITIAL_STATE,
-
-    async load(uid) {
-        const settings = await loadSettings(uid);
-        set({ ...settings, hasLoaded: true });
-    },
-
-    reset() {
-        set({ ...INITIAL_STATE });
-    },
-
-    async setEstimatedIncome(uid, value) {
-        set({ estimatedIncome: value });
-        await saveSettings(uid, { estimatedIncome: value });
-    },
-
-    async setSavingsTarget(uid, value) {
-        set({ savingsTarget: value });
-        await saveSettings(uid, { savingsTarget: value });
-    },
-
-    async setCategoryBudgets(uid, budgets, month = getCurrentMonth()) {
-        // Snapshotted under its own month so past months keep showing whatever
-        // budget was actually active then. Only touches the "current" budget
-        // (the one every other screen reads as "now") when editing the
-        // current month itself — correcting a past month must not change it.
-        const budgetHistory = { ...get().budgetHistory, [month]: budgets };
-        const isCurrentMonth = month === getCurrentMonth();
-        const patch = isCurrentMonth ? { categoryBudgets: budgets, budgetHistory } : { budgetHistory };
+export const useSettingsStore = create<SettingsState>((set, get) => {
+    const save = async (uid: string, patch: Partial<Settings>) => {
         set(patch);
         await saveSettings(uid, patch);
-    },
+    };
 
-    async addCategory(uid, value, label) {
-        const categories = [...get().categories, { value, label }];
-        set({ categories });
-        await saveSettings(uid, { categories });
-    },
+    const updateCategory = (value: string, patch: Partial<Category>): Category[] =>
+        get().categories.map((c) => (c.value === value ? { ...c, ...patch } : c));
 
-    async updateCategoryLabel(uid, value, label) {
-        const categories = get().categories.map((c) => (c.value === value ? { ...c, label, customLabel: true } : c));
-        set({ categories });
-        await saveSettings(uid, { categories });
-    },
-
-    async setCategoryNoComputable(uid, value, noComputable) {
-        const categories = get().categories.map((c) => (c.value === value ? { ...c, noComputable } : c));
-        const categoryBudgets = { ...get().categoryBudgets };
-        if (noComputable) delete categoryBudgets[value];
-        // Also snapshots the current month, same as setCategoryBudgets does —
-        // otherwise the budget history dialog's "what was the budget this
-        // month" lookup falls back to an older snapshot that still has the
-        // category, making it look like it "came back" for no reason.
+    const withoutBudgetFor = (value: string) => {
+        const categoryBudgets = Object.fromEntries(Object.entries(get().categoryBudgets).filter(([key]) => key !== value));
         const budgetHistory = { ...get().budgetHistory, [getCurrentMonth()]: categoryBudgets };
-        set({ categories, categoryBudgets, budgetHistory });
-        await saveSettings(uid, { categories, categoryBudgets, budgetHistory });
-    },
+        return { categoryBudgets, budgetHistory };
+    };
 
-    async setCategoryIncomeOnly(uid, value, incomeOnly) {
-        const categories = get().categories.map((c) => (c.value === value ? { ...c, incomeOnly } : c));
-        const categoryBudgets = { ...get().categoryBudgets };
-        if (incomeOnly) delete categoryBudgets[value];
-        const budgetHistory = { ...get().budgetHistory, [getCurrentMonth()]: categoryBudgets };
-        set({ categories, categoryBudgets, budgetHistory });
-        await saveSettings(uid, { categories, categoryBudgets, budgetHistory });
-    },
+    const budgetsAfterToggle = (value: string, removesBudget: boolean) =>
+        removesBudget ? withoutBudgetFor(value) : { budgetHistory: { ...get().budgetHistory, [getCurrentMonth()]: get().categoryBudgets } };
 
-    async setCategoryExcludeFromBalance(uid, value, excludeFromBalance) {
-        const categories = get().categories.map((c) => (c.value === value ? { ...c, excludeFromBalance } : c));
-        set({ categories });
-        await saveSettings(uid, { categories });
-    },
+    return {
+        ...INITIAL_STATE,
 
-    async removeCategory(uid, value) {
-        const categories = get().categories.filter((c) => c.value !== value);
-        const categoryBudgets = { ...get().categoryBudgets };
-        delete categoryBudgets[value];
-        const budgetHistory = { ...get().budgetHistory, [getCurrentMonth()]: categoryBudgets };
-        set({ categories, categoryBudgets, budgetHistory });
-        await saveSettings(uid, { categories, categoryBudgets, budgetHistory });
-    },
+        load: async (uid) => set({ ...(await loadSettings(uid)), hasLoaded: true }),
 
-    async addRule(uid, keyword, category, goalId) {
-        const rule: CategorizationRule = { id: crypto.randomUUID(), keyword, category, ...(goalId ? { goalId } : {}) };
-        const categorizationRules = [...get().categorizationRules, rule];
-        set({ categorizationRules });
-        await saveSettings(uid, { categorizationRules });
-    },
+        reset: () => set({ ...INITIAL_STATE }),
 
-    async removeRule(uid, id) {
-        const categorizationRules = get().categorizationRules.filter((r) => r.id !== id);
-        set({ categorizationRules });
-        await saveSettings(uid, { categorizationRules });
-    },
+        setEstimatedIncome: (uid, estimatedIncome) => save(uid, { estimatedIncome }),
 
-    async setFeaturedGoalId(uid, id) {
-        set({ featuredGoalId: id });
-        await saveSettings(uid, { featuredGoalId: id });
-    },
+        setSavingsTarget: (uid, savingsTarget) => save(uid, { savingsTarget }),
 
-    async completeOnboarding(uid) {
-        set({ onboardingComplete: true });
-        await saveSettings(uid, { onboardingComplete: true });
-    },
+        setCategoryBudgets: (uid, budgets, month = getCurrentMonth()) => {
+            const budgetHistory = { ...get().budgetHistory, [month]: budgets };
+            const isCurrentMonth = month === getCurrentMonth();
+            return save(uid, isCurrentMonth ? { categoryBudgets: budgets, budgetHistory } : { budgetHistory });
+        },
 
-    async setCombinedTransactionsView(uid, value) {
-        set({ combinedTransactionsView: value });
-        await saveSettings(uid, { combinedTransactionsView: value });
-    },
+        addCategory: (uid, value, label) => save(uid, { categories: [...get().categories, { value, label }] }),
 
-    async setShowNoComputableTab(uid, value) {
-        set({ showNoComputableTab: value });
-        await saveSettings(uid, { showNoComputableTab: value });
-    },
-}));
+        updateCategoryLabel: (uid, value, label) => save(uid, { categories: updateCategory(value, { label, customLabel: true }) }),
+
+        setCategoryNoComputable: (uid, value, noComputable) =>
+            save(uid, { categories: updateCategory(value, { noComputable }), ...budgetsAfterToggle(value, noComputable) }),
+
+        setCategoryIncomeOnly: (uid, value, incomeOnly) =>
+            save(uid, { categories: updateCategory(value, { incomeOnly }), ...budgetsAfterToggle(value, incomeOnly) }),
+
+        setCategoryExcludeFromBalance: (uid, value, excludeFromBalance) =>
+            save(uid, { categories: updateCategory(value, { excludeFromBalance }) }),
+
+        removeCategory: (uid, value) =>
+            save(uid, { categories: get().categories.filter((c) => c.value !== value), ...withoutBudgetFor(value) }),
+
+        addRule: (uid, keyword, category, goalId) => {
+            const rule: CategorizationRule = { id: crypto.randomUUID(), keyword, category, ...(goalId && { goalId }) };
+            return save(uid, { categorizationRules: [...get().categorizationRules, rule] });
+        },
+
+        removeRule: (uid, id) => save(uid, { categorizationRules: get().categorizationRules.filter((r) => r.id !== id) }),
+
+        setFeaturedGoalId: (uid, featuredGoalId) => save(uid, { featuredGoalId }),
+
+        completeOnboarding: (uid) => save(uid, { onboardingComplete: true }),
+
+        setCombinedTransactionsView: (uid, combinedTransactionsView) => save(uid, { combinedTransactionsView }),
+
+        setShowNoComputableTab: (uid, showNoComputableTab) => save(uid, { showNoComputableTab }),
+    };
+});

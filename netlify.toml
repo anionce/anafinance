@@ -2,15 +2,11 @@
   command = "npm run build"
   publish = "dist"
 
-# react-router uses client-side routing, so every path needs to fall back
-# to index.html instead of Netlify 404ing on direct loads/refreshes.
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Google sign-in uses a popup; without this header Chrome blocks the
-# opener's window.closed check with a COOP console error.
 [[headers]]
   for = "/*"
   [headers.values]
